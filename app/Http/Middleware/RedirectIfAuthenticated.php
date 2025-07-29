@@ -29,7 +29,7 @@ class RedirectIfAuthenticated
                 }
 
                 // Jika bukan, berarti dia klien, tendang ke halaman laporan.
-                return redirect()->route('client.report.index');
+                return redirect()->route('client.laporan.index');
             }
         }
 

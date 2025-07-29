@@ -22,7 +22,9 @@ Route::get('/', function () {
         return redirect()->route('admin.dashboard');
     }
 
-    return redirect()->route('client.report.index');
+    // PERBAIKAN DI SINI:
+    // Pastikan ini juga menggunakan 'laporan'
+    return redirect()->route('client.laporan.index');
 });
 
 // == RUTE PUBLIK (GUEST) ==
@@ -37,12 +39,15 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 // == RUTE KLIEN / PENGGUNA (AUTH) ==
 Route::middleware(['auth'])->prefix('app')->name('client.')->group(function () {
     // Rute '/app' sekarang akan mengarah ke laporan
-    Route::get('/', fn() => redirect()->route('client.report.index'));
+    Route::get('/', fn() => redirect()->route('client.laporan.index'));
 
-    Route::resource('report', ReportController::class)->except(['show']);
+    // PERBAIKAN UTAMA DI SINI:
+    // Mengganti 'report' menjadi 'laporan' agar konsisten
+    Route::resource('laporan', ReportController::class)->except(['show']);
 
-    Route::get('/report/{dailyReport}/preview-pdf', [ReportController::class, 'previewPdf'])->name('report.pdf.preview');
-    Route::get('/report/{dailyReport}/export-pdf', [ReportController::class, 'exportPdf'])->name('report.pdf.export');
+    Route::get('/laporan/{dailyReport}/preview-pdf', [ReportController::class, 'previewPdf'])->name('laporan.pdf.preview');
+    Route::get('/laporan/{dailyReport}/export-pdf', [ReportController::class, 'exportPdf'])->name('laporan.pdf.export');
+
     Route::get('/grafik', [ChartController::class, 'index'])->name('grafik.index');
     Route::get('/profil', [ProfileController::class, 'index'])->name('profil.index');
 });

@@ -14,7 +14,7 @@ class ChartController extends Controller
     public function index()
     {
         $user = Auth::user();
-        
+
         // Ambil data laporan 30 hari terakhir
         $reports = DailyReport::where('user_id', $user->id)
             ->where('tanggal', '>=', Carbon::now()->subDays(30))
@@ -30,6 +30,6 @@ class ChartController extends Controller
         $dataTotalNetto = $reports->pluck('total_netto');
 
         // Pastikan Anda membuat view 'client.Chart.index'
-        return view('client.Chart.index', compact('labels', 'dataTotalUang', 'dataTotalNetto'));
+        return view('client.grafik.index', compact('labels', 'dataTotalUang', 'dataTotalNetto'));
     }
 }
