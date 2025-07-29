@@ -1,5 +1,5 @@
 <?php
-// File: app/Http/Controllers/Client/LaporanController.php
+// File: app/Http/Controllers/Client/ReportController.php
 
 namespace App\Http\Controllers\Client;
 
@@ -13,7 +13,7 @@ use App\Models\PdfExport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Str;
 
-class LaporanController extends Controller
+class ReportController extends Controller
 {
     /**
      * Menampilkan halaman daftar laporan utama.
@@ -119,10 +119,10 @@ class LaporanController extends Controller
         return DB::transaction(function () use ($request, $report) {
             // Hapus data rincian lama
             $report->rincianBarang()->delete();
-            
+
             // Logika untuk kalkulasi dan update sama seperti di method store()
             // ... (Tambahkan logika kalkulasi dan update di sini) ...
-            
+
             // Simpan rincian baru
             // ... (Tambahkan loop untuk menyimpan rincian baru) ...
 
@@ -143,7 +143,7 @@ class LaporanController extends Controller
 
         return redirect()->route('client.laporan.index')->with('success', 'Laporan berhasil dihapus.');
     }
-    
+
     // Logika untuk Preview dan Export PDF tetap sama
     public function previewPdf(DailyReport $report)
     {
@@ -166,7 +166,7 @@ class LaporanController extends Controller
             'filename' => $filename,
             'data_snapshot' => $data,
         ]);
-        
+
         return $pdf->download($filename);
     }
 }

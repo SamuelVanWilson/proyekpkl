@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 
 class AuthController extends Controller
@@ -19,20 +20,21 @@ class AuthController extends Controller
             'kode_unik' => 'required|string',
         ]);
 
-        $user = User::where('kode_unik', $credentials['kode_unik'])->first();
+        // Ambil semua user aktif untuk dicek satu per satu
+        $users = User::where('is_active', true)->get();
 
-        if ($user && $user->is_active) {
-            Auth::login($user);
-            $request->session()->regenerate();
+        foreach ($users as $user) {
+            // Cek apakah kode unik yang diinput cocok dengan hash di database
+            if (Hash::check($credentials['kode_unik'], $user->kode_unik)) {
+                Auth::login($user);
+                $request->session()->regenerate();
 
-            // Arahkan berdasarkan role menggunakan nama route yang sudah benar
-            if ($user->role === 'admin') {
-                // Nama route lengkapnya adalah 'admin.dashboard'
-                return redirect()->intended(route('admin.dashboard')); 
+                if ($user->role === 'admin') {
+                    return redirect()->intended(route('admin.dashboard'));
+                }
+
+                return redirect()->intended(route('client.report.index'));
             }
-            
-            // Nama route lengkapnya adalah 'client.laporan.index'
-            return redirect()->intended(route('client.laporan.index'));
         }
 
         return back()->withErrors([
@@ -45,7 +47,6 @@ class AuthController extends Controller
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
-
         return redirect()->route('login');
     }
 }

@@ -7,45 +7,52 @@ use App\Http\Controllers\Client\ChartController;
 use App\Http\Controllers\Client\ProfileController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
+use Illuminate\Support\Facades\Auth;
 
-// == 1. RUTE PUBLIK (GUEST) ==
+// PERBAIKAN UTAMA:
+// Rute '/' sekarang menjadi "gerbang" utama.
+// Ia akan memeriksa apakah user sudah login dan mengarahkan ke tempat yang benar.
+Route::get('/', function () {
+    if (!Auth::check()) {
+        return redirect()->route('login');
+    }
+
+    $user = Auth::user();
+    if ($user->role === 'admin') {
+        return redirect()->route('admin.dashboard');
+    }
+
+    return redirect()->route('client.report.index');
+});
+
+// == RUTE PUBLIK (GUEST) ==
 Route::middleware('guest')->group(function () {
-    Route::get('/', [AuthController::class, 'showLoginForm'])->name('login');
-    Route::post('/login', [AuthController::class, 'login'])->name('login.store'); // Beri nama untuk proses login
+    // Halaman login sekarang ada di /login
+    Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
+    Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 });
 
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
-// == 2. RUTE KLIEN / PENGGUNA (AUTH) ==
+// == RUTE KLIEN / PENGGUNA (AUTH) ==
 Route::middleware(['auth'])->prefix('app')->name('client.')->group(function () {
-    // Redirect /app ke halaman laporan
-    Route::get('/', function() {
-        return redirect()->route('client.laporan.index');
-    });
+    // Rute '/app' sekarang akan mengarah ke laporan
+    Route::get('/', fn() => redirect()->route('client.report.index'));
 
-    Route::get('/laporan', [ReportController::class, 'index'])->name('laporan.index');
-    // ... rute klien lainnya tetap sama ...
+    Route::resource('report', ReportController::class)->except(['show']);
+
+    Route::get('/report/{dailyReport}/preview-pdf', [ReportController::class, 'previewPdf'])->name('report.pdf.preview');
+    Route::get('/report/{dailyReport}/export-pdf', [ReportController::class, 'exportPdf'])->name('report.pdf.export');
     Route::get('/grafik', [ChartController::class, 'index'])->name('grafik.index');
     Route::get('/profil', [ProfileController::class, 'index'])->name('profil.index');
 });
 
-
-// == 3. RUTE ADMIN (AUTH & ADMIN) ==
+// == RUTE ADMIN (AUTH & ADMIN) ==
 Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
-    // Redirect /admin ke halaman dashboard
-    Route::get('/', function() {
-        return redirect()->route('admin.dashboard');
-    });
-    
-    // Nama route di sini HANYA 'dashboard', bukan 'admin.dashboard'
+    Route::get('/', fn() => redirect()->route('admin.dashboard'));
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-
-    // Manajemen Klien/User
-    Route::get('/users', [AdminUserController::class, 'index'])->name('users.index');
-    Route::get('/users/create', [AdminUserController::class, 'create'])->name('users.create');
-    Route::post('/users', [AdminUserController::class, 'store'])->name('users.store');
-    Route::get('/users/{user}/edit', [AdminUserController::class, 'edit'])->name('users.edit');
-    Route::put('/users/{user}', [AdminUserController::class, 'update'])->name('users.update');
-    Route::delete('/users/{user}', [AdminUserController::class, 'destroy'])->name('users.destroy');
+    Route::resource('users', AdminUserController::class)->except(['show']);
     Route::get('/users/{user}/activity', [AdminUserController::class, 'showActivity'])->name('users.activity');
+    Route::get('/users/{user}/form-builder', [AdminUserController::class, 'showFormBuilder'])->name('users.form-builder');
+    Route::post('/users/{user}/form-builder', [AdminUserController::class, 'saveFormBuilder'])->name('users.form-builder.store');
 });

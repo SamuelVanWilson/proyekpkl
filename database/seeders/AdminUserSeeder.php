@@ -26,9 +26,9 @@ class AdminUserSeeder extends Seeder
                 'name' => 'Administrator',
                 'nama_pabrik' => 'Sistem Admin',
                 'email' => 'admin@laporanapp.com',
-                
+
                 // Ini adalah kunci untuk login ke halaman admin
-                'kode_unik' => 'ADMIN-SUPER', 
+                'kode_unik' => Hash::make('ADMIN-USER'),
 
                 'role' => 'admin', // Menandakan user ini adalah admin
                 'is_active' => true,

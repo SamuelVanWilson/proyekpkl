@@ -10,9 +10,6 @@
         <h1 class="text-3xl font-bold text-gray-900">
             Laporan
         </h1>
-        <button class="text-gray-500 hover:text-gray-900">
-            <ion-icon name="search-outline" class="text-2xl"></ion-icon>
-        </button>
     </div>
 </div>
 
@@ -32,9 +29,8 @@
             <div class="flex justify-between items-start">
                 <div>
                     <p class="text-sm font-semibold text-gray-800">{{ $report->lokasi }}</p>
-                    <p class="text-xs text-gray-500">{{ $report->tanggal->isoFormat('dddd, D MMMM Y') }}</p>
+                    <p class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($report->tanggal)->isoFormat('dddd, D MMMM Y') }}</p>
                 </div>
-                {{-- Tombol Aksi (Edit, Hapus, dll) --}}
                 <div class="text-xs text-gray-400">
                     ID: #{{ $report->id }}
                 </div>
@@ -44,10 +40,10 @@
                 <p class="text-xl font-bold text-gray-900">Rp {{ number_format($report->total_uang, 0, ',', '.') }}</p>
             </div>
             <div class="mt-4 flex space-x-2">
-                <a href="{{-- route('client.laporan.edit', $report) --}}" class="flex-1 text-center bg-gray-100 text-gray-800 py-2 rounded-lg text-sm font-medium hover:bg-gray-200">
+                <a href="{{ route('client.report.edit', $report) }}" class="flex-1 text-center bg-gray-100 text-gray-800 py-2 rounded-lg text-sm font-medium hover:bg-gray-200">
                     Edit
                 </a>
-                <a href="{{ route('client.laporan.pdf.preview', $report) }}" target="_blank" class="flex-1 text-center bg-blue-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-600">
+                <a href="{{ route('client.report.pdf.preview', $report) }}" target="_blank" class="flex-1 text-center bg-blue-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-600">
                     Lihat PDF
                 </a>
             </div>
@@ -70,7 +66,7 @@
 </div>
 
 {{-- Tombol Tambah Mengambang (Floating Action Button) --}}
-<a href="{{-- route('client.laporan.create') --}}" class="fixed bottom-20 right-5 h-14 w-14 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-600 transition-transform active:scale-90">
+<a href="{{ route('client.report.create') }}" class="fixed bottom-20 right-5 h-14 w-14 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-600 transition-transform active:scale-90">
     <ion-icon name="add-outline" class="text-3xl"></ion-icon>
 </a>
 @endsection
