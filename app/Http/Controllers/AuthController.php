@@ -20,20 +20,24 @@ class AuthController extends Controller
             'kode_unik' => 'required|string',
         ]);
 
-        // Ambil semua user aktif untuk dicek satu per satu
         $users = User::where('is_active', true)->get();
 
         foreach ($users as $user) {
-            // Cek apakah kode unik yang diinput cocok dengan hash di database
             if (Hash::check($credentials['kode_unik'], $user->kode_unik)) {
                 Auth::login($user);
                 $request->session()->regenerate();
 
+                // ==================================================
+                // PERBAIKAN UTAMA: TIDAK ADA LAGI redirect()->intended()
+                // Kita gunakan pengalihan langsung yang tegas.
+                // ==================================================
                 if ($user->role === 'admin') {
-                    return redirect()->intended(route('admin.dashboard'));
+                    // Jika admin, PAKSA ke dashboard admin. Titik.
+                    return redirect()->route('admin.dashboard');
                 }
 
-                return redirect()->intended(route('client.report.index'));
+                // Jika bukan admin, PAKSA ke halaman laporan klien. Titik.
+                return redirect()->route('client.laporan.index');
             }
         }
 

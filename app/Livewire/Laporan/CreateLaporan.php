@@ -7,6 +7,9 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use App\Models\DailyReport;
 use App\Models\Barang;
+// PERBAIKAN UTAMA DI SINI:
+// Mengubah alamat 'use' statement agar menunjuk ke folder Models
+use App\Models\TableConfiguration;
 
 class CreateLaporan extends Component
 {
@@ -18,6 +21,27 @@ class CreateLaporan extends Component
 
     // Properti yang tetap (tidak dinamis)
     public $rincian = [];
+
+    // Properti untuk hasil kalkulasi real-time
+    public $jumlah_karung = 0;
+    public $total_bruto = 0;
+    public $total_netto = 0;
+    public $harga_bruto = 0;
+    public $total_uang = 0;
+
+    // Aturan validasi
+    protected function rules()
+    {
+        // Membuat aturan validasi dinamis berdasarkan form config
+        $rekapRules = collect($this->formConfig)->mapWithKeys(function ($field) {
+            return ['rekapData.' . $field['name'] => 'required'];
+        })->toArray();
+
+        return array_merge($rekapRules, [
+            'rincian' => 'required|array|min:1',
+            'rincian.*.total' => 'required|numeric|min:0',
+        ]);
+    }
 
     // Method ini dijalankan saat komponen pertama kali dimuat
     public function mount()
@@ -36,12 +60,19 @@ class CreateLaporan extends Component
                 ['name' => 'tanggal', 'label' => 'Tanggal', 'type' => 'date'],
                 ['name' => 'lokasi', 'label' => 'Lokasi', 'type' => 'text'],
                 ['name' => 'pemilik_sawah', 'label' => 'Pemilik Sawah', 'type' => 'text'],
+                ['name' => 'karung_kosong', 'label' => 'Karung Kosong (Kg)', 'type' => 'number'],
+                ['name' => 'harga_per_kilo', 'label' => 'Harga per Kilo', 'type' => 'number'],
+                ['name' => 'uang_muka', 'label' => 'Uang Muka', 'type' => 'number'],
             ];
         }
 
-        // Inisialisasi rekapData agar tidak error
+        // Inisialisasi rekapData agar tidak error dan set tanggal default
         foreach($this->formConfig as $field) {
-            $this->rekapData[$field['name']] = '';
+            if ($field['name'] === 'tanggal') {
+                $this->rekapData[$field['name']] = now()->format('Y-m-d');
+            } else {
+                 $this->rekapData[$field['name']] = '';
+            }
         }
 
         $this->tambahBarisRincian();
@@ -62,36 +93,68 @@ class CreateLaporan extends Component
     }
 
     // Method "ajaib" dari Livewire.
-    // Setiap kali ada properti yang di-update di frontend (misal: user mengetik),
-    // method ini akan dipanggil secara otomatis.
     public function updated($propertyName)
     {
         $this->hitungUlang();
     }
 
+    // Logika utama untuk kalkulasi
+    public function hitungUlang()
+    {
+        // Mengambil nilai dari form dinamis dengan fallback 0
+        $karung_kosong = is_numeric($this->rekapData['karung_kosong'] ?? 0) ? $this->rekapData['karung_kosong'] : 0;
+        $harga_per_kilo = is_numeric($this->rekapData['harga_per_kilo'] ?? 0) ? $this->rekapData['harga_per_kilo'] : 0;
+        $uang_muka = is_numeric($this->rekapData['uang_muka'] ?? 0) ? $this->rekapData['uang_muka'] : 0;
+
+        $this->jumlah_karung = count($this->rincian);
+        $this->total_bruto = collect($this->rincian)->sum(function($item){
+            return is_numeric($item['total']) ? $item['total'] : 0;
+        });
+
+        $this->total_netto = $this->total_bruto - $karung_kosong;
+        $this->harga_bruto = $this->total_netto * $harga_per_kilo;
+        $this->total_uang = $this->harga_bruto - $uang_muka;
+    }
+
     // Method untuk menyimpan data ke database
     public function simpanLaporan()
     {
-        // Validasi sekarang menjadi lebih dinamis
-        $this->validate([
-            'rekapData.*' => 'required', // Aturan simpel, bisa dibuat lebih detail
-            'rincian.*.total' => 'required|numeric',
-        ]);
+        $this->validate();
 
-        // Simpan semua data dari form dinamis ke satu kolom JSON
-        DailyReport::create([
-            'user_id' => Auth::id(),
-            'data' => $this->rekapData, // <-- KUNCI UTAMA ADA DI SINI
-            'rincian_data' => $this->rincian, // Simpan rincian juga di JSON
-            // ... simpan hasil kalkulasi jika perlu ...
-        ]);
+        DB::transaction(function () {
+            // Simpan semua data dari form dinamis dan kalkulasi ke satu kolom JSON
+            $dataToStore = array_merge($this->rekapData, [
+                'jumlah_karung' => $this->jumlah_karung,
+                'total_bruto' => $this->total_bruto,
+                'total_netto' => $this->total_netto,
+                'harga_bruto' => $this->harga_bruto,
+                'total_uang' => $this->total_uang,
+            ]);
+
+            $dailyReport = DailyReport::create([
+                'user_id' => Auth::id(),
+                'tanggal' => $this->rekapData['tanggal'], // Simpan tanggal di kolom terpisah untuk sorting
+                'data' => $dataToStore,
+            ]);
+
+            // Simpan rincian ke tabel barangs
+            foreach ($this->rincian as $item) {
+                if(!empty($item['total'])) {
+                    Barang::create([
+                        'user_id' => Auth::id(),
+                        'daily_report_id' => $dailyReport->id,
+                        'data' => $item,
+                    ]);
+                }
+            }
+        });
 
         session()->flash('success', 'Laporan berhasil disimpan.');
-        return redirect()->route('client.report.index');
+        return redirect()->route('client.laporan.index');
     }
 
-    public function render()
+    public function harian()
     {
-        return view('livewire.laporan.create-laporan');
+        return view('client.laporan.harian');
     }
 }

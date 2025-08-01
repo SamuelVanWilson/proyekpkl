@@ -26,8 +26,8 @@ class ReportController extends Controller
                               ->orderBy('tanggal', 'desc')
                               ->paginate(15);
 
-        // Pastikan Anda membuat view 'client.laporan.index'
-        return view('client.laporan.index', compact('reports'));
+        // Pastikan Anda membuat view 'client.laporan.histori'
+        return view('client.laporan.histori', compact('reports'));
     }
 
     /**
@@ -92,7 +92,7 @@ class ReportController extends Controller
                 ]);
             }
 
-            return redirect()->route('client.laporan.index')->with('success', 'Laporan berhasil disimpan.');
+            return redirect()->route('client.laporan.histori')->with('success', 'Laporan berhasil disimpan.');
         });
     }
 
@@ -126,7 +126,7 @@ class ReportController extends Controller
             // Simpan rincian baru
             // ... (Tambahkan loop untuk menyimpan rincian baru) ...
 
-            return redirect()->route('client.laporan.index')->with('success', 'Laporan berhasil diperbarui.');
+            return redirect()->route('client.laporan.histori')->with('success', 'Laporan berhasil diperbarui.');
         });
     }
 
@@ -141,7 +141,7 @@ class ReportController extends Controller
         // data rincian di tabel 'barangs' akan otomatis terhapus.
         $report->delete();
 
-        return redirect()->route('client.laporan.index')->with('success', 'Laporan berhasil dihapus.');
+        return redirect()->route('client.laporan.histori')->with('success', 'Laporan berhasil dihapus.');
     }
 
     // Logika untuk Preview dan Export PDF tetap sama

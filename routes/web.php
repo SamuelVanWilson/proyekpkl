@@ -9,9 +9,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use Illuminate\Support\Facades\Auth;
 
-// PERBAIKAN UTAMA:
-// Rute '/' sekarang menjadi "gerbang" utama.
-// Ia akan memeriksa apakah user sudah login dan mengarahkan ke tempat yang benar.
+// Gerbang utama yang akan mengarahkan user yang sudah login
 Route::get('/', function () {
     if (!Auth::check()) {
         return redirect()->route('login');
@@ -22,14 +20,13 @@ Route::get('/', function () {
         return redirect()->route('admin.dashboard');
     }
 
-    // PERBAIKAN DI SINI:
-    // Pastikan ini juga menggunakan 'laporan'
+    // PERBAIKAN UTAMA DI SINI:
+    // Menggunakan nama rute 'client.laporan.index' yang benar
     return redirect()->route('client.laporan.index');
 });
 
 // == RUTE PUBLIK (GUEST) ==
 Route::middleware('guest')->group(function () {
-    // Halaman login sekarang ada di /login
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 });
@@ -37,17 +34,13 @@ Route::middleware('guest')->group(function () {
 Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middleware('auth');
 
 // == RUTE KLIEN / PENGGUNA (AUTH) ==
-Route::middleware(['auth'])->prefix('app')->name('client.')->group(function () {
-    // Rute '/app' sekarang akan mengarah ke laporan
+Route::middleware(['auth', 'client'])->prefix('app')->name('client.')->group(function () {
     Route::get('/', fn() => redirect()->route('client.laporan.index'));
 
-    // PERBAIKAN UTAMA DI SINI:
-    // Mengganti 'report' menjadi 'laporan' agar konsisten
     Route::resource('laporan', ReportController::class)->except(['show']);
 
     Route::get('/laporan/{dailyReport}/preview-pdf', [ReportController::class, 'previewPdf'])->name('laporan.pdf.preview');
     Route::get('/laporan/{dailyReport}/export-pdf', [ReportController::class, 'exportPdf'])->name('laporan.pdf.export');
-
     Route::get('/grafik', [ChartController::class, 'index'])->name('grafik.index');
     Route::get('/profil', [ProfileController::class, 'index'])->name('profil.index');
 });
