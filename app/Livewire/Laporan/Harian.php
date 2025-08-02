@@ -93,32 +93,48 @@ class Harian extends Component
                 preg_match_all('/SUM\((.*?)\)/', $formula, $matches);
                 foreach ($matches[1] as $colToSum) {
                     $sum = collect($this->rincian)->sum(function($item) use ($colToSum) {
-                        return is_numeric($item[$colToSum] ?? 0) ? $item[$colToSum] : 0;
+                        return is_numeric($item[$colToSum] ?? 0) ? (float) $item[$colToSum] : 0;
                     });
                     $formula = str_replace("SUM($colToSum)", $sum, $formula);
                 }
 
                 // Ganti nama kolom lain dengan nilainya
                 foreach ($this->rekap as $key => $value) {
-                    if (is_numeric($value)) {
-                        $formula = str_replace($key, $value, $formula);
+                    // Hanya ganti jika key adalah string dan valuenya numerik
+                    if (is_string($key)) {
+                        $numericValue = is_numeric($value) ? (float) $value : 0;
+                        $formula = str_replace($key, (string)$numericValue, $formula);
                     }
                 }
 
-                // Evaluasi ekspresi matematika sederhana
+                // PERBAIKAN: Evaluasi ekspresi matematika yang lebih aman
                 try {
-                    // Hapus karakter non-matematika yang tersisa
+                    // Hapus semua karakter kecuali angka, titik, dan operator matematika dasar
                     $sanitizedFormula = preg_replace('/[^0-9\.\+\-\*\/ \(\)]/', '', $formula);
-                    if (!empty($sanitizedFormula)) {
-                         $this->rekap[$field['name']] = eval("return {$sanitizedFormula};");
+
+                    // Jika setelah dibersihkan formulanya kosong atau tidak valid, hasilnya 0
+                    if (empty($sanitizedFormula) || !preg_match('/[0-9]/', $sanitizedFormula)) {
+                        $this->rekap[$field['name']] = 0;
+                        continue;
                     }
+
+                    // Matikan error reporting sementara untuk menekan warning dari eval()
+                    // dan gunakan @ untuk menekan error jika formula tidak valid
+                    $result = @eval("return {$sanitizedFormula};");
+
+                    // Pastikan hasilnya adalah angka, jika tidak, set ke 0
+                    $this->rekap[$field['name']] = is_numeric($result) ? $result : 0;
+
                 } catch (\Throwable $e) {
-                    // Abaikan jika formula tidak valid
-                    Log::error("Formula evaluation error: " . $e->getMessage());
+                    // Jika terjadi error parah, set hasilnya ke 0 dan log error
+                    $this->rekap[$field['name']] = 0;
+                    Log::error("Formula evaluation error: " . $e->getMessage() . " | Formula: " . $formula);
                 }
             }
         }
     }
+
+
 
     public function simpanLaporan()
     {

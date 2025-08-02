@@ -37,7 +37,7 @@ class AuthController extends Controller
                 }
 
                 // Jika bukan admin, PAKSA ke halaman laporan klien. Titik.
-                return redirect()->route('client.laporan.index');
+                return redirect()->route('client.laporan.harian');
             }
         }
 

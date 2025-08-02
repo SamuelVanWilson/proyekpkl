@@ -9,23 +9,18 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use Illuminate\Support\Facades\Auth;
 
-// Gerbang utama yang akan mengarahkan user yang sudah login
+// Gerbang utama, sudah benar.
 Route::get('/', function () {
     if (!Auth::check()) {
         return redirect()->route('login');
     }
-
     $user = Auth::user();
-    if ($user->role === 'admin') {
-        return redirect()->route('admin.dashboard');
-    }
-
-    // PERBAIKAN UTAMA DI SINI:
-    // Menggunakan nama rute 'client.laporan.index' yang benar
-    return redirect()->route('client.laporan.index');
+    return $user->role === 'admin'
+        ? redirect()->route('admin.dashboard')
+        : redirect()->route('client.laporan.harian'); // <-- DIARAHKAN KE HALAMAN "LIVE" BARU
 });
 
-// == RUTE PUBLIK (GUEST) ==
+// Rute Publik (Guest), sudah benar.
 Route::middleware('guest')->group(function () {
     Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.store');
@@ -35,12 +30,18 @@ Route::post('/logout', [AuthController::class, 'logout'])->name('logout')->middl
 
 // == RUTE KLIEN / PENGGUNA (AUTH) ==
 Route::middleware(['auth', 'client'])->prefix('app')->name('client.')->group(function () {
-    Route::get('/', fn() => redirect()->route('client.laporan.index'));
+    // Rute '/app' sekarang akan mengarah ke halaman laporan harian
+    Route::get('/', fn() => redirect()->route('client.laporan.harian'));
 
-    Route::resource('laporan', ReportController::class)->except(['show']);
+    // --- PEROMBAKAN UTAMA PADA RUTE LAPORAN ---
+    // Halaman utama klien adalah 'harian'
+    Route::get('/laporan', [ReportController::class, 'harian'])->name('laporan.harian');
+    // Halaman sekunder untuk melihat daftar laporan lama
+    Route::get('/laporan/histori', [ReportController::class, 'histori'])->name('laporan.histori');
+    // Rute untuk melihat PDF dari histori
+    Route::get('/laporan/histori/{dailyReport}/preview-pdf', [ReportController::class, 'previewPdf'])->name('laporan.histori.pdf');
 
-    Route::get('/laporan/{dailyReport}/preview-pdf', [ReportController::class, 'previewPdf'])->name('laporan.pdf.preview');
-    Route::get('/laporan/{dailyReport}/export-pdf', [ReportController::class, 'exportPdf'])->name('laporan.pdf.export');
+    // --- Rute Halaman Lain (tetap sama) ---
     Route::get('/grafik', [ChartController::class, 'index'])->name('grafik.index');
     Route::get('/profil', [ProfileController::class, 'index'])->name('profil.index');
 });

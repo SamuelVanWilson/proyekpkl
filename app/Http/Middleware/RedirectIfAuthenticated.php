@@ -24,7 +24,7 @@ class RedirectIfAuthenticated
                 if ($user->role === 'admin') {
                     return redirect('/admin/dashboard');
                 } elseif ($user->role === 'user') {
-                    return redirect('/app/laporan/create');
+                    return redirect('client.laporan.harian');
                 }
             }
         }
