@@ -118,20 +118,34 @@ class UserController extends Controller
         return view('admin.users.form-builder', compact('user', 'config'));
     }
 
-    // METHOD BARU UNTUK MEMPERBAIKI ERROR `Method not found`
     public function saveFormBuilder(Request $request, User $user)
     {
+        // PERBAIKAN: Validasi sekarang mencocokkan struktur data dan membuat label opsional
         $validated = $request->validate([
-            'columns' => 'required|array',
-            'columns.*.name' => 'required|string',
-            'columns.*.label' => 'required|string',
-            'columns.*.type' => 'required|string|in:text,number,date',
+            'columns.rincian' => 'sometimes|array',
+            'columns.rincian.*.name' => 'required|string',
+            'columns.rincian.*.label' => 'nullable|string', // Label sekarang opsional
+            'columns.rincian.*.type' => 'required|string|in:text,number',
+
+            'columns.rekap' => 'sometimes|array',
+            'columns.rekap.*.name' => 'required|string',
+            'columns.rekap.*.label' => 'nullable|string', // Label sekarang opsional
+            'columns.rekap.*.type' => 'required|string|in:text,number,date',
+            'columns.rekap.*.formula' => 'nullable|string',
         ]);
 
-        TableConfiguration::updateOrCreate(
-            ['user_id' => $user->id, 'table_name' => 'daily_reports'],
-            ['columns' => $validated['columns']]
+        // Ambil atau buat konfigurasi baru
+        $config = TableConfiguration::firstOrNew(
+            ['user_id' => $user->id, 'table_name' => 'daily_reports']
         );
+        
+        // Simpan kolom, pastikan rincian dan rekap selalu ada meskipun kosong
+        $config->columns = [
+            'rincian' => $validated['columns']['rincian'] ?? [],
+            'rekap' => $validated['columns']['rekap'] ?? [],
+        ];
+
+        $config->save();
 
         return redirect()->route('admin.users.index')->with('success', 'Konfigurasi form untuk ' . $user->name . ' berhasil disimpan.');
     }

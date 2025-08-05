@@ -15,21 +15,23 @@
     @csrf
     <div class="space-y-8">
         {{-- Konfigurasi Tabel Rincian --}}
-        <div x-data='formSection(@json($config->columns['rincian'] ?? []))' class="bg-white p-6 rounded-xl shadow-sm">
+        <div x-data='formSection(@json(old('columns.rincian', $config->columns['rincian'] ?? [])))' class="bg-white p-6 rounded-xl shadow-sm">
             <h2 class="text-xl font-bold text-gray-800">1. Konfigurasi Tabel Rincian</h2>
             <p class="text-sm text-gray-500 mt-1">Atur kolom-kolom yang akan diisi berulang kali (seperti baris di Excel).</p>
             <div class="mt-4 space-y-4">
                 <template x-for="(field, index) in fields" :key="index">
-                    <div class="flex items-center space-x-3 p-3 border rounded-lg">
-                        <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <input type="text" :name="`columns[rincian][${index}][name]`" x-model="field.name" placeholder="Nama Kolom (e.g., qty_pcs)" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
-                            <input type="text" :name="`columns[rincian][${index}][label]`" x-model="field.label" placeholder="Label Tampilan (e.g., Jumlah (Pcs))" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
-                            <select :name="`columns[rincian][${index}][type]`" x-model="field.type" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
-                                <option value="text">Teks</option>
-                                <option value="number">Angka</option>
-                            </select>
+                    <div class="p-3 border rounded-lg">
+                        <div class="flex items-center space-x-3">
+                            <div class="flex-grow grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <input type="text" :name="`columns[rincian][${index}][name]`" x-model="field.name" placeholder="Nama Kolom (e.g., qty_pcs)" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                                <input type="text" :name="`columns[rincian][${index}][label]`" x-model="field.label" placeholder="Label Tampilan (e.g., Jumlah (Pcs))" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                                <select :name="`columns[rincian][${index}][type]`" x-model="field.type" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                                    <option value="text">Teks</option>
+                                    <option value="number">Angka</option>
+                                </select>
+                            </div>
+                            <button type="button" @click="removeField(index)" class="text-red-500 hover:text-red-700 p-2"><ion-icon name="trash-outline" class="text-xl"></ion-icon></button>
                         </div>
-                        <button type="button" @click="removeField(index)" class="text-red-500 hover:text-red-700 p-2"><ion-icon name="trash-outline" class="text-xl"></ion-icon></button>
                     </div>
                 </template>
             </div>
@@ -37,13 +39,13 @@
         </div>
 
         {{-- Konfigurasi Formulir Rekapitulasi --}}
-        <div x-data='formSection(@json($config->columns['rekap'] ?? []))' class="bg-white p-6 rounded-xl shadow-sm">
+        <div x-data='formSection(@json(old('columns.rekap', $config->columns['rekap'] ?? [])))' class="bg-white p-6 rounded-xl shadow-sm">
             <h2 class="text-xl font-bold text-gray-800">2. Konfigurasi Formulir Rekapitulasi</h2>
-            <p class="text-sm text-gray-500 mt-1">Atur kolom-kolom ringkasan. Gunakan `SUM(nama_kolom_rincian)` untuk perhitungan otomatis.</p>
+            <p class="text-sm text-gray-500 mt-1">Gunakan `SUM(nama_kolom_rincian)` dan operator (`+`, `-`, `*`, `/`) untuk perhitungan otomatis.</p>
             <div class="mt-4 space-y-4">
                 <template x-for="(field, index) in fields" :key="index">
-                    <div class="flex items-center space-x-3 p-3 border rounded-lg">
-                        <div class="flex-grow grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div class="p-3 border rounded-lg">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <input type="text" :name="`columns[rekap][${index}][name]`" x-model="field.name" placeholder="Nama Kolom (e.g., total_penjualan)" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
                             <input type="text" :name="`columns[rekap][${index}][label]`" x-model="field.label" placeholder="Label Tampilan (e.g., Total Penjualan)" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
                             <select :name="`columns[rekap][${index}][type]`" x-model="field.type" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
@@ -51,13 +53,19 @@
                                 <option value="number">Angka</option>
                                 <option value="date">Tanggal</option>
                             </select>
-                            <input type="text" :name="`columns[rekap][${index}][formula]`" x-model="field.formula" placeholder="Rumus (e.g., SUM(qty_pcs) * harga_satuan)" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                            {{-- PERBAIKAN: Checkbox untuk Read-only --}}
+                            <div class="flex items-center justify-center">
+                                <input type="checkbox" :name="`columns[rekap][${index}][readonly]`" x-model="field.readonly" :value="true" class="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <label class="ml-2 block text-sm text-gray-900">Read-only (Hanya Lihat)</label>
+                            </div>
                         </div>
-                        <button type="button" @click="removeField(index)" class="text-red-500 hover:text-red-700 p-2"><ion-icon name="trash-outline" class="text-xl"></ion-icon></button>
+                        <div class="mt-3">
+                             <input type="text" :name="`columns[rekap][${index}][formula]`" x-model="field.formula" placeholder="Rumus (e.g., SUM(qty_pcs) * harga_satuan)" class="block w-full rounded-md border-gray-300 shadow-sm text-sm">
+                        </div>
                     </div>
                 </template>
             </div>
-            <button type="button" @click="addField()" class="mt-4 text-sm font-medium text-blue-600 hover:text-blue-800">+ Tambah Kolom Rekapitulasi</button>
+             <button type="button" @click="addField()" class="mt-4 text-sm font-medium text-blue-600 hover:text-blue-800">+ Tambah Kolom Rekapitulasi</button>
         </div>
     </div>
     <div class="mt-6 flex justify-end">

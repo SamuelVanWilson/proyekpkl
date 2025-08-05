@@ -51,4 +51,47 @@ class ReportController extends Controller
         // $pdf = Pdf::loadView('client.laporan.pdf_template', $data);
         // return $pdf->stream('laporan-'. $dailyReport->tanggal .'.pdf');
     }
+
+    // METHOD BARU untuk menampilkan Form Builder ke klien
+    public function showFormBuilder()
+    {
+        $config = TableConfiguration::firstOrNew([
+            'user_id' => Auth::id(),
+            'table_name' => 'daily_reports'
+        ]);
+
+        return view('client.laporan.form-builder', compact('config'));
+    }
+
+    // METHOD BARU untuk menyimpan konfigurasi dari klien
+    public function saveFormBuilder(Request $request)
+    {
+        $validated = $request->validate([
+            'columns.rincian' => 'sometimes|array',
+            'columns.rincian.*.name' => 'required|string',
+            'columns.rincian.*.label' => 'nullable|string',
+            'columns.rincian.*.type' => 'required|string|in:text,number',
+
+            'columns.rekap' => 'sometimes|array',
+            'columns.rekap.*.name' => 'required|string',
+            'columns.rekap.*.label' => 'nullable|string',
+            'columns.rekap.*.type' => 'required|string|in:text,number,date',
+            'columns.rekap.*.formula' => 'nullable|string',
+            'columns.rekap.*.readonly' => 'nullable|boolean',
+        ]);
+
+        $config = TableConfiguration::firstOrNew([
+            'user_id' => Auth::id(),
+            'table_name' => 'daily_reports'
+        ]);
+
+        $config->columns = [
+            'rincian' => $validated['columns']['rincian'] ?? [],
+            'rekap' => $validated['columns']['rekap'] ?? [],
+        ];
+
+        $config->save();
+
+        return redirect()->route('client.laporan.harian')->with('success', 'Struktur laporan Anda berhasil diperbarui!');
+    }
 }
