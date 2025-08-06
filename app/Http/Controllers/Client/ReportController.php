@@ -3,7 +3,11 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Http\Request;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use App\Models\User;
+use App\Models\TableConfiguration;
 use App\Models\DailyReport;
 use Barryvdh\DomPDF\Facade\Pdf;
 

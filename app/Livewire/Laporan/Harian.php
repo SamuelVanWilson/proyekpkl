@@ -17,6 +17,7 @@ class Harian extends Component
     public $rekap = [];
     public $configRincian = [];
     public $configRekap = [];
+    public $selectedRowIndex = null; // Properti baru untuk baris terpilih
 
     public function mount()
     {
@@ -50,16 +51,16 @@ class Harian extends Component
             'user_id' => Auth::id(),
             'tanggal' => now()->toDateString(),
         ]);
-        
+
         if ($this->report->exists && isset($this->report->data['rincian'])) {
             $this->rincian = $this->report->data['rincian'];
             $this->rekap = $this->report->data['rekap'];
         } else {
-            $this->rincian = []; 
+            $this->rincian = [];
             for ($i = 0; $i < 10; $i++) {
                 $this->tambahBarisRincian(false);
             }
-            
+
             foreach($this->configRekap as $field) {
                 $this->rekap[$field['name']] = ($field['type'] == 'date') ? now()->format('Y-m-d') : '';
             }
@@ -74,39 +75,60 @@ class Harian extends Component
             $newRow[$col['name']] = '';
         }
         $this->rincian[] = $newRow;
-        
+
         if ($recalculate) {
             $this->hitungUlang();
         }
     }
 
-    public function hapusBarisRincian($index)
+    // FUNGSI BARU: Untuk memilih baris
+    public function selectRow($index)
     {
-        unset($this->rincian[$index]);
-        $this->rincian = array_values($this->rincian);
-        $this->hitungUlang();
+        // Jika baris yang sama diklik lagi, batalkan pilihan. Jika tidak, pilih baris baru.
+        $this->selectedRowIndex = $this->selectedRowIndex === $index ? null : $index;
     }
-    
+
+    // PERUBAHAN: Method hapus sekarang berdasarkan baris yang dipilih
+    public function hapusBarisTerpilih()
+    {
+        if ($this->selectedRowIndex !== null && isset($this->rincian[$this->selectedRowIndex])) {
+            unset($this->rincian[$this->selectedRowIndex]);
+            $this->rincian = array_values($this->rincian);
+            $this->selectedRowIndex = null; // Reset pilihan setelah menghapus
+            $this->hitungUlang();
+        }
+    }
+
     public function updated($name, $value)
     {
         $this->hitungUlang();
     }
 
-    // --- MESIN RUMUS BARU YANG CANGGIH ---
+    // --- PERUBAHAN PADA MESIN RUMUS ---
     public function hitungUlang()
     {
         foreach ($this->configRekap as $field) {
             if (!empty($field['formula'])) {
                 $formula = $field['formula'];
-                
-                // 1. Evaluasi fungsi agregat seperti SUM()
-                preg_match_all('/SUM\((.*?)\)/', $formula, $matches);
-                foreach ($matches[1] as $colToSum) {
+
+                // 1. Evaluasi fungsi agregat SUM()
+                preg_match_all('/SUM\((.*?)\)/', $formula, $sumMatches);
+                foreach ($sumMatches[1] as $colToSum) {
                     $sum = collect($this->rincian)->sum(fn($item) => (float)($item[trim($colToSum)] ?? 0));
                     $formula = str_replace("SUM(".trim($colToSum).")", $sum, $formula);
                 }
 
-                // 2. Ganti nama kolom rekapitulasi dengan nilainya
+                // 2. IMPLEMENTASI BARU: Evaluasi fungsi SUBT(nilai_awal, kolom)
+                preg_match_all('/SUBT\(([^,]+),\s*([^)]+)\)/', $formula, $subtMatches, PREG_SET_ORDER);
+                foreach ($subtMatches as $match) {
+                    $initialValue = (float)($this->rekap[trim($match[1])] ?? (is_numeric($match[1]) ? $match[1] : 0));
+                    $colToSubtract = trim($match[2]);
+                    $sumOfSubtractColumn = collect($this->rincian)->sum(fn($item) => (float)($item[$colToSubtract] ?? 0));
+                    $result = $initialValue - $sumOfSubtractColumn;
+                    $formula = str_replace($match[0], $result, $formula);
+                }
+
+                // 3. Ganti nama kolom rekapitulasi dengan nilainya
                 foreach ($this->rekap as $key => $value) {
                     if (is_string($key)) {
                         $numericValue = is_numeric($value) ? (float) $value : 0;
@@ -114,7 +136,7 @@ class Harian extends Component
                     }
                 }
 
-                // 3. Evaluasi ekspresi matematika yang aman
+                // 4. Evaluasi ekspresi matematika yang aman
                 $this->rekap[$field['name']] = $this->evaluateFormula($formula);
             }
         }
@@ -123,44 +145,37 @@ class Harian extends Component
     private function evaluateFormula($formula)
     {
         try {
+            // Hanya izinkan angka, operator, dan tanda kurung untuk keamanan
             $sanitizedFormula = preg_replace('/[^-0-9\.\+\*\/ \(\)]/', '', $formula);
             if (empty($sanitizedFormula) || !preg_match('/[0-9]/', $sanitizedFormula)) {
                 return 0;
             }
-            return eval("return {$sanitizedFormula};");
+            // Menggunakan @ untuk menekan error jika formula tidak valid (misal: "5 * ")
+            return @eval("return {$sanitizedFormula};") ?? 0;
         } catch (\Throwable $e) {
             Log::error("Formula evaluation error: " . $e->getMessage() . " | Original Formula: " . $formula);
-            return 0;
+            return 0; // Kembalikan 0 jika ada error
         }
     }
 
-    // --- LOGIKA PENYIMPANAN DATA YANG BENAR ---
     public function simpanLaporan()
     {
-        // Gabungkan semua data menjadi satu array
+        // ... (Logika simpan laporan tidak berubah)
         $dataToStore = [
             'rekap' => $this->rekap,
-            'rincian' => $this->rincian,
+            'rincian' => array_filter($this->rincian, fn($row) => collect($row)->filter()->isNotEmpty()) // Hanya simpan baris yg terisi
         ];
 
         DB::transaction(function () use ($dataToStore) {
-            // Simpan atau perbarui data utama di daily_reports
             $this->report->data = $dataToStore;
             $this->report->save();
-
-            // Hapus rincian lama dari tabel 'barangs'
             Barang::where('daily_report_id', $this->report->id)->delete();
-
-            // Simpan setiap baris rincian baru ke tabel 'barangs'
-            foreach ($this->rincian as $item) {
-                // Hanya simpan jika baris tidak kosong
-                if (collect($item)->filter()->isNotEmpty()) {
-                    Barang::create([
-                        'user_id' => Auth::id(),
-                        'daily_report_id' => $this->report->id,
-                        'data' => $item,
-                    ]);
-                }
+            foreach ($dataToStore['rincian'] as $item) {
+                Barang::create([
+                    'user_id' => Auth::id(),
+                    'daily_report_id' => $this->report->id,
+                    'data' => $item,
+                ]);
             }
         });
 
