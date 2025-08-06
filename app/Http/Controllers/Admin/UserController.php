@@ -114,38 +114,46 @@ class UserController extends Controller
     // METHOD BARU UNTUK MEMPERBAIKI ERROR `Method not found`
     public function showFormBuilder(User $user)
     {
-        $config = TableConfiguration::firstOrNew(['user_id' => $user->id, 'table_name' => 'daily_reports']);
+        $config = TableConfiguration::firstOrNew(
+            ['user_id' => $user->id, 'table_name' => 'daily_reports'],
+            ['columns' => ['rincian' => [], 'rekap' => []]] // Default value jika tidak ada
+        );
         return view('admin.users.form-builder', compact('user', 'config'));
     }
 
     public function saveFormBuilder(Request $request, User $user)
     {
-        // PERBAIKAN: Validasi sekarang mencocokkan struktur data dan membuat label opsional
+        // PERBAIKAN: Menambahkan validasi untuk 'readonly'
         $validated = $request->validate([
             'columns.rincian' => 'sometimes|array',
             'columns.rincian.*.name' => 'required|string',
-            'columns.rincian.*.label' => 'nullable|string', // Label sekarang opsional
+            'columns.rincian.*.label' => 'nullable|string',
             'columns.rincian.*.type' => 'required|string|in:text,number',
 
             'columns.rekap' => 'sometimes|array',
             'columns.rekap.*.name' => 'required|string',
-            'columns.rekap.*.label' => 'nullable|string', // Label sekarang opsional
+            'columns.rekap.*.label' => 'nullable|string',
             'columns.rekap.*.type' => 'required|string|in:text,number,date',
             'columns.rekap.*.formula' => 'nullable|string',
+            'columns.rekap.*.readonly' => 'sometimes|boolean', // Tambahkan validasi
         ]);
 
-        // Ambil atau buat konfigurasi baru
-        $config = TableConfiguration::firstOrNew(
-            ['user_id' => $user->id, 'table_name' => 'daily_reports']
-        );
-        
-        // Simpan kolom, pastikan rincian dan rekap selalu ada meskipun kosong
-        $config->columns = [
-            'rincian' => $validated['columns']['rincian'] ?? [],
-            'rekap' => $validated['columns']['rekap'] ?? [],
-        ];
+        // Membersihkan data 'readonly'
+        $rekapColumns = $validated['columns']['rekap'] ?? [];
+        foreach ($rekapColumns as $index => $column) {
+            // Pastikan 'readonly' ada dan bernilai boolean
+            $rekapColumns[$index]['readonly'] = !empty($column['readonly']);
+        }
 
-        $config->save();
+        $config = TableConfiguration::updateOrCreate(
+            ['user_id' => $user->id, 'table_name' => 'daily_reports'],
+            [
+                'columns' => [
+                    'rincian' => $validated['columns']['rincian'] ?? [],
+                    'rekap' => $rekapColumns,
+                ]
+            ]
+        );
 
         return redirect()->route('admin.users.index')->with('success', 'Konfigurasi form untuk ' . $user->name . ' berhasil disimpan.');
     }

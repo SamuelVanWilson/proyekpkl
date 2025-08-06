@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
+
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\TableConfiguration;
@@ -56,45 +57,53 @@ class ReportController extends Controller
         // return $pdf->stream('laporan-'. $dailyReport->tanggal .'.pdf');
     }
 
-    // METHOD BARU untuk menampilkan Form Builder ke klien
     public function showFormBuilder()
     {
-        $config = TableConfiguration::firstOrNew([
-            'user_id' => Auth::id(),
-            'table_name' => 'daily_reports'
-        ]);
+        // PERBAIKAN: Mengambil konfigurasi atau membuat instance baru dengan struktur default
+        $config = TableConfiguration::firstOrNew(
+            ['user_id' => Auth::id(), 'table_name' => 'daily_reports'],
+            ['columns' => ['rincian' => [], 'rekap' => []]] // Default value jika tidak ada
+        );
 
-        return view('client.laporan.form-builder', compact('config'));
+        // PERBAIKAN: Mengirim variabel 'columns' yang dibutuhkan oleh view
+        $columns = $config->columns;
+
+        return view('client.laporan.form-builder', compact('columns'));
     }
 
-    // METHOD BARU untuk menyimpan konfigurasi dari klien
     public function saveFormBuilder(Request $request)
     {
+        // PERBAIKAN: Menambahkan validasi untuk 'readonly'
         $validated = $request->validate([
-            'columns.rincian' => 'sometimes|array',
-            'columns.rincian.*.name' => 'required|string',
-            'columns.rincian.*.label' => 'nullable|string',
-            'columns.rincian.*.type' => 'required|string|in:text,number',
+            'rincian' => 'sometimes|array',
+            'rincian.*.name' => 'required_with:rincian|string',
+            'rincian.*.label' => 'nullable|string',
+            'rincian.*.type' => 'required_with:rincian|string|in:text,number',
 
-            'columns.rekap' => 'sometimes|array',
-            'columns.rekap.*.name' => 'required|string',
-            'columns.rekap.*.label' => 'nullable|string',
-            'columns.rekap.*.type' => 'required|string|in:text,number,date',
-            'columns.rekap.*.formula' => 'nullable|string',
-            'columns.rekap.*.readonly' => 'nullable|boolean',
+            'rekap' => 'sometimes|array',
+            'rekap.*.name' => 'required_with:rekap|string',
+            'rekap.*.label' => 'nullable|string',
+            'rekap.*.type' => 'required_with:rekap|string|in:text,number,date',
+            'rekap.*.formula' => 'nullable|string',
+            'rekap.*.readonly' => 'sometimes|boolean',
         ]);
 
-        $config = TableConfiguration::firstOrNew([
-            'user_id' => Auth::id(),
-            'table_name' => 'daily_reports'
-        ]);
+        // Membersihkan data 'readonly'
+        $rekapColumns = $validated['rekap'] ?? [];
+        foreach ($rekapColumns as $index => $column) {
+             // Pastikan 'readonly' ada dan bernilai boolean
+            $rekapColumns[$index]['readonly'] = !empty($column['readonly']);
+        }
 
-        $config->columns = [
-            'rincian' => $validated['columns']['rincian'] ?? [],
-            'rekap' => $validated['columns']['rekap'] ?? [],
-        ];
-
-        $config->save();
+        TableConfiguration::updateOrCreate(
+            ['user_id' => Auth::id(), 'table_name' => 'daily_reports'],
+            [
+                'columns' => [
+                    'rincian' => $validated['rincian'] ?? [],
+                    'rekap' => $rekapColumns,
+                ]
+            ]
+        );
 
         return redirect()->route('client.laporan.harian')->with('success', 'Struktur laporan Anda berhasil diperbarui!');
     }
