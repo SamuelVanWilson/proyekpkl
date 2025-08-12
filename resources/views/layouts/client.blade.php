@@ -16,12 +16,13 @@
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
         main { padding-bottom: 5rem; }
     </style>
+    @vite('resources/css/app.css')
     @livewireStyles
 </head>
 <body class="h-full">
 
     <div class="relative min-h-full">
-        <main>
+        <main class="mb-[100em] md:mb-[4em]">
             @yield('content')
         </main>
 

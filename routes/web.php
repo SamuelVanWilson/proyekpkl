@@ -46,8 +46,8 @@ Route::middleware(['auth', 'client'])->prefix('app')->name('client.')->group(fun
     Route::get('/profil', [ProfileController::class, 'index'])->name('profil.index');
 
     // routes/web.php (di dalam grup client)
-    Route::get('/form-builder', [ReportController::class, 'showFormBuilder'])->name('laporan.form-builder');
-    Route::post('/form-builder', [ReportController::class, 'saveFormBuilder'])->name('laporan.form-builder.store');
+    Route::get('/laporan/form-builder', [ReportController::class, 'showFormBuilder'])->name('laporan.form-builder');
+    Route::post('/laporan/form-builder', [ReportController::class, 'saveFormBuilder'])->name('laporan.form-builder.save');
 });
 
 // == RUTE ADMIN (AUTH & ADMIN) ==

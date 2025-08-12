@@ -17,7 +17,7 @@ class Harian extends Component
     public $rekap = [];
     public $configRincian = [];
     public $configRekap = [];
-    public $selectedRowIndex = null; // Properti baru untuk baris terpilih
+    public $selectedRowIndex = null;
 
     public function mount()
     {
@@ -25,9 +25,24 @@ class Harian extends Component
         $this->loadOrCreateReport();
     }
 
+    private function parseNumber($value): float
+    {
+        if (is_null($value) || $value === '') {
+            return 0.0;
+        }
+        // 1. Hapus semua karakter kecuali angka, koma, dan titik.
+        $cleaned = preg_replace('/[^\d,.]/', '', (string) $value);
+        // 2. Ganti koma desimal gaya Eropa dengan titik.
+        $cleaned = str_replace(',', '.', $cleaned);
+        // 3. Hapus titik pemisah ribuan.
+        $cleaned = str_replace('.', '', substr($cleaned, 0, -3)) . substr($cleaned, -3);
+
+        return (float) $cleaned;
+    }
+
     public function loadConfig()
     {
-        $config = TableConfiguration::where('user_id', Auth::id())
+        $config = \App\Models\TableConfiguration::where('user_id', \Illuminate\Support\Facades\Auth::id())
                                     ->where('table_name', 'daily_reports')
                                     ->first();
 
@@ -35,20 +50,20 @@ class Harian extends Component
             $this->configRincian = $config->columns['rincian'] ?? [];
             $this->configRekap = $config->columns['rekap'] ?? [];
         } else {
-            // Konfigurasi default
+            // Konfigurasi default jika tidak ada
             $this->configRincian = [['name' => 'total', 'label' => 'Total', 'type' => 'number']];
             $this->configRekap = [
-                ['name' => 'tanggal', 'label' => 'Tanggal', 'type' => 'date', 'formula' => null],
-                ['name' => 'lokasi', 'label' => 'Lokasi', 'type' => 'text', 'formula' => null],
-                ['name' => 'total_bruto', 'label' => 'Total Bruto', 'type' => 'number', 'formula' => 'SUM(total)'],
+                ['name' => 'tanggal', 'label' => 'Tanggal', 'type' => 'date', 'formula' => null, 'readonly' => false],
+                ['name' => 'lokasi', 'label' => 'Lokasi', 'type' => 'text', 'formula' => null, 'readonly' => false],
+                ['name' => 'total_bruto', 'label' => 'Total Bruto', 'type' => 'number', 'formula' => 'SUM(total)', 'readonly' => true],
             ];
         }
     }
 
     public function loadOrCreateReport()
     {
-        $this->report = DailyReport::firstOrNew([
-            'user_id' => Auth::id(),
+        $this->report = \App\Models\DailyReport::firstOrNew([
+            'user_id' => \Illuminate\Support\Facades\Auth::id(),
             'tanggal' => now()->toDateString(),
         ]);
 
@@ -56,13 +71,21 @@ class Harian extends Component
             $this->rincian = $this->report->data['rincian'];
             $this->rekap = $this->report->data['rekap'];
         } else {
+            // Bagian ini hanya berjalan saat membuat laporan BARU
             $this->rincian = [];
             for ($i = 0; $i < 10; $i++) {
                 $this->tambahBarisRincian(false);
             }
 
+            // --- PERBAIKAN BUG NILAI DEFAULT ---
             foreach($this->configRekap as $field) {
-                $this->rekap[$field['name']] = ($field['type'] == 'date') ? now()->format('Y-m-d') : '';
+                // Prioritaskan nilai default jika ada dan tidak kosong
+                if (isset($field['default_value']) && $field['default_value'] !== '') {
+                    $this->rekap[$field['name']] = $field['default_value'];
+                } else {
+                    // Jika tidak ada default, gunakan logika lama
+                    $this->rekap[$field['name']] = ($field['type'] == 'date') ? now()->format('Y-m-d') : '';
+                }
             }
         }
         $this->hitungUlang();
@@ -81,71 +104,103 @@ class Harian extends Component
         }
     }
 
-    // FUNGSI BARU: Untuk memilih baris
     public function selectRow($index)
     {
-        // Jika baris yang sama diklik lagi, batalkan pilihan. Jika tidak, pilih baris baru.
         $this->selectedRowIndex = $this->selectedRowIndex === $index ? null : $index;
     }
 
-    // PERUBAHAN: Method hapus sekarang berdasarkan baris yang dipilih
     public function hapusBarisTerpilih()
     {
         if ($this->selectedRowIndex !== null && isset($this->rincian[$this->selectedRowIndex])) {
             unset($this->rincian[$this->selectedRowIndex]);
             $this->rincian = array_values($this->rincian);
-            $this->selectedRowIndex = null; // Reset pilihan setelah menghapus
+            $this->selectedRowIndex = null;
             $this->hitungUlang();
         }
     }
 
+    // PERUBAHAN: Method ini sekarang hanya dipanggil saat input kehilangan fokus (blur)
     public function updated($name, $value)
     {
         $this->hitungUlang();
     }
 
-    // --- PERUBAHAN PADA MESIN RUMUS ---
     public function hitungUlang()
     {
         foreach ($this->configRekap as $field) {
             if (!empty($field['formula'])) {
                 $formula = $field['formula'];
 
-                // 1. Evaluasi fungsi agregat SUM()
-                preg_match_all('/SUM\((.*?)\)/', $formula, $sumMatches);
-                foreach ($sumMatches[1] as $colToSum) {
-                    $sum = collect($this->rincian)->sum(fn($item) => (float)($item[trim($colToSum)] ?? 0));
-                    $formula = str_replace("SUM(".trim($colToSum).")", $sum, $formula);
+                // --- Tahap 1: FUNGSI BARU PAIRPALC(kolom1 * kolom2) ---
+                // Mencari semua fungsi PAIRPALC
+                preg_match_all('/PAIRPALC\(([^ "]+)\s*([*+\/-])\s*([^")]+)\)/', $formula, $pairpMatches, PREG_SET_ORDER);
+
+                foreach ($pairpMatches as $match) {
+                    $col1 = trim($match[1]);
+                    $operator = trim($match[2]);
+                    $col2 = trim($match[3]);
+                    $totalPairResult = 0;
+
+                    // Lakukan perhitungan per baris di tabel rincian
+                    foreach ($this->rincian as $row) {
+                        $val1 = $this->parseNumber($row[$col1] ?? 0);
+                        $val2 = $this->parseNumber($row[$col2] ?? 0);
+                        $pairResult = 0;
+                        switch ($operator) {
+                            case '*': $pairResult = $val1 * $val2; break;
+                            case '+': $pairResult = $val1 + $val2; break;
+                            case '-': $pairResult = $val1 - $val2; break;
+                            case '/': $pairResult = $val2 != 0 ? $val1 / $val2 : 0; break;
+                        }
+                        $totalPairResult += $pairResult;
+                    }
+                    // Ganti fungsi PAIRPALC di formula dengan hasilnya
+                    $formula = str_replace($match[0], $totalPairResult, $formula);
                 }
 
-                // 2. IMPLEMENTASI BARU: Evaluasi fungsi SUBT(nilai_awal, kolom)
+
+                // --- Tahap 2: Fungsi Agregat (SUM, SUBT) ---
+                // Kalkulator SUM()
+                preg_match_all('/SUM\((.*?)\)/', $formula, $sumMatches);
+                foreach ($sumMatches[1] as $colToSum) {
+                    $sum = collect($this->rincian)->sum(fn($item) => $this->parseNumber($item[trim($colToSum)] ?? 0));
+                    $formula = str_replace("SUM(" . trim($colToSum) . ")", $sum, $formula);
+                }
+
+                // Kalkulator SUBT()
                 preg_match_all('/SUBT\(([^,]+),\s*([^)]+)\)/', $formula, $subtMatches, PREG_SET_ORDER);
                 foreach ($subtMatches as $match) {
-                    $initialValue = (float)($this->rekap[trim($match[1])] ?? (is_numeric($match[1]) ? $match[1] : 0));
+                    $initialValueExpr = trim($match[1]);
                     $colToSubtract = trim($match[2]);
-                    $sumOfSubtractColumn = collect($this->rincian)->sum(fn($item) => (float)($item[$colToSubtract] ?? 0));
+                    $initialValue = is_numeric($initialValueExpr) ? (float)$initialValueExpr : $this->parseNumber($this->rekap[$initialValueExpr] ?? 0);
+                    $sumOfSubtractColumn = collect($this->rincian)->sum(fn($item) => $this->parseNumber($item[$colToSubtract] ?? 0));
                     $result = $initialValue - $sumOfSubtractColumn;
                     $formula = str_replace($match[0], $result, $formula);
                 }
 
-                // 3. Ganti nama kolom rekapitulasi dengan nilainya
                 foreach ($this->rekap as $key => $value) {
                     if (is_string($key)) {
-                        $numericValue = is_numeric($value) ? (float) $value : 0;
-                        $formula = preg_replace('/\b' . preg_quote($key, '/') . '\b/', (string)$numericValue, $formula);
+                        // PERUBAHAN: Bandingkan dalam huruf kecil semua (case-insensitive)
+                        if (strpos(strtolower($formula), strtolower($key)) !== false) {
+                            $numericValue = $this->parseNumber($value);
+                            // Ganti nama kolom di formula (apapun kapitalisasinya) dengan nilainya
+                            $formula = preg_replace('/\b' . preg_quote($key, '/') . '\b/i', (string)$numericValue, $formula);
+                        }
                     }
                 }
 
-                // 4. Evaluasi ekspresi matematika yang aman
+                // --- Tahap 4: Evaluasi Final ---
+                // Hitung hasil akhir dari formula yang sudah diproses
                 $this->rekap[$field['name']] = $this->evaluateFormula($formula);
             }
         }
     }
 
+
     private function evaluateFormula($formula)
     {
         try {
-            // Hanya izinkan angka, operator, dan tanda kurung untuk keamanan
+            // Sanitasi sederhana untuk keamanan, hanya izinkan karakter matematika dasar
             $sanitizedFormula = preg_replace('/[^-0-9\.\+\*\/ \(\)]/', '', $formula);
             if (empty($sanitizedFormula) || !preg_match('/[0-9]/', $sanitizedFormula)) {
                 return 0;
@@ -158,21 +213,21 @@ class Harian extends Component
         }
     }
 
+    // OPTIMASI: Menambahkan feedback loading pada proses simpan
     public function simpanLaporan()
     {
-        // ... (Logika simpan laporan tidak berubah)
         $dataToStore = [
             'rekap' => $this->rekap,
-            'rincian' => array_filter($this->rincian, fn($row) => collect($row)->filter()->isNotEmpty()) // Hanya simpan baris yg terisi
+            'rincian' => array_values(array_filter($this->rincian, fn($row) => collect($row)->filter()->isNotEmpty()))
         ];
 
-        DB::transaction(function () use ($dataToStore) {
+        \Illuminate\Support\Facades\DB::transaction(function () use ($dataToStore) {
             $this->report->data = $dataToStore;
             $this->report->save();
-            Barang::where('daily_report_id', $this->report->id)->delete();
+            \App\Models\Barang::where('daily_report_id', $this->report->id)->delete();
             foreach ($dataToStore['rincian'] as $item) {
-                Barang::create([
-                    'user_id' => Auth::id(),
+                \App\Models\Barang::create([
+                    'user_id' => \Illuminate\Support\Facades\Auth::id(),
                     'daily_report_id' => $this->report->id,
                     'data' => $item,
                 ]);

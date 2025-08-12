@@ -29,6 +29,8 @@
         .ios-safe-area-top { padding-top: env(safe-area-inset-top); }
         .ios-safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
     </style>
+    @vite('resources/css/app.css')
+
 </head>
 <body class="h-full">
 

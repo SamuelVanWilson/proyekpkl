@@ -18,6 +18,13 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         [x-cloak] { display: none !important; }
+        /* Tambahkan ini di file CSS utama Anda (e.g., app.css) */
+        @layer components {
+            .input-modern {
+                @apply mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
+                    focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500;
+            }
+        }
     </style>
 </head>
 <body class="h-full">

@@ -57,54 +57,108 @@ class ReportController extends Controller
         // return $pdf->stream('laporan-'. $dailyReport->tanggal .'.pdf');
     }
 
-    public function showFormBuilder()
+    public function saveFormBuilder(Request $request, User $user = null) // Tambahkan User $user = null untuk Client
     {
-        // PERBAIKAN: Mengambil konfigurasi atau membuat instance baru dengan struktur default
-        $config = TableConfiguration::firstOrNew(
-            ['user_id' => Auth::id(), 'table_name' => 'daily_reports'],
-            ['columns' => ['rincian' => [], 'rekap' => []]] // Default value jika tidak ada
-        );
-
-        // PERBAIKAN: Mengirim variabel 'columns' yang dibutuhkan oleh view
-        $columns = $config->columns;
-
-        return view('client.laporan.form-builder', compact('columns'));
-    }
-
-    public function saveFormBuilder(Request $request)
-    {
-        // PERBAIKAN: Menambahkan validasi untuk 'readonly'
+        // Validasi sekarang memeriksa 'label' bukan 'name' untuk input pengguna
         $validated = $request->validate([
             'rincian' => 'sometimes|array',
-            'rincian.*.name' => 'required_with:rincian|string',
-            'rincian.*.label' => 'nullable|string',
-            'rincian.*.type' => 'required_with:rincian|string|in:text,number',
+            'rincian.*.label' => 'required_with:rincian|string', // Cek 'label'
+            'rincian.*.type' => 'required_with:rincian|string',
 
             'rekap' => 'sometimes|array',
-            'rekap.*.name' => 'required_with:rekap|string',
-            'rekap.*.label' => 'nullable|string',
-            'rekap.*.type' => 'required_with:rekap|string|in:text,number,date',
+            'rekap.*.label' => 'required_with:rekap|string', // Cek 'label'
+            'rekap.*.type' => 'required_with:rekap|string',
             'rekap.*.formula' => 'nullable|string',
+            'rekap.*.default_value' => 'nullable|string',
             'rekap.*.readonly' => 'sometimes|boolean',
         ]);
 
-        // Membersihkan data 'readonly'
-        $rekapColumns = $validated['rekap'] ?? [];
-        foreach ($rekapColumns as $index => $column) {
-             // Pastikan 'readonly' ada dan bernilai boolean
-            $rekapColumns[$index]['readonly'] = !empty($column['readonly']);
+        $processedColumns = [];
+
+        // Proses Tabel Rincian
+        if (!empty($validated['rincian'])) {
+            foreach ($validated['rincian'] as $col) {
+                $processedColumns['rincian'][] = [
+                    // 'name' dibuat secara otomatis dari 'label'
+                    'name' => \Illuminate\Support\Str::slug($col['label'], '_'),
+                    'label' => $col['label'], // Simpan 'label' asli
+                    'type' => $col['type'],
+                ];
+            }
+        } else {
+            $processedColumns['rincian'] = [];
         }
 
+        // Proses Formulir Rekapitulasi
+        if (!empty($validated['rekap'])) {
+            foreach ($validated['rekap'] as $col) {
+                $processedColumns['rekap'][] = [
+                    'name' => \Illuminate\Support\Str::slug($col['label'], '_'),
+                    'label' => $col['label'],
+                    'type' => $col['type'],
+                    'formula' => $col['formula'] ?? null,
+                    'default_value' => $col['default_value'] ?? null,
+                    'readonly' => !empty($col['readonly']),
+                ];
+            }
+        } else {
+            $processedColumns['rekap'] = [];
+        }
+
+        // Logika untuk menentukan user_id
+        $userId = $user ? $user->id : Auth::id();
+
         TableConfiguration::updateOrCreate(
-            ['user_id' => Auth::id(), 'table_name' => 'daily_reports'],
-            [
-                'columns' => [
-                    'rincian' => $validated['rincian'] ?? [],
-                    'rekap' => $rekapColumns,
-                ]
-            ]
+            ['user_id' => $userId, 'table_name' => 'daily_reports'],
+            ['columns' => $processedColumns]
         );
 
-        return redirect()->route('client.laporan.harian')->with('success', 'Struktur laporan Anda berhasil diperbarui!');
+        // Redirect yang sesuai untuk setiap peran
+        if ($user) {
+            return redirect()->route('admin.users.index')->with('success', 'Konfigurasi form untuk ' . $user->name . ' berhasil disimpan.');
+        } else {
+            return redirect()->route('client.laporan.harian')->with('success', 'Struktur laporan Anda berhasil diperbarui!');
+        }
+    }
+
+
+    // Terapkan pada method showFormBuilder() di KEDUA controller
+    public function showFormBuilder(User $user = null)
+    {
+        $userId = $user ? $user->id : Auth::id();
+
+        $config = TableConfiguration::firstOrNew(
+            ['user_id' => $userId, 'table_name' => 'daily_reports'],
+            ['columns' => ['rincian' => [], 'rekap' => []]]
+        );
+
+        $columns = $config->columns;
+
+        // --- LOGIKA BARU: Pastikan 'label' selalu ada ---
+        // Loop untuk Rincian
+        if (!empty($columns['rincian'])) {
+            foreach ($columns['rincian'] as $key => $col) {
+                if (empty($col['label'])) {
+                    // Jika tidak ada label (data lama), buat dari nama
+                    // Ubah underscore menjadi spasi dan kapitalisasi setiap kata
+                    $columns['rincian'][$key]['label'] = ucwords(str_replace('_', ' ', $col['name']));
+                }
+            }
+        }
+
+        // Loop untuk Rekapitulasi
+        if (!empty($columns['rekap'])) {
+            foreach ($columns['rekap'] as $key => $col) {
+                if (empty($col['label'])) {
+                    $columns['rekap'][$key]['label'] = ucwords(str_replace('_', ' ', $col['name']));
+                }
+            }
+        }
+
+        if ($user) {
+            return view('admin.users.form-builder', compact('user', 'config', 'columns'));
+        } else {
+            return view('client.laporan.form-builder', compact('columns'));
+        }
     }
 }

@@ -1,4 +1,5 @@
 <div>
+    {{-- (Style tidak berubah) --}}
     <style>
         .spreadsheet-container { height: 45vh; overflow: auto; position: relative; background-color: white; border: 1px solid #e5e7eb; }
         .spreadsheet { border-collapse: collapse; position: relative; min-width: 100%; }
@@ -12,89 +13,123 @@
         .cell-input:focus { box-shadow: inset 0 0 0 2px #3b82f6; }
         .spreadsheet tbody tr.bg-blue-100, .spreadsheet tbody tr.bg-blue-100 th { background-color: #dbeafe; }
 
-        /* PERBAIKAN: Style untuk animasi hapus */
-        .row-removing {
-            transition: opacity 0.3s ease-out, transform 0.3s ease-out;
-        }
-        .row-removing.fade-out {
-            opacity: 0;
-            transform: scale(0.95);
-        }
     </style>
 
-    <div class="mt-8 space-y-6">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-            <div class="p-3 border-b border-gray-200 flex items-center space-x-2">
-                <h2 class="text-lg font-semibold text-gray-800 mr-auto">Tabel Rincian</h2>
+    {{-- OPTIMASI: Menambahkan indikator saat koneksi offline --}}
+    <div class="flex flex-col gap-6 mb-[20em]" >
 
-                {{-- PERBAIKAN TOTAL: Logika tombol yang lebih stabil --}}
-                <div wire:key="action-buttons">
-                    @if($selectedRowIndex !== null)
-                        <button wire:click="hapusBarisTerpilih" class="px-4 py-1.5 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700">
-                            Hapus Baris
-                        </button>
-                    @else
-                        <button wire:click="tambahBarisRincian" class="px-4 py-1.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-                            Tambah Baris
-                        </button>
-                    @endif
+
+            {{-- Pesan Sukses --}}
+            @if (session('success'))
+                <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg" role="alert">
+                    <span class="block sm:inline">{{ session('success') }}</span>
+                </div>
+            @endif
+
+            <div class="flex justify-end mb-2">
+                <button wire:click="simpanLaporan" wire:loading.attr="disabled" class="w-full sm:w-auto px-6 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-green-300 flex items-center justify-center">
+                    <span wire:loading.remove wire:target="simpanLaporan">Simpan Laporan</span>
+                    <span wire:loading wire:target="simpanLaporan">Menyimpan...</span>
+                </button>
+            </div>
+
+            {{-- KARTU TABEL RINCIAN --}}
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full">
+
+                {{-- Toolbar Aksi --}}
+                <div class="p-3 border-b border-gray-200 flex flex-wrap items-center gap-2">
+                    <h2 class="text-lg font-semibold text-gray-800 mr-auto">Tabel Rincian</h2>
+                    <button wire:click="tambahBarisRincian" class="px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                        Tambah Baris
+                    </button>
+                    <button wire:click="hapusBarisTerpilih" @if($selectedRowIndex === null) disabled @endif class="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed">
+                        Hapus Baris
+                    </button>
+                    <a href="{{ route('client.laporan.form-builder') }}" wire:navigate class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                        Konfigurasi
+                    </a>
                 </div>
 
-                <a href="{{ route('client.laporan.form-builder') }}" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300">
-                    Konfigurasi
-                </a>
-            </div>
-
-            <div class="spreadsheet-container">
-                <table class="spreadsheet">
-                    <thead>
-                        <tr>
-                            <th class="sticky left-0 bg-gray-50 z-10 w-12">#</th>
-                            @foreach($configRincian as $col)
-                                <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">{{ $col['label'] ?? $col['name'] }}</th>
-                            @endforeach
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach($rincian as $index => $row)
-                            {{-- PERBAIKAN: Menambahkan wire:transition untuk animasi --}}
-                            <tr wire:key="rincian-{{ $index }}" wire:transition.out class="row-removing {{ $selectedRowIndex === $index ? 'bg-blue-100' : '' }}">
-                                <th wire:click="selectRow({{ $index }})" class="sticky left-0 z-10 w-12 hover:bg-gray-200 transition-colors">
-                                    {{ $index + 1 }}
-                                </th>
+                {{-- Kontainer Spreadsheet (Mengisi sisa ruang) --}}
+                <div class="flex-grow overflow-auto">
+                    <table class="spreadsheet min-w-full">
+                        <thead class="sticky top-0 z-20 bg-gray-50">
+                            <tr>
+                                <th class="sticky left-0 z-30 bg-gray-100 w-12">#</th>
                                 @foreach($configRincian as $col)
-                                    <td>
-                                        <input
-                                            type="{{ $col['type'] }}"
-                                            wire:model.live.debounce.300ms="rincian.{{ $index }}.{{ $col['name'] }}"
-                                            class="cell-input" style="min-width: 150px;">
-                                    </td>
+                                    <th class="px-3 py-2 text-left text-xs font-medium text-gray-500 uppercase whitespace-nowrap">{{ $col['label'] ?? $col['name'] }}</th>
                                 @endforeach
                             </tr>
-                        @endforeach
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                            @forelse($rincian as $index => $row)
+                                <tr wire:key="rincian-{{ $index }}" class="{{ $selectedRowIndex === $index ? 'bg-blue-100' : '' }}">
+                                    <th wire:click="selectRow({{ $index }})" class="sticky left-0 z-10 w-12 bg-gray-50 hover:bg-gray-200 transition-colors cursor-pointer">
+                                        {{ $index + 1 }}
+                                    </th>
+                                    @foreach($configRincian as $col)
+                                        <td>
+                                            <input
+                                                type="{{ $col['type'] }}"
+                                                wire:model.blur="rincian.{{ $index }}.{{ $col['name'] }}"
+                                                class="w-full h-full border-none bg-transparent px-2 text-sm focus:ring-0 focus:bg-blue-50" style="min-width: 150px;">
+                                        </td>
+                                    @endforeach
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="{{ count($configRincian) + 1 }}" class="text-center text-gray-500 py-6">
+                                        Tabel rincian kosong.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
-        </div>
 
-        <div class="bg-white p-4 rounded-xl shadow-sm">
-            <h2 class="text-lg font-semibold text-gray-800">Formulir Rekapitulasi</h2>
-            <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
-                @foreach($configRekap as $field)
-                    <div>
-                        <label class="text-sm font-medium text-gray-600">{{ $field['label'] ?? $field['name'] }}</label>
+            {{-- KARTU FORMULIR REKAPITULASI --}}
+            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
+                <h2 class="text-lg font-semibold text-gray-800">Formulir Rekapitulasi</h2>
+                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    @foreach($configRekap as $field)
+                        <div>
+                            <label class="text-sm font-medium text-gray-600 capitalize">{{ $field['label'] ?? $field['name'] }}</label>
+                            @if(!empty($field['formula']) || !empty($field['readonly']))
+                                {{-- Blok ini untuk nilai yang tidak bisa diedit --}}
+                                <div class="mt-1 block w-full rounded-md bg-gray-100 px-3 py-2 text-gray-700 text-sm">
+                                    @php
+                                        $value = $rekap[$field['name']] ?? 0;
+                                        $type = $field['type'] ?? 'text';
+                                        $formattedValue = $value; // Nilai default
 
-                        {{-- PERBAIKAN TOTAL: Logika Readonly yang benar --}}
-                        @if(!empty($field['formula']) || !empty($field['readonly']))
-                            <div class="mt-1 block w-full rounded-md bg-gray-100 px-3 py-2 text-gray-700">
-                                {{ ($field['type'] == 'number') ? number_format((float) ($rekap[$field['name']] ?? 0), 0, ',', '.') : ($rekap[$field['name']] ?? '-') }}
-                            </div>
-                        @else
-                            <input type="{{ $field['type'] }}" wire:model.live.debounce.300ms="rekap.{{ $field['name'] }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-                        @endif
-                    </div>
-                @endforeach
+                                        switch ($type) {
+                                            case 'rupiah':
+                                                $formattedValue = 'Rp ' . number_format((float)$value, 0, ',', '.');
+                                                break;
+                                            case 'dollar':
+                                                $formattedValue = '$ ' . number_format((float)$value, 2, '.', ',');
+                                                break;
+                                            case 'kg':
+                                                $formattedValue = number_format((float)$value, 2, '.', ',') . ' Kg';
+                                                break;
+                                            case 'g':
+                                                $formattedValue = number_format((float)$value, 0, ',', '.') . ' g';
+                                                break;
+                                            case 'number':
+                                                $formattedValue = number_format((float)$value, 0, ',', '.');
+                                                break;
+                                        }
+                                    @endphp
+                                    {{ $formattedValue }}
+                                </div>
+                            @else
+                                {{-- Blok ini untuk nilai yang bisa diedit (tidak ada perubahan) --}}
+                                <input type="{{ $field['type'] }}" wire:model.blur="rekap.{{ $field['name'] }}" class="input-modern">
+                            @endif
+                        </div>
+                    @endforeach
+                </div>
             </div>
-        </div>
     </div>
 </div>
