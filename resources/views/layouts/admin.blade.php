@@ -13,6 +13,7 @@
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 
     {{-- PERBAIKAN: Menambahkan Alpine.js untuk membuat dropdown berfungsi --}}
+    @vite('resources/css/app.css')
     <script src="//unpkg.com/alpinejs" defer></script>
 
     <style>
@@ -88,5 +89,19 @@
         </div>
     </nav>
 </div>
+<div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-75 z-[9999] hidden items-center justify-center">
+    <div class="spinner"></div>
+</div>
+<script>
+    document.addEventListener('livewire:navigating', () => {
+        document.getElementById('loading-overlay').classList.add('flex');
+        document.getElementById('loading-overlay').classList.remove('hidden');
+    });
+
+    document.addEventListener('livewire:navigated', () => {
+        document.getElementById('loading-overlay').classList.add('hidden');
+        document.getElementById('loading-overlay').classList.remove('flex');
+    });
+</script>
 </body>
 </html>

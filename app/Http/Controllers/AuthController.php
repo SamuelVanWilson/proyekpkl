@@ -24,22 +24,23 @@ class AuthController extends Controller
 
         foreach ($users as $user) {
             if (Hash::check($credentials['kode_unik'], $user->kode_unik)) {
-                Auth::login($user);
+                
+                // PERUBAHAN: Tambahkan parameter $remember saat login
+                Auth::login($user, true);
+                
                 $request->session()->regenerate();
 
-                // ==================================================
-                // PERBAIKAN UTAMA: TIDAK ADA LAGI redirect()->intended()
-                // Kita gunakan pengalihan langsung yang tegas.
-                // ==================================================
                 if ($user->role === 'admin') {
-                    // Jika admin, PAKSA ke dashboard admin. Titik.
                     return redirect()->route('admin.dashboard');
                 }
-
-                // Jika bukan admin, PAKSA ke halaman laporan klien. Titik.
                 return redirect()->route('client.laporan.harian');
             }
         }
+
+        return back()->withErrors([
+            'kode_unik' => 'Kode unik tidak valid atau akun tidak aktif.',
+        ])->onlyInput('kode_unik');
+    }
 
         return back()->withErrors([
             'kode_unik' => 'Kode unik tidak valid atau akun tidak aktif.',

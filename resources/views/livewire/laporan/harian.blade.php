@@ -16,7 +16,33 @@
     </style>
 
     {{-- OPTIMASI: Menambahkan indikator saat koneksi offline --}}
-    <div class="flex flex-col gap-6 mb-[20em]" >
+    <div x-data="{
+        get storageKey() {
+            // Membuat key unik untuk setiap laporan per hari
+            return 'laporan_rincian_{{ $report->tanggal }}';
+        },
+        init() {
+            // Saat komponen pertama kali dimuat
+            console.log('Alpine init, loading from:', this.storageKey);
+            const savedData = localStorage.getItem(this.storageKey);
+            if (savedData) {
+                // Jika ada data, kirim ke Livewire untuk dimuat
+                $dispatch('loadDataFromLocalStorage', { data: JSON.parse(savedData) });
+            }
+
+            // Awasi perubahan pada data $rincian dari Livewire
+            $watch('$wire.rincian', (newData) => {
+                console.log('Data changed, saving to local storage...');
+                localStorage.setItem(this.storageKey, JSON.stringify(newData));
+            });
+
+            // Dengar event dari server untuk membersihkan local storage
+            window.addEventListener('laporanDisimpan', () => {
+                console.log('Laporan disimpan, clearing local storage...');
+                localStorage.removeItem(this.storageKey);
+            });
+        }
+    }" class="flex flex-col gap-6 mb-[20em]" >
 
 
             {{-- Pesan Sukses --}}
@@ -25,7 +51,7 @@
                     <span class="block sm:inline">{{ session('success') }}</span>
                 </div>
             @endif
-
+            
             <div class="flex justify-end mb-2">
                 <button wire:click="simpanLaporan" wire:loading.attr="disabled" class="w-full sm:w-auto px-6 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 disabled:bg-green-300 flex items-center justify-center">
                     <span wire:loading.remove wire:target="simpanLaporan">Simpan Laporan</span>

@@ -19,6 +19,20 @@ class Harian extends Component
     public $configRekap = [];
     public $selectedRowIndex = null;
 
+    protected $listeners = ['loadDataFromLocalStorage' => 'loadFromLocalStorage'];
+
+    public function loadFromLocalStorage($data)
+    {
+        // Hanya isi data jika $rincian di server masih kosong (laporan baru)
+        // dan jika data dari local storage tidak kosong
+        $isServerDataEmpty = collect($this->rincian)->flatten()->filter()->isEmpty();
+        if ($isServerDataEmpty && !empty($data)) {
+            $this->rincian = $data;
+            $this->hitungUlang();
+        }
+    }
+
+
     public function mount()
     {
         $this->loadConfig();
@@ -234,7 +248,10 @@ class Harian extends Component
             }
         });
 
+        $this->dispatch('laporanDisimpan');
+
         session()->flash('success', 'Laporan hari ini berhasil disimpan/diperbarui!');
+        return $this->redirect(route('client.laporan.harian'), navigate: true);
     }
 
     public function render()
