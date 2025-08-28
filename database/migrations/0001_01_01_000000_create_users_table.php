@@ -16,7 +16,21 @@ return new class extends Migration
             $table->string('name');
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
-            $table->string('password');
+            $table->string('password'); // KEMBALIKAN KOLOM PASSWORD
+
+            // Kolom kustom yang kita butuhkan
+            $table->string('alamat');
+            $table->string('tanggal_lahir');
+            $table->string('pekerjaan');
+
+            $table->enum('role', ['admin', 'user'])->default('user');
+            $table->boolean('is_active')->default(true);
+
+            // --- KOLOM BARU UNTUK LANGGANAN ---
+            $table->string('subscription_plan')->nullable(); // e.g., 'bulanan', 'mingguan'
+            $table->timestamp('subscription_expires_at')->nullable(); // Tanggal kadaluarsa langganan
+            $table->timestamp('offer_expires_at')->nullable(); // Tanggal kadaluarsa penawaran spesial
+
             $table->rememberToken();
             $table->timestamps();
         });

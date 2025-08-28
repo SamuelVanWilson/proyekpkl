@@ -56,19 +56,41 @@
             </div>
         </nav>
     </div>
-    <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-75 z-[9999] hidden items-center justify-center">
-        <div class="spinner"></div>
-    </div>
     <script>
-        let deferredPrompt;
-        const installButton = document.getElementById('install-app-button');
+        document.addEventListener('livewire:navigating', () => {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        });
+        document.addEventListener('livewire:navigated', () => {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        });
 
+        function toggleFullscreen() {
+            const elem = document.documentElement;
+
+            // Cek apakah sedang dalam mode fullscreen
+            if (!document.fullscreenElement) {
+                // Jika tidak, masuk ke mode fullscreen
+                if (elem.requestFullscreen) {
+                    elem.requestFullscreen();
+                } else if (elem.webkitRequestFullscreen) { /* Safari */
+                    elem.webkitRequestFullscreen();
+                }
+            } else {
+                // Jika iya, keluar dari mode fullscreen
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) { /* Safari */
+                    document.webkitExitFullscreen();
+                }
+            }
+        }
+
+        // Logika PWA
+        let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
-            // Mencegah browser menampilkan prompt default
             e.preventDefault();
-            // Simpan event untuk digunakan nanti
             deferredPrompt = e;
-            // Tampilkan tombol install kita yang sebelumnya tersembunyi
+            const installButton = document.getElementById('install-app-button');
             if (installButton) {
                 installButton.style.display = 'flex';
             }
@@ -76,31 +98,12 @@
 
         function promptInstall() {
             if (deferredPrompt) {
-                // Tampilkan prompt instalasi
                 deferredPrompt.prompt();
-                // Tunggu hasil dari prompt
-                deferredPrompt.userChoice.then((choiceResult) => {
-                    if (choiceResult.outcome === 'accepted') {
-                        console.log('User accepted the install prompt');
-                    } else {
-                        console.log('User dismissed the install prompt');
-                    }
+                deferredPrompt.userChoice.then(() => {
                     deferredPrompt = null;
-                    if (installButton) {
-                        installButton.style.display = 'none';
-                    }
                 });
             }
         }
-        document.addEventListener('livewire:navigating', () => {
-            document.getElementById('loading-overlay').classList.add('flex');
-            document.getElementById('loading-overlay').classList.remove('hidden');
-        });
-
-        document.addEventListener('livewire:navigated', () => {
-            document.getElementById('loading-overlay').classList.add('hidden');
-            document.getElementById('loading-overlay').classList.remove('flex');
-        });
     </script>
     @livewireScripts
 </body>

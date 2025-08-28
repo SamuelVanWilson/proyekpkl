@@ -18,15 +18,13 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        // Kita tidak memakai password, tapi tetap ada jika diperlukan untuk admin
         'password',
-        'nama_pabrik',
-        'lokasi_pabrik',
-        'kode_unik', // Ini yang paling penting untuk login klien
-        'nomor_telepon',
-        'alamat_lengkap',
-        'role',
         'is_active',
+        'tanggal_lahir', // Tambahkan
+        'alamat',        // Tambahkan
+        'pekerjaan',     // Tambahkan
+        'nomor_telepon', // Tambahkan
+        'offer_expires_at', // Tambahkan
     ];
 
     /**
@@ -83,5 +81,11 @@ class User extends Authenticatable
     public function tableConfigurations()
     {
         return $this->hasMany(TableConfiguration::class);
+    }
+
+    public function hasActiveSubscription(): bool
+    {
+        // Pengguna dianggap aktif jika tanggal kadaluarsa langganan ada di masa depan
+        return $this->subscription_expires_at && $this->subscription_expires_at->isFuture();
     }
 }

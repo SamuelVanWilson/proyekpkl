@@ -18,21 +18,15 @@ class AdminUserSeeder extends Seeder
     {
         // Cari user dengan email admin, jika tidak ada, buat baru.
         // Ini mencegah duplikasi jika seeder dijalankan berkali-kali.
-        User::firstOrCreate(
-            [
-                'email' => 'admin@laporanapp.com',
-            ],
-            [
-                'name' => 'Administrator',
-                'nama_pabrik' => 'Sistem Admin',
-                'email' => 'admin@laporanapp.com',
-
-                // Ini adalah kunci untuk login ke halaman admin
-                'kode_unik' => Hash::make('ADMIN-USER'),
-
-                'role' => 'admin', // Menandakan user ini adalah admin
-                'is_active' => true,
-            ]
-        );
+        User::create([
+            'name' => 'Admin Utama',
+            'email' => 'admin@laporan.app',
+            'email_verified_at' => now(),
+            'password' => Hash::make('password'), // Ganti 'password' dengan password yang aman
+            'role' => 'admin',
+            'tanggal_lahir' => '2000-01-01', // Data dummy
+            'alamat' => 'DKI Jakarta',      // Data dummy
+            'pekerjaan' => 'Administrator',  // Data dummy
+        ]);
     }
 }
