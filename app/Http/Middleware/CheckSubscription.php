@@ -12,8 +12,8 @@ class CheckSubscription
     {
         // Cek jika pengguna sudah login dan TIDAK punya langganan aktif
         if (Auth::check() && !Auth::user()->hasActiveSubscription()) {
-            // Jika tidak, tendang ke halaman langganan dengan pesan
-            return redirect()->route('subscribe.show')->with('warning', 'Anda harus berlangganan untuk mengakses fitur ini.');
+            // Jika belum berlangganan, alihkan ke halaman langganan di dalam grup client
+            return redirect()->route('client.subscribe.show')->with('warning', 'Anda harus berlangganan untuk mengakses fitur ini.');
         }
 
         return $next($request);

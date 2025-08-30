@@ -88,7 +88,8 @@ Route::middleware('auth')->group(function () {
             if (!$user->hasVerifiedEmail()) {
                 return redirect()->route('verification.notice');
             }
-
+            // Arahkan sesuai status langganan
+            // Perbaiki nama rute: bagi pengguna non‑premium arahkan ke laporan harian (laporan biasa)
             $targetRoute = $user->hasActiveSubscription() ? 'client.laporan.advanced' : 'client.laporan.harian';
             return redirect()->route($targetRoute);
         })->name('dashboard');

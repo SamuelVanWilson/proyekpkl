@@ -40,10 +40,9 @@
                 <p class="text-xl font-bold text-gray-900">Rp {{ number_format($report->total_uang, 0, ',', '.') }}</p>
             </div>
             <div class="mt-4 flex space-x-2">
-                <a href="{{ route('client.laporan.edit', $report) }}" class="flex-1 text-center bg-gray-100 text-gray-800 py-2 rounded-lg text-sm font-medium hover:bg-gray-200">
-                    Edit
-                </a>
-                <a href="{{ route('client.laporan.pdf.preview', $report) }}" target="_blank" class="flex-1 text-center bg-blue-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-600">
+                {{-- Tombol Edit sementara dinonaktifkan karena fitur edit belum tersedia --}}
+                {{-- <a href="#" class="flex-1 text-center bg-gray-100 text-gray-800 py-2 rounded-lg text-sm font-medium opacity-50 cursor-not-allowed">Edit</a> --}}
+                <a href="{{ route('client.laporan.histori.pdf', $report) }}" target="_blank" class="flex-1 text-center bg-blue-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-600">
                     Lihat PDF
                 </a>
             </div>
@@ -66,7 +65,7 @@
 </div>
 
 {{-- Tombol Tambah Mengambang (Floating Action Button) --}}
-<a href="{{ route('client.laporan.create') }}" class="fixed bottom-20 right-5 h-14 w-14 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-600 transition-transform active:scale-90">
+<a href="{{ route('client.laporan.harian') }}" class="fixed bottom-20 right-5 h-14 w-14 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-600 transition-transform active:scale-90">
     <ion-icon name="add-outline" class="text-3xl"></ion-icon>
 </a>
 @endsection

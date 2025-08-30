@@ -14,6 +14,7 @@
             paket premium dan kunjungi halaman “Laporan Advanced”.
         --}}
 
-        @livewire('laporan.create-laporan')
+        {{-- Gunakan komponen SimpleTable untuk laporan biasa (tanpa rekapitulasi) --}}
+        @livewire('laporan.simple-table')
     </div>
 @endsection

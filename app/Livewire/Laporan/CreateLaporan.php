@@ -150,7 +150,8 @@ class CreateLaporan extends Component
         });
 
         session()->flash('success', 'Laporan berhasil disimpan.');
-        return redirect()->route('client.laporan.index');
+        // Setelah menyimpan, alihkan ke daftar histori laporan
+        return redirect()->route('client.laporan.histori');
     }
 
     public function harian()
