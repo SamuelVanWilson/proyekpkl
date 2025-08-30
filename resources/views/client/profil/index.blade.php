@@ -34,20 +34,45 @@
     {{-- Detail Data Diri --}}
     <div class="mt-6">
         <h2 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data Diri</h2>
-        <div class="mt-2 bg-white rounded-xl border border-gray-200 divide-y divide-gray-200">
-            <div class="p-4 flex justify-between items-center">
-                <span class="text-sm font-medium text-gray-700">Tanggal Lahir</span>
-                <span class="text-sm text-gray-600">{{ \Carbon\Carbon::parse($user->tanggal_lahir)->isoFormat('D MMMM YYYY') }}</span>
+        {{-- Form untuk memperbarui profil --}}
+        <form action="{{ route('client.profil.update') }}" method="POST" class="mt-2 bg-white rounded-xl border border-gray-200 divide-y divide-gray-200">
+            @csrf
+            <div class="p-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
+                <input type="text" name="name" value="{{ old('name', $user->name) }}" class="w-full border-gray-300 rounded-lg py-2 px-3 text-sm" required>
+                @error('name') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
             </div>
-            <div class="p-4 flex justify-between items-center">
-                <span class="text-sm font-medium text-gray-700">Provinsi</span>
-                <span class="text-sm text-gray-600">{{ $user->alamat }}</span>
+            <div class="p-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input type="email" name="email" value="{{ old('email', $user->email) }}" class="w-full border-gray-300 rounded-lg py-2 px-3 text-sm" required>
+                @error('email') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
             </div>
-            <div class="p-4 flex justify-between items-center">
-                <span class="text-sm font-medium text-gray-700">Pekerjaan</span>
-                <span class="text-sm text-gray-600">{{ $user->pekerjaan }}</span>
+            <div class="p-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir</label>
+                <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir', $user->tanggal_lahir) }}" class="w-full border-gray-300 rounded-lg py-2 px-3 text-sm">
+                @error('tanggal_lahir') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
             </div>
-        </div>
+            <div class="p-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Alamat</label>
+                <input type="text" name="alamat" value="{{ old('alamat', $user->alamat) }}" class="w-full border-gray-300 rounded-lg py-2 px-3 text-sm">
+                @error('alamat') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
+            </div>
+            <div class="p-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Pekerjaan</label>
+                <input type="text" name="pekerjaan" value="{{ old('pekerjaan', $user->pekerjaan) }}" class="w-full border-gray-300 rounded-lg py-2 px-3 text-sm">
+                @error('pekerjaan') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
+            </div>
+            <div class="p-4">
+                <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Telepon</label>
+                <input type="text" name="nomor_telepon" value="{{ old('nomor_telepon', $user->nomor_telepon) }}" class="w-full border-gray-300 rounded-lg py-2 px-3 text-sm">
+                @error('nomor_telepon') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
+            </div>
+            <div class="p-4 flex justify-end">
+                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+                    Simpan Perubahan
+                </button>
+            </div>
+        </form>
     </div>
 
     {{-- Aksi & Pengaturan --}}
@@ -73,6 +98,14 @@
                 <button type="submit" class="p-4 flex justify-between items-center w-full text-left">
                     <span class="font-medium text-red-500">Keluar</span>
                     <ion-icon name="log-out-outline" class="text-gray-400 text-xl"></ion-icon>
+                </button>
+            </form>
+            {{-- Tombol Nonaktifkan Akun --}}
+            <form action="{{ route('client.profil.deactivate') }}" method="POST" onsubmit="return confirm('Menonaktifkan akun akan menghanguskan langganan Anda dan tidak dapat digunakan kembali. Lanjutkan?');">
+                @csrf
+                <button type="submit" class="p-4 flex justify-between items-center w-full text-left">
+                    <span class="font-medium text-red-600">Nonaktifkan Akun</span>
+                    <ion-icon name="alert-circle-outline" class="text-gray-400 text-xl"></ion-icon>
                 </button>
             </form>
         </div>

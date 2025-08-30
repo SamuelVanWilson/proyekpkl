@@ -16,8 +16,8 @@
     {{-- Layout responsive: stack on mobile, side‑by‑side on large screens --}}
     <div class="flex flex-col lg:flex-row gap-6">
         {{-- PDF preview section --}}
-        <div class="flex-grow lg:w-2/3 border border-gray-200 rounded-lg overflow-hidden">
-            <iframe src="{{ route('client.laporan.histori.pdf', $report) }}" class="w-full h-[70vh]" frameborder="0"></iframe>
+        <div class="flex-grow lg:w-2/3 border border-gray-200 rounded-lg overflow-x-auto">
+            <iframe src="{{ route('client.laporan.histori.pdf', $report) }}" class="w-full h-[70vh] min-w-[600px]" frameborder="0"></iframe>
         </div>
         {{-- Sidebar for editing meta and export --}}
         <div class="lg:w-1/3 bg-white border border-gray-200 rounded-lg p-4 flex flex-col gap-4">

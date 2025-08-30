@@ -17,15 +17,20 @@
             dan ekspor PDF. Selama masa pengembangan, pembayaran akan dilakukan via sandbox Midtrans.
         </p>
 
-        @isset($subscription)
+        @if(isset($subscription) && $subscription)
             <div class="mb-4">
                 <p class="mb-2">Paket dipilih: <strong>{{ ucfirst($subscription->plan) }}</strong></p>
                 <p>Total yang harus dibayar: <strong>Rp{{ number_format($subscription->total_price, 0, ',', '.') }}</strong></p>
             </div>
-        @endisset
+        @else
+            <div class="mb-4">
+                <p class="mb-2">Paket dipilih: <strong>{{ ucfirst($plan) }}</strong></p>
+                <p>Total yang harus dibayar: <strong>Rp{{ number_format($totalPrice, 0, ',', '.') }}</strong></p>
+            </div>
+        @endif
 
         {{-- Tombol bayar menggunakan Snap Midtrans --}}
-        @if (isset($snapToken) && $subscription->payment_status === 'pending')
+        @if (isset($subscription) && $subscription && isset($snapToken) && $subscription->payment_status === 'pending')
             <button id="pay-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
                 Bayar Sekarang
             </button>

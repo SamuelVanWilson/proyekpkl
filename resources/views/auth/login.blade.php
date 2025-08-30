@@ -34,6 +34,11 @@
                 Masuk
             </button>
         </div>
+
+    {{-- Lupa Password --}}
+    <div class="text-center mt-2">
+        <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:underline">Lupa password?</a>
+    </div>
     </form>
 
     {{-- Link ke Halaman Registrasi --}}

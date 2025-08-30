@@ -116,37 +116,37 @@
     </div>
 
     {{-- Tombol Aksi --}}
-    <div class="mt-4 flex flex-wrap gap-2">
-        {{-- Tambah & hapus baris --}}
-        <button type="button" wire:click="addRow" class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
-            <span class="text-lg font-bold">+</span>
-            <span>Baris</span>
-        </button>
-        <button type="button" wire:click="removeLastRow" @if(count($rows) <= 1) disabled @endif class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
-            <span class="text-lg font-bold">−</span>
-            <span>Baris</span>
-        </button>
-        {{-- Tambah & hapus kolom --}}
-        <button type="button" wire:click="addColumn" @if (count($columns) >= 26) disabled @endif class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
-            <span class="text-lg font-bold">+</span>
-            <span>Kolom</span>
-        </button>
-        <button type="button" wire:click="removeLastColumn" @if(count($columns) <= 1) disabled @endif class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
-            <span class="text-lg font-bold">−</span>
-            <span>Kolom</span>
-        </button>
-
+    <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+        {{-- Grup baris: plus dan minus --}}
+        <div class="flex justify-between items-center rounded-lg overflow-hidden bg-gray-200 text-gray-700 text-sm font-medium">
+            <button type="button" wire:click="addRow" class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1">
+                <span class="text-base font-bold">+</span><span>Baris</span>
+            </button>
+            <span class="h-full w-px bg-gray-300"></span>
+            <button type="button" wire:click="removeLastRow" @if(count($rows) <= 1) disabled @endif class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span class="text-base font-bold">−</span><span>Baris</span>
+            </button>
+        </div>
+        {{-- Grup kolom: plus dan minus --}}
+        <div class="flex justify-between items-center rounded-lg overflow-hidden bg-gray-200 text-gray-700 text-sm font-medium">
+            <button type="button" wire:click="addColumn" @if(count($columns) >= 26) disabled @endif class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span class="text-base font-bold">+</span><span>Kolom</span>
+            </button>
+            <span class="h-full w-px bg-gray-300"></span>
+            <button type="button" wire:click="removeLastColumn" @if(count($columns) <= 1) disabled @endif class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
+                <span class="text-base font-bold">−</span><span>Kolom</span>
+            </button>
+        </div>
         {{-- Simpan --}}
-        <button type="button" wire:click="save" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        <button type="button" wire:click="save" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">
             Simpan
         </button>
-
-        {{-- Preview: tombol non-aktif jika laporan belum disimpan (reportId null) --}}
+        {{-- Preview: tombol non‑aktif jika laporan belum disimpan (reportId null) --}}
         <button
             type="button"
             wire:click="preview"
             @if(!$reportId) disabled @endif
-            class="px-4 py-2 rounded-lg text-sm font-medium
+            class="px-4 py-2 rounded-lg text-sm font-medium w-full
                    @if(!$reportId)
                        bg-green-300 text-gray-500 cursor-not-allowed
                    @else
