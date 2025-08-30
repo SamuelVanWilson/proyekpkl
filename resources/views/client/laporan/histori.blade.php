@@ -64,8 +64,28 @@
     </div>
 </div>
 
-{{-- Tombol Tambah Mengambang (Floating Action Button) --}}
-<a href="{{ route('client.laporan.harian') }}" class="fixed bottom-20 right-5 h-14 w-14 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-600 transition-transform active:scale-90">
-    <ion-icon name="add-outline" class="text-3xl"></ion-icon>
-</a>
+{{-- Tombol Tambah dengan dropdown pilihan laporan. Laporan advanced dikunci bagi yang belum berlangganan --}}
+<div x-data="{ open: false }" class="fixed bottom-20 right-5 z-50">
+    <button @click="open = !open" class="h-14 w-14 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-600 transition-transform active:scale-90 focus:outline-none">
+        <ion-icon name="add-outline" class="text-3xl"></ion-icon>
+    </button>
+    <div x-show="open" @click.away="open = false" class="absolute bottom-16 right-0 mb-2 space-y-2">
+        <a href="{{ route('client.laporan.harian') }}" class="block bg-white px-4 py-2 rounded-lg shadow text-sm font-medium text-gray-800 hover:bg-gray-100">
+            Laporan Biasa
+        </a>
+        @if(auth()->user()->hasActiveSubscription())
+            <a href="{{ route('client.laporan.advanced') }}" class="block bg-white px-4 py-2 rounded-lg shadow text-sm font-medium text-gray-800 hover:bg-gray-100">
+                Laporan Advanced
+            </a>
+        @else
+            <a href="{{ route('client.subscribe.show') }}" class="block bg-gray-200 px-4 py-2 rounded-lg shadow text-sm font-medium text-gray-400 cursor-pointer">
+                Laporan Advanced
+            </a>
+        @endif
+    </div>
+</div>
 @endsection
+
+{{-- Sertakan AlpineJS untuk dropdown menu --}}
+{{-- Muat AlpineJS agar dropdown berfungsi --}}
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>

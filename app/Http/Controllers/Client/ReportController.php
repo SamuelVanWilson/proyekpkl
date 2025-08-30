@@ -12,8 +12,12 @@ use App\Models\TableConfiguration;
 use App\Models\DailyReport;
 use Barryvdh\DomPDF\Facade\Pdf;
 
+// Tambahkan trait untuk otorisasi agar metode authorize() tersedia
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+
 class ReportController extends Controller
 {
+    use AuthorizesRequests;
     /**
      * Menampilkan halaman laporan "live" untuk hari ini.
      * Halaman ini ditenagai oleh komponen Livewire 'Laporan\Harian'.

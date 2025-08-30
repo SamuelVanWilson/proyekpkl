@@ -25,6 +25,7 @@ class DailyReport extends Model
     protected $fillable = [
         'user_id',
         'tanggal',
+        // Kolom bawaan untuk laporan rekapitulasi (advanced). Tetap dipertahankan
         'lokasi',
         'pemilik_sawah',
         'jumlah_karung',
@@ -36,6 +37,8 @@ class DailyReport extends Model
         'uang_muka',
         'total_uang',
         'custom_fields', // Kolom untuk data kustom seperti No. HP
+        // Kolom baru untuk laporan dinamis (laporan biasa)
+        'data',
     ];
 
     /**
@@ -46,6 +49,7 @@ class DailyReport extends Model
     protected $casts = [
         'tanggal' => 'date',
         'custom_fields' => 'array',
+        'data' => 'array',
     ];
 
     /**
