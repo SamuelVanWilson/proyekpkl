@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('alamat');
             $table->string('tanggal_lahir');
             $table->string('pekerjaan');
+            $table->string('nomor_telepon');
 
             $table->enum('role', ['admin', 'user'])->default('user');
             $table->boolean('is_active')->default(true);

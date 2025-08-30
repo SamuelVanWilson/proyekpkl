@@ -21,8 +21,18 @@ use Illuminate\Support\Facades\Auth;
 Route::middleware('guest')->group(function () {
     Route::get('/', [AuthController::class, 'showLoginForm'])->name('login');
     Route::post('/login', [AuthController::class, 'login'])->name('login.post');
-    Route::get('/register', [AuthController::class, 'showRegistrationForm'])->name('register');
-    Route::post('/register', [AuthController::class, 'register'])->name('register.post');
+    Route::get('/register', [AuthController::class, 'showRegisterStep1'])->name('register');
+
+    Route::post('/register/step1', [AuthController::class, 'postRegisterStep1'])->name('register.step1.post');
+
+    Route::get('/register/step2', [AuthController::class, 'showRegisterStep2'])->name('register.step2.show');
+    Route::post('/register/step2', [AuthController::class, 'postRegisterStep2'])->name('register.step2.post');
+
+    Route::get('/register/step3', [AuthController::class, 'showRegisterStep3'])->name('register.step3.show');
+    Route::post('/register/step3', [AuthController::class, 'postRegisterStep3'])->name('register.step3.post');
+
+    Route::get('/register/consent', [AuthController::class, 'showRegisterConsent'])->name('register.consent.show');
+    Route::post('/register/consent', [AuthController::class, 'postRegisterConsent'])->name('register.consent.post');
 });
 
 /*
@@ -62,7 +72,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', fn() => redirect()->route('admin.dashboard'));
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
-        Route::resource('users', AdminUserController::class)->except(['show']);
+        Route::resource('users', AdminUserController::class)->except(['show', 'create', 'store']);
         Route::get('/users/{user}/activity', [AdminUserController::class, 'showActivity'])->name('users.activity');
         Route::get('/users/{user}/form-builder', [AdminUserController::class, 'showFormBuilder'])->name('users.form-builder');
         Route::post('/users/{user}/form-builder', [AdminUserController::class, 'saveFormBuilder'])->name('users.form-builder.store');

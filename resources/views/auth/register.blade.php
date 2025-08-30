@@ -45,6 +45,13 @@
             @error('tanggal_lahir') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
         </div>
 
+        {{-- Tanggal Lahir --}}
+        <div>
+            <label for="nomor_telepon" class="label-modern">Tanggal Lahir</label>
+            <input id="nomor_telepon" name="nomor_telepon" type="text" required class="input-modern mt-1" value="{{ old('nomor_telepon') }}">
+            @error('nomor_telepon') <span class="text-red-500 text-sm mt-1">{{ $message }}</span> @enderror
+        </div>
+
         {{-- Alamat (Provinsi) --}}
         <div>
             <label for="alamat" class="label-modern">Provinsi</label>

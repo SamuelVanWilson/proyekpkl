@@ -24,6 +24,7 @@ class AdminUserSeeder extends Seeder
             'email_verified_at' => now(),
             'password' => Hash::make('password'), // Ganti 'password' dengan password yang aman
             'role' => 'admin',
+            'nomor_telepon' => '628721871821',
             'tanggal_lahir' => '2000-01-01', // Data dummy
             'alamat' => 'DKI Jakarta',      // Data dummy
             'pekerjaan' => 'Administrator',  // Data dummy

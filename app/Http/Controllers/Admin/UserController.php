@@ -26,35 +26,6 @@ class UserController extends Controller
         return view('admin.users.create');
     }
 
-    public function store(Request $request)
-    {
-        // PERBAIKAN: Menambahkan validasi untuk lokasi & pola kode unik yang baru
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'nama_pabrik' => 'required|string|max:255',
-            'lokasi_pabrik' => 'nullable|string|max:255',
-            'nomor_telepon' => 'required|string|max:20',
-            'is_active' => 'required|boolean',
-            'kode_unik_pola' => 'required|string|in:nama-usaha,usaha.tahun,usaha.nama,lokasi-nama',
-        ]);
-
-        // --- LOGIKA KODE UNIK KUSTOM BARU ---
-        $originalKodeUnik = $this->generateKodeUnik($validated['kode_unik_pola'], $validated);
-
-        $dataToCreate = $validated;
-        $dataToCreate['kode_unik'] = Hash::make($originalKodeUnik); // Hash kode unik
-        $dataToCreate['role'] = 'user';
-        // PERBAIKAN: Menghilangkan 'password', BUG SQL FIXED!
-
-        $user = User::create($dataToCreate);
-
-        // Redirect ke halaman edit agar admin bisa langsung menyalin kode unik
-        return redirect()->route('admin.users.edit', $user)
-                         ->with('success', 'Klien baru berhasil dibuat!')
-                         ->with('new_kode_unik', $originalKodeUnik);
-    }
-
     public function edit(User $user)
     {
         if ($user->role === 'admin') abort(403);
@@ -63,31 +34,65 @@ class UserController extends Controller
 
     public function update(Request $request, User $user)
     {
-        if ($user->role === 'admin') abort(403);
+    $validated = $request->validate([
+    'name' => 'required|string|max:255',
+    'email' => ['required','email','max:255', Rule::unique('users')->ignore($user->id)],
+    'password' => 'nullable|string|min:8|confirmed',
 
-        $validated = $request->validate([
-            'name' => 'required|string|max:255',
-            'email' => ['required', 'string', 'email', 'max:255', Rule::unique('users')->ignore($user->id)],
-            'nama_pabrik' => 'nullable|string|max:255',
-            'lokasi_pabrik' => 'nullable|string|max:255',
-            'nomor_telepon' => 'required|string|max:20',
-            'is_active' => 'required|boolean',
-            'kode_unik_baru' => 'nullable|string|min:4', // Input untuk kode unik baru
-        ]);
 
-        $flashMessage = 'Data klien berhasil diperbarui.';
+    'alamat' => 'nullable|string|max:255',
+    'tanggal_lahir' => 'nullable|string|max:20',
+    'pekerjaan' => 'nullable|string|max:255',
+    'nomor_telepon' => 'required|string|max:20',
 
-        // PERBAIKAN: Jika admin mengisi kode unik baru, hash dan simpan
-        if (!empty($validated['kode_unik_baru'])) {
-            $user->kode_unik = Hash::make($validated['kode_unik_baru']);
-            $user->save();
-            // Siapkan pesan flash untuk ditampilkan
-            $flashMessage .= ' Kode unik baru telah diatur ke: ' . $validated['kode_unik_baru'];
-        }
 
-        $user->update($validated);
+    'role' => ['required', Rule::in(['admin','user'])],
+    'is_active' => 'required|boolean',
 
-        return redirect()->route('admin.users.index')->with('success', $flashMessage);
+
+    'subscription_plan' => 'nullable|in:mingguan,bulanan,3_bulan',
+    'subscription_expires_at' => 'nullable|date',
+    'offer_expires_at' => 'nullable|date',
+    ]);
+
+
+    $user->name = $validated['name'];
+    $user->email = $validated['email'];
+
+
+    if (!empty($validated['password'])) {
+    $user->password = Hash::make($validated['password']);
+    }
+
+
+    $user->alamat = $validated['alamat'] ?? null;
+    $user->tanggal_lahir = $validated['tanggal_lahir'] ?? null;
+    $user->pekerjaan = $validated['pekerjaan'] ?? null;
+    $user->nomor_telepon = $validated['nomor_telepon'];
+
+
+    $user->role = $validated['role'];
+    $user->is_active = (bool) $validated['is_active'];
+
+
+    $user->subscription_plan = $validated['subscription_plan'] ?? null;
+
+
+    $user->subscription_expires_at = !empty($validated['subscription_expires_at'])
+    ? Carbon::parse($validated['subscription_expires_at'])
+    : null;
+
+
+    $user->offer_expires_at = !empty($validated['offer_expires_at'])
+    ? Carbon::parse($validated['offer_expires_at'])
+    : null;
+
+
+    $user->save();
+
+
+    return redirect()->route('admin.users.index')
+    ->with('success', 'Data pengguna berhasil diperbarui.');
     }
 
     public function destroy(User $user)

@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+use App\Models\Subscription;
 
 class User extends Authenticatable
 {
@@ -16,15 +17,10 @@ class User extends Authenticatable
      * @var array<int, string>
      */
     protected $fillable = [
-        'name',
-        'email',
-        'password',
-        'is_active',
-        'tanggal_lahir', // Tambahkan
-        'alamat',        // Tambahkan
-        'pekerjaan',     // Tambahkan
-        'nomor_telepon', // Tambahkan
-        'offer_expires_at', // Tambahkan
+    'name','email','password',
+    'alamat','tanggal_lahir','pekerjaan','nomor_telepon',
+    'role','is_active',
+    'subscription_plan','subscription_expires_at','offer_expires_at',
     ];
 
     /**
@@ -48,6 +44,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'is_active' => 'boolean',
+            'subscription_expires_at' => 'datetime',
         ];
     }
 
@@ -81,6 +78,14 @@ class User extends Authenticatable
     public function tableConfigurations()
     {
         return $this->hasMany(TableConfiguration::class);
+    }
+
+    /**
+     * Relasi: satu user memiliki banyak pesanan langganan.
+     */
+    public function subscriptions()
+    {
+        return $this->hasMany(Subscription::class);
     }
 
     public function hasActiveSubscription(): bool

@@ -25,6 +25,23 @@ class ReportController extends Controller
     }
 
     /**
+     * Tampilkan halaman laporan harian standar (biasa).
+     */
+    public function biasa()
+    {
+        // Halaman ini memuat komponen Livewire laporan.create-laporan
+        return view('client.laporan.biasa');
+    }
+
+    /**
+     * Tampilkan halaman laporan advanced. Pastikan pengguna telah berlangganan.
+     */
+    public function advanced()
+    {
+        return view('client.laporan.advanced');
+    }
+
+    /**
      * Menampilkan halaman histori (daftar laporan lama).
      */
     public function histori()

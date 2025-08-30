@@ -9,12 +9,6 @@
         <h1 class="text-3xl font-bold text-gray-900">Manajemen Klien</h1>
         <p class="mt-1 text-base text-gray-600">Daftar semua akun klien yang terdaftar.</p>
     </div>
-    <div class="mt-4 shrink-0 sm:mt-0">
-        <a href="{{ route('admin.users.create') }}" class="w-full sm:w-auto inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500 transition-colors">
-            <ion-icon name="add-outline" class="text-lg -ml-1 mr-2"></ion-icon>
-            Tambah Klien
-        </a>
-    </div>
 </div>
 
 {{-- Pesan Sukses --}}
