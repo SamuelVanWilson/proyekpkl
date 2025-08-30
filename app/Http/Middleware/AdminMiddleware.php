@@ -22,6 +22,7 @@ class AdminMiddleware
             return $next($request);
         }
 
-        return redirect()->route('client.laporan.index')->with('error', 'Anda tidak memiliki hak akses ke halaman tersebut.');
+        // Jika bukan admin, alihkan ke dashboard klien agar pengguna berada pada halaman yang tepat
+        return redirect()->route('client.dashboard')->with('error', 'Anda tidak memiliki hak akses ke halaman tersebut.');
     }
 }

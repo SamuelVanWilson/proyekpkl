@@ -88,8 +88,9 @@ Route::middleware('auth')->group(function () {
             if (!$user->hasVerifiedEmail()) {
                 return redirect()->route('verification.notice');
             }
-            // Arahkan sesuai status langganan
-            return redirect()->route($user->hasActiveSubscription() ? 'client.laporan.advanced' : 'client.laporan.biasa');
+
+            $targetRoute = $user->hasActiveSubscription() ? 'client.laporan.advanced' : 'client.laporan.harian';
+            return redirect()->route($targetRoute);
         })->name('dashboard');
 
         // --- FITUR GRATIS (Hanya butuh verifikasi email) ---

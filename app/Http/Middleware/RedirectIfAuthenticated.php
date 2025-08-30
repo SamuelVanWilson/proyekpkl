@@ -22,9 +22,12 @@ class RedirectIfAuthenticated
 
                 // Redirect berdasarkan role
                 if ($user->role === 'admin') {
-                    return redirect('/admin/dashboard');
+                    // Jika admin sudah login, arahkan ke dashboard admin
+                    return redirect()->route('admin.dashboard');
                 } elseif ($user->role === 'user') {
-                    return redirect('client.laporan.harian');
+                    // Jika pengguna sudah login, arahkan ke halaman dashboard klien.
+                    // Dashboard klien akan mengarahkan ke halaman yang tepat berdasarkan status langganan.
+                    return redirect()->route('client.dashboard');
                 }
             }
         }
