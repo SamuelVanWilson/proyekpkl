@@ -106,6 +106,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/laporan/{dailyReport}/preview', [ReportController::class, 'preview'])->name('laporan.preview');
             Route::post('/laporan/{dailyReport}/preview', [ReportController::class, 'updatePreview'])->name('laporan.preview.update');
             Route::get('/profil', [ProfileController::class, 'index'])->name('profil.index');
+            Route::post('/profil', [ProfileController::class, 'update'])->name('profil.update');
+            Route::post('/profil/deactivate', [ProfileController::class, 'deactivate'])->name('profil.deactivate');
             Route::get('/berlangganan', [ProfileController::class, 'show'])->name('subscribe.show');
             Route::post('/berlangganan/proses', [ProfileController::class, 'process'])->name('subscribe.process');
         });

@@ -202,22 +202,13 @@ class SimpleTable extends Component
             'date' => 'required|date',
         ]);
 
-        // Jika mengedit laporan yang sudah ada
-        if ($this->reportId) {
-            $report = DailyReport::where('id', $this->reportId)
-                ->where('user_id', Auth::id())
-                ->first();
-            if (!$report) {
-                abort(403);
-            }
-        } else {
-            // Buat instance baru untuk laporan baru
-            $report = new DailyReport();
-        }
+        // Gunakan firstOrNew untuk menghindari duplikasi berdasarkan user_id & tanggal
+        $report = DailyReport::firstOrNew([
+            'user_id' => Auth::id(),
+            'tanggal' => $this->date,
+        ]);
 
-        // Set nilai dan simpan
-        $report->user_id = Auth::id();
-        $report->tanggal = $this->date;
+        // Set nilai kolom data
         $report->data = [
             'columns' => $this->columns,
             'rows'    => $this->rows,
@@ -226,12 +217,36 @@ class SimpleTable extends Component
             ],
         ];
         $report->save();
-        // Perbarui reportId (berguna saat edit)
         $this->reportId = $report->id;
 
         session()->flash('success', 'Laporan berhasil disimpan.');
-        // Redirect ke histori agar pengguna melihat daftar laporan
-        return redirect()->route('client.laporan.histori');
+        // Tetap di halaman saat ini; tombol preview akan muncul berdasarkan reportId
+        return null;
+    }
+
+    /**
+     * Simpan laporan lalu alihkan ke halaman preview.
+     */
+    public function preview()
+    {
+        $this->validate([
+            'date' => 'required|date',
+        ]);
+
+        // Simpan atau perbarui laporan
+        $report = DailyReport::updateOrCreate([
+            'user_id' => Auth::id(),
+            'tanggal' => $this->date,
+        ], [
+            'data' => [
+                'columns' => $this->columns,
+                'rows'    => $this->rows,
+                'meta'    => [ 'title' => $this->title ],
+            ],
+        ]);
+        $this->reportId = $report->id;
+        // Redirect ke halaman preview
+        return redirect()->route('client.laporan.preview', $report);
     }
     
     /**

@@ -1,9 +1,13 @@
 <div>
-    {{-- Pesan Sukses --}}
+    {{-- Pesan Sukses dan Error --}}
     @if (session('success'))
         <div class="bg-green-100 text-green-800 text-sm font-medium p-3 rounded-lg mb-4">
             {{ session('success') }}
-            <p class="text-gray-700 text-xs mt-1">Anda dapat melihat atau mengunduh PDF dari halaman histori.</p>
+        </div>
+    @endif
+    @if (session('error'))
+        <div class="bg-red-100 text-red-800 text-sm font-medium p-3 rounded-lg mb-4">
+            {{ session('error') }}
         </div>
     @endif
 
@@ -78,7 +82,11 @@
     </div>
 
     {{-- Tabel Data Dinamis --}}
-    <div class="overflow-x-auto">
+    <!--
+        Gunakan overflow-y-auto dan tinggi maksimum agar tabel tidak membuat halaman terlalu panjang. 
+        max-h-96 (24rem) memastikan ketinggian tabel terbatas pada perangkat mobile.
+    -->
+    <div class="overflow-x-auto overflow-y-auto max-h-96">
         <table class="min-w-full bg-white border border-gray-200 rounded-lg">
             <thead class="bg-gray-50">
                 <tr>
@@ -111,20 +119,20 @@
     <div class="mt-4 flex flex-wrap gap-2">
         {{-- Tambah & hapus baris --}}
         <button type="button" wire:click="addRow" class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
-            <ion-icon name="add-outline" class="text-lg"></ion-icon>
+            <span class="text-lg font-bold">+</span>
             <span>Baris</span>
         </button>
         <button type="button" wire:click="removeLastRow" @if(count($rows) <= 1) disabled @endif class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
-            <ion-icon name="remove-outline" class="text-lg"></ion-icon>
+            <span class="text-lg font-bold">−</span>
             <span>Baris</span>
         </button>
         {{-- Tambah & hapus kolom --}}
         <button type="button" wire:click="addColumn" @if (count($columns) >= 26) disabled @endif class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
-            <ion-icon name="add-outline" class="text-lg"></ion-icon>
+            <span class="text-lg font-bold">+</span>
             <span>Kolom</span>
         </button>
         <button type="button" wire:click="removeLastColumn" @if(count($columns) <= 1) disabled @endif class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
-            <ion-icon name="remove-outline" class="text-lg"></ion-icon>
+            <span class="text-lg font-bold">−</span>
             <span>Kolom</span>
         </button>
 
@@ -133,11 +141,18 @@
             Simpan
         </button>
 
-        {{-- Preview PDF (tampil jika sudah disimpan) --}}
-        @if($reportId)
-        <a href="{{ route('client.laporan.preview', $reportId) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        {{-- Preview: tombol non-aktif jika laporan belum disimpan (reportId null) --}}
+        <button
+            type="button"
+            wire:click="preview"
+            @if(!$reportId) disabled @endif
+            class="px-4 py-2 rounded-lg text-sm font-medium
+                   @if(!$reportId)
+                       bg-green-300 text-gray-500 cursor-not-allowed
+                   @else
+                       bg-green-600 hover:bg-green-700 text-white
+                   @endif">
             Preview
-        </a>
-        @endif
+        </button>
     </div>
 </div>
