@@ -78,6 +78,42 @@ class ReportController extends Controller
         // return $pdf->stream('laporan-'. $dailyReport->tanggal .'.pdf');
     }
 
+    /**
+     * Tampilkan form edit untuk laporan. Laporan biasa akan memuat komponen SimpleTable dengan reportId.
+     */
+    public function edit(DailyReport $dailyReport)
+    {
+        // Pastikan user memiliki laporan ini
+        $this->authorize('update', $dailyReport);
+        // Jika laporan biasa (memiliki data), gunakan halaman laporan biasa
+        if (!empty($dailyReport->data)) {
+            return view('client.laporan.biasa', ['reportId' => $dailyReport->id]);
+        }
+        // Untuk laporan advanced, sementara belum ada dukungan edit
+        return redirect()->route('client.laporan.histori')->with('message', 'Edit laporan advanced belum tersedia.');
+    }
+
+    /**
+     * Hapus laporan dari database.
+     */
+    public function destroy(DailyReport $dailyReport)
+    {
+        $this->authorize('delete', $dailyReport);
+        $dailyReport->delete();
+        return redirect()->route('client.laporan.histori')->with('success', 'Laporan berhasil dihapus.');
+    }
+
+    /**
+     * Generate dan download PDF dari laporan menggunakan DomPDF.
+     */
+    public function downloadPdf(DailyReport $dailyReport)
+    {
+        $this->authorize('view', $dailyReport);
+        $pdf = Pdf::loadView('client.laporan.pdf_template', ['report' => $dailyReport]);
+        $fileName = 'laporan-' . $dailyReport->tanggal . '.pdf';
+        return $pdf->download($fileName);
+    }
+
     public function saveFormBuilder(Request $request, User $user = null) // Tambahkan User $user = null untuk Client
     {
         // Validasi sekarang memeriksa 'label' bukan 'name' untuk input pengguna

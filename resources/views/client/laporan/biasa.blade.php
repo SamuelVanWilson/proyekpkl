@@ -14,7 +14,12 @@
             paket premium dan kunjungi halaman “Laporan Advanced”.
         --}}
 
-        {{-- Gunakan komponen SimpleTable untuk laporan biasa (tanpa rekapitulasi) --}}
-        @livewire('laporan.simple-table')
+        {{-- Gunakan komponen SimpleTable untuk laporan biasa (tanpa rekapitulasi).
+             Jika $reportId tersedia (mode edit), oper ke komponen. --}}
+        @isset($reportId)
+            @livewire('laporan.simple-table', ['reportId' => $reportId])
+        @else
+            @livewire('laporan.simple-table')
+        @endisset
     </div>
 @endsection

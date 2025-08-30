@@ -3,19 +3,34 @@
     @if (session('success'))
         <div class="bg-green-100 text-green-800 text-sm font-medium p-3 rounded-lg mb-4">
             {{ session('success') }}
+            <p class="text-gray-700 text-xs mt-1">Anda dapat melihat atau mengunduh PDF dari halaman histori.</p>
         </div>
     @endif
 
     {{-- Toolbar format teks --}}
     <div class="flex flex-wrap items-center gap-2 mb-4">
-        <button type="button" onclick="document.execCommand('bold', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm font-semibold">B</button>
-        <button type="button" onclick="document.execCommand('italic', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm italic">I</button>
+        {{-- Format teks dasar --}}
+        <button type="button" onclick="document.execCommand('bold', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm font-semibold" title="Tebal">B</button>
+        <button type="button" onclick="document.execCommand('italic', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm italic" title="Miring">I</button>
+        <button type="button" onclick="document.execCommand('underline', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm underline" title="Garis Bawah">U</button>
+        <button type="button" onclick="document.execCommand('strikeThrough', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm line-through" title="Coret">S</button>
+        {{-- Pemisah --}}
+        <span class="mx-1 border-l h-4 border-gray-300"></span>
+        {{-- Text alignment --}}
+        <button type="button" onclick="document.execCommand('justifyLeft', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm" title="Rata Kiri">L</button>
+        <button type="button" onclick="document.execCommand('justifyCenter', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm" title="Rata Tengah">C</button>
+        <button type="button" onclick="document.execCommand('justifyRight', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm" title="Rata Kanan">R</button>
+        <button type="button" onclick="document.execCommand('justifyFull', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm" title="Rata Kanan/Kiri">J</button>
+        {{-- Pemisah --}}
+        <span class="mx-1 border-l h-4 border-gray-300"></span>
+        {{-- Font family --}}
         <select onchange="document.execCommand('fontName', false, this.value)" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm">
             <option value="Arial">Arial</option>
             <option value="Times New Roman">Times New Roman</option>
             <option value="Courier New">Courier New</option>
             <option value="Helvetica">Helvetica</option>
         </select>
+        {{-- Font size --}}
         <select onchange="document.execCommand('fontSize', false, this.value)" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm">
             <option value="1">8pt</option>
             <option value="2">10pt</option>
@@ -77,8 +92,6 @@
         <button type="button" wire:click="save" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium">
             Simpan
         </button>
-        <button type="button" wire:click="export" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium">
-            Export CSV
-        </button>
+        {{-- Tombol export CSV dihapus sesuai permintaan --}}
     </div>
 </div>

@@ -99,6 +99,8 @@ Route::middleware('auth')->group(function () {
             Route::get('/laporan-biasa', [ReportController::class, 'biasa'])->name('laporan.harian');
             Route::get('/laporan/histori', [ReportController::class, 'histori'])->name('laporan.histori');
             Route::get('/laporan/histori/{dailyReport}/preview-pdf', [ReportController::class, 'previewPdf'])->name('laporan.histori.pdf');
+            // Unduh PDF laporan
+            Route::get('/laporan/histori/{dailyReport}/download', [ReportController::class, 'downloadPdf'])->name('laporan.histori.download');
             Route::get('/profil', [ProfileController::class, 'index'])->name('profil.index');
             Route::get('/berlangganan', [ProfileController::class, 'show'])->name('subscribe.show');
             Route::post('/berlangganan/proses', [ProfileController::class, 'process'])->name('subscribe.process');
@@ -111,6 +113,14 @@ Route::middleware('auth')->group(function () {
             Route::get('/laporan/form-builder', [ReportController::class, 'showFormBuilder'])->name('laporan.form-builder');
             Route::post('/laporan/form-builder', [ReportController::class, 'saveFormBuilder'])->name('laporan.form-builder.save');
             // Tambahkan rute premium lainnya di sini
+        });
+
+        // Rute tambahan untuk edit dan hapus laporan, tersedia untuk laporan apapun yang dimiliki pengguna
+        Route::middleware('verified')->group(function () {
+            // Edit laporan: jika laporan biasa, gunakan halaman laporan biasa dengan parameter report
+            Route::get('/laporan/{dailyReport}/edit', [ReportController::class, 'edit'])->name('laporan.edit');
+            // Hapus laporan
+            Route::delete('/laporan/{dailyReport}', [ReportController::class, 'destroy'])->name('laporan.destroy');
         });
     });
 });

@@ -28,22 +28,41 @@
         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
             <div class="flex justify-between items-start">
                 <div>
-                    <p class="text-sm font-semibold text-gray-800">{{ $report->lokasi }}</p>
+                    {{-- Judul laporan berbeda antara laporan biasa dan advanced --}}
+                    @if(!empty($report->data))
+                        <p class="text-sm font-semibold text-gray-800">Laporan Biasa</p>
+                    @else
+                        <p class="text-sm font-semibold text-gray-800">{{ $report->lokasi }}</p>
+                    @endif
                     <p class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($report->tanggal)->isoFormat('dddd, D MMMM Y') }}</p>
                 </div>
                 <div class="text-xs text-gray-400">
                     ID: #{{ $report->id }}
                 </div>
             </div>
-            <div class="mt-4 border-t border-gray-100 pt-3">
-                <p class="text-xs text-gray-500">Total Uang</p>
-                <p class="text-xl font-bold text-gray-900">Rp {{ number_format($report->total_uang, 0, ',', '.') }}</p>
-            </div>
-            <div class="mt-4 flex space-x-2">
-                {{-- Tombol Edit sementara dinonaktifkan karena fitur edit belum tersedia --}}
-                {{-- <a href="#" class="flex-1 text-center bg-gray-100 text-gray-800 py-2 rounded-lg text-sm font-medium opacity-50 cursor-not-allowed">Edit</a> --}}
+            {{-- Tidak tampilkan total uang untuk laporan biasa, karena tidak relevan --}}
+            <div class="mt-4 flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
+                {{-- Tombol edit hanya untuk laporan biasa (data != null) --}}
+                @if(!empty($report->data))
+                    <a href="{{ route('client.laporan.edit', $report) }}" class="flex-1 text-center bg-gray-100 text-gray-800 py-2 rounded-lg text-sm font-medium hover:bg-gray-200">
+                        Edit
+                    </a>
+                @endif
+                {{-- Tombol hapus --}}
+                <form method="POST" action="{{ route('client.laporan.destroy', $report) }}" class="flex-1" onsubmit="return confirm('Hapus laporan ini?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="w-full text-center bg-red-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-red-600">
+                        Hapus
+                    </button>
+                </form>
+                {{-- Tombol preview PDF --}}
                 <a href="{{ route('client.laporan.histori.pdf', $report) }}" target="_blank" class="flex-1 text-center bg-blue-500 text-white py-2 rounded-lg text-sm font-medium hover:bg-blue-600">
-                    Lihat PDF
+                    Preview PDF
+                </a>
+                {{-- Tombol download PDF --}}
+                <a href="{{ route('client.laporan.histori.download', $report) }}" class="flex-1 text-center bg-green-600 text-white py-2 rounded-lg text-sm font-medium hover:bg-green-700">
+                    Download PDF
                 </a>
             </div>
         </div>

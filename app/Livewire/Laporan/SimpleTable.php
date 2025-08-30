@@ -22,6 +22,13 @@ use App\Models\DailyReport;
 class SimpleTable extends Component
 {
     /**
+     * ID laporan yang sedang diedit. Null saat membuat laporan baru.
+     *
+     * @var int|null
+     */
+    public $reportId = null;
+
+    /**
      * Tanggal laporan. Digunakan sebagai kunci unik untuk setiap hari.
      *
      * @var string
@@ -44,21 +51,47 @@ class SimpleTable extends Component
 
     /**
      * Jalankan sekali ketika komponen di‑mount.
+     * Jika diberikan reportId, muat data laporan untuk diedit.
      */
-    public function mount()
+    public function mount($reportId = null)
     {
-        // Tanggal default adalah hari ini dalam format Y-m-d
-        $this->date = now()->format('Y-m-d');
-        // Inisialisasi kolom default: A sampai E
-        $this->columns = range('A', 'E');
+        $this->reportId = $reportId;
 
-        // Inisialisasi 10 baris awal dengan kolom kosong
-        for ($i = 0; $i < 10; $i++) {
-            $row = [];
-            foreach ($this->columns as $col) {
-                $row[$col] = '';
+        // Jika ID laporan diberikan, coba muat dari database
+        if ($this->reportId) {
+            $report = DailyReport::where('id', $this->reportId)
+                ->where('user_id', Auth::id())
+                ->first();
+
+            if ($report) {
+                // Gunakan tanggal dari laporan
+                $this->date = $report->tanggal;
+                // Jika data tersedia (laporan biasa), gunakan kolom dan baris tersimpan
+                if (!empty($report->data)) {
+                    $this->columns = $report->data['columns'] ?? [];
+                    $this->rows = $report->data['rows'] ?? [];
+                }
             }
-            $this->rows[] = $row;
+        }
+
+        // Jika belum ada kolom (laporan baru), inisialisasi default A-E
+        if (empty($this->columns)) {
+            $this->columns = range('A', 'E');
+        }
+
+        // Jika belum ada baris (laporan baru), inisialisasi 10 baris
+        if (empty($this->rows)) {
+            for ($i = 0; $i < 10; $i++) {
+                $row = [];
+                foreach ($this->columns as $col) {
+                    $row[$col] = '';
+                }
+                $this->rows[] = $row;
+            }
+        }
+        // Pastikan tanggal terisi jika belum (misalnya laporan baru)
+        if (empty($this->date)) {
+            $this->date = now()->format('Y-m-d');
         }
     }
 
@@ -128,47 +161,42 @@ class SimpleTable extends Component
             'date' => 'required|date',
         ]);
 
-        // Simpan ke tabel daily_reports: data berisi kolom dan baris
-        DailyReport::updateOrCreate([
-            'user_id' => Auth::id(),
-            'tanggal' => $this->date,
-        ], [
-            'data' => [
-                'columns' => $this->columns,
-                'rows'    => $this->rows,
-            ],
-        ]);
+        // Jika mengedit laporan yang sudah ada
+        if ($this->reportId) {
+            $report = DailyReport::where('id', $this->reportId)
+                ->where('user_id', Auth::id())
+                ->first();
+            if (!$report) {
+                abort(403);
+            }
+        } else {
+            // Cari laporan berdasarkan user dan tanggal, atau buat baru
+            $report = DailyReport::firstOrNew([
+                'user_id' => Auth::id(),
+                'tanggal' => $this->date,
+            ]);
+        }
+
+        // Set nilai dan simpan
+        $report->user_id = Auth::id();
+        $report->tanggal = $this->date;
+        $report->data = [
+            'columns' => $this->columns,
+            'rows'    => $this->rows,
+        ];
+        $report->save();
+        // Perbarui reportId (berguna saat edit)
+        $this->reportId = $report->id;
 
         session()->flash('success', 'Laporan berhasil disimpan.');
         // Redirect ke histori agar pengguna melihat daftar laporan
         return redirect()->route('client.laporan.histori');
     }
-
+    
     /**
-     * Unduh data sebagai file CSV.
+     * Fitur export CSV dihapus karena permintaan pengguna. PDF diekspor melalui controller.
      */
-    public function export()
-    {
-        $fileName = 'laporan-' . $this->date . '.csv';
-        return response()->streamDownload(function () {
-            $handle = fopen('php://output', 'w');
-            // Header: kolom pertama kosong untuk nomor baris
-            $header = array_merge([''], $this->columns);
-            fputcsv($handle, $header);
-            foreach ($this->rows as $index => $row) {
-                $rowData = [ $index + 1 ];
-                foreach ($this->columns as $col) {
-                    $value = $row[$col] ?? '';
-                    // Strip tags untuk CSV (hilangkan HTML formatting)
-                    $rowData[] = trim(strip_tags($value));
-                }
-                fputcsv($handle, $rowData);
-            }
-            fclose($handle);
-        }, $fileName, [
-            'Content-Type' => 'text/csv',
-        ]);
-    }
+    // public function export() {}
 
     public function render()
     {
