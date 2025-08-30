@@ -202,25 +202,52 @@ class SimpleTable extends Component
             'date' => 'required|date',
         ]);
 
-        // Gunakan firstOrNew untuk menghindari duplikasi berdasarkan user_id & tanggal
-        $report = DailyReport::firstOrNew([
-            'user_id' => Auth::id(),
-            'tanggal' => $this->date,
-        ]);
-
-        // Set nilai kolom data
-        $report->data = [
-            'columns' => $this->columns,
-            'rows'    => $this->rows,
-            'meta'    => [
-                'title' => $this->title,
-            ],
-        ];
-        $report->save();
+        // Jika reportId sudah ada, update laporan tersebut
+        if ($this->reportId) {
+            $report = DailyReport::where('id', $this->reportId)
+                ->where('user_id', Auth::id())
+                ->first();
+            if ($report) {
+                $report->tanggal = $this->date;
+                $report->data = [
+                    'columns' => $this->columns,
+                    'rows'    => $this->rows,
+                    'meta'    => [
+                        'title' => $this->title,
+                    ],
+                ];
+                $report->save();
+            } else {
+                // Jika tidak ditemukan, buat baru
+                $report = DailyReport::create([
+                    'user_id' => Auth::id(),
+                    'tanggal' => $this->date,
+                    'data' => [
+                        'columns' => $this->columns,
+                        'rows'    => $this->rows,
+                        'meta'    => [
+                            'title' => $this->title,
+                        ],
+                    ],
+                ]);
+            }
+        } else {
+            // Membuat laporan baru tanpa mempertimbangkan tanggal
+            $report = DailyReport::create([
+                'user_id' => Auth::id(),
+                'tanggal' => $this->date,
+                'data' => [
+                    'columns' => $this->columns,
+                    'rows'    => $this->rows,
+                    'meta'    => [
+                        'title' => $this->title,
+                    ],
+                ],
+            ]);
+        }
         $this->reportId = $report->id;
 
         session()->flash('success', 'Laporan berhasil disimpan.');
-        // Tetap di halaman saat ini; tombol preview akan muncul berdasarkan reportId
         return null;
     }
 
@@ -233,20 +260,10 @@ class SimpleTable extends Component
             'date' => 'required|date',
         ]);
 
-        // Simpan atau perbarui laporan
-        $report = DailyReport::updateOrCreate([
-            'user_id' => Auth::id(),
-            'tanggal' => $this->date,
-        ], [
-            'data' => [
-                'columns' => $this->columns,
-                'rows'    => $this->rows,
-                'meta'    => [ 'title' => $this->title ],
-            ],
-        ]);
-        $this->reportId = $report->id;
-        // Redirect ke halaman preview
-        return redirect()->route('client.laporan.preview', $report);
+        // Pastikan data tersimpan terlebih dahulu
+        $this->save();
+        // Redirect ke halaman preview dengan ID laporan yang baru disimpan
+        return redirect()->route('client.laporan.preview', $this->reportId);
     }
     
     /**

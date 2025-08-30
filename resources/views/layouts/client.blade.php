@@ -57,6 +57,12 @@
         </nav>
     </div>
     <script>
+        document.addEventListener('livewire:navigating', () => {
+            document.getElementById('loading-overlay').classList.remove('hidden');
+        });
+        document.addEventListener('livewire:navigated', () => {
+            document.getElementById('loading-overlay').classList.add('hidden');
+        });
 
         function toggleFullscreen() {
             const elem = document.documentElement;

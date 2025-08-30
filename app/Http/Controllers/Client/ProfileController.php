@@ -34,29 +34,26 @@ class ProfileController extends Controller
         $plan = 'bulanan';
         $totalPrice = 10000;
 
-        // Cari atau buat pesanan langganan baru untuk user ini yang statusnya masih pending
+        // Ambil pesanan langganan yang masih pending jika ada
         $subscription = $user->subscriptions()->where('payment_status', 'pending')->latest()->first();
-        if (!$subscription) {
-            $number = uniqid('SUB-');
-            $subscription = $user->subscriptions()->create([
-                'number' => $number,
-                'plan' => $plan,
-                'total_price' => $totalPrice,
-            ]);
-        }
+        $snapToken = null;
 
-        // Jika belum memiliki Snap token, generate menggunakan layanan Midtrans
-        if (!$subscription->snap_token) {
-            $midtransService = new CreateSnapTokenService($subscription);
-            $snapToken = $midtransService->getSnapToken();
-            $subscription->snap_token = $snapToken;
-            $subscription->save();
-        } else {
-            $snapToken = $subscription->snap_token;
+        // Hanya generate Snap token jika ada pesanan pending
+        if ($subscription) {
+            if (!$subscription->snap_token) {
+                $midtransService = new CreateSnapTokenService($subscription);
+                $snapToken = $midtransService->getSnapToken();
+                $subscription->snap_token = $snapToken;
+                $subscription->save();
+            } else {
+                $snapToken = $subscription->snap_token;
+            }
         }
 
         return view('client.subscribe.show', [
             'user' => $user,
+            'plan' => $plan,
+            'totalPrice' => $totalPrice,
             'subscription' => $subscription,
             'snapToken' => $snapToken,
         ]);
@@ -85,5 +82,41 @@ class ProfileController extends Controller
         }
 
         return back()->with('error', 'Tidak ada pesanan langganan yang bisa diproses.');
+    }
+
+    /**
+     * Perbarui profil pengguna.
+     */
+    public function update(Request $request)
+    {
+        $user = Auth::user();
+        $validated = $request->validate([
+            'name' => 'required|string|max:255',
+            'email' => 'required|email|max:255|unique:users,email,' . $user->id,
+            'tanggal_lahir' => 'nullable|date',
+            'alamat' => 'nullable|string|max:255',
+            'pekerjaan' => 'nullable|string|max:255',
+            'nomor_telepon' => 'nullable|string|max:20',
+        ]);
+        $user->update($validated);
+        return back()->with('success', 'Profil berhasil diperbarui.');
+    }
+
+    /**
+     * Nonaktifkan akun pengguna.
+     */
+    public function deactivate(Request $request)
+    {
+        $user = Auth::user();
+        // Tandai user sebagai tidak aktif
+        $user->is_active = false;
+        // Hanguskan langganan jika ada
+        $user->subscription_expires_at = null;
+        $user->subscription_plan = null;
+        $user->save();
+
+        // Logout user
+        Auth::logout();
+        return redirect()->route('login')->with('success', 'Akun Anda telah dinonaktifkan. Hubungi pengembang untuk aktivasi ulang.');
     }
 }

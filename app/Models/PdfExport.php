@@ -25,8 +25,13 @@ class PdfExport extends Model
         'user_id',
         'daily_report_id',
         'filename',
-        'file_path',
+        'type',
+        'filters',
         'data_snapshot',
+        'total_items',
+        'total_pages',
+        'file_path',
+        'exported_at',
     ];
 
     /**
@@ -36,6 +41,8 @@ class PdfExport extends Model
      */
     protected $casts = [
         'data_snapshot' => 'array',
+        'filters' => 'array',
+        'exported_at' => 'datetime',
     ];
     
     /**

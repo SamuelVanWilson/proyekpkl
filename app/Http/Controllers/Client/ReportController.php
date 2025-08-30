@@ -11,6 +11,8 @@ use App\Models\User;
 use App\Models\TableConfiguration;
 use App\Models\DailyReport;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Illuminate\Support\Facades\Storage;
+use App\Models\PdfExport;
 
 // Tambahkan trait untuk otorisasi agar metode authorize() tersedia
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
@@ -109,8 +111,33 @@ class ReportController extends Controller
     public function downloadPdf(DailyReport $dailyReport)
     {
         $this->authorize('view', $dailyReport);
+        $user = Auth::user();
+
+        // Batasi jumlah export PDF untuk pengguna non‑premium
+        if (!$user->hasActiveSubscription()) {
+            $exportCount = PdfExport::where('user_id', $user->id)->count();
+            if ($exportCount >= 3) {
+                return back()->with('error', 'Limit export PDF gratis (3x) telah tercapai. Silakan berlangganan untuk export tanpa batas.');
+            }
+        }
+
         $pdf = Pdf::loadView('client.laporan.pdf_template', ['report' => $dailyReport]);
-        $fileName = 'laporan-' . $dailyReport->tanggal . '.pdf';
+        $fileName = 'laporan-' . $dailyReport->tanggal . '-' . now()->timestamp . '.pdf';
+
+        // Rekam aktivitas export PDF
+        PdfExport::create([
+            'user_id' => $user->id,
+            'daily_report_id' => $dailyReport->id,
+            'filename' => $fileName,
+            'type' => 'daily_report',
+            'filters' => null,
+            'data_snapshot' => $dailyReport->data,
+            'total_items' => 0,
+            'total_pages' => 0,
+            'file_path' => null,
+            'exported_at' => now(),
+        ]);
+
         return $pdf->download($fileName);
     }
 
@@ -131,7 +158,7 @@ class ReportController extends Controller
         $this->authorize('update', $dailyReport);
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
-            'logo'  => 'nullable|image|max:2048',
+            'logo'  => 'nullable|image|max:1024', // batas 1MB
         ]);
         $data = $dailyReport->data ?? [];
         // Pastikan struktur meta tersedia
@@ -140,7 +167,21 @@ class ReportController extends Controller
         }
         $data['meta']['title'] = $validated['title'] ?? ($data['meta']['title'] ?? '');
         if ($request->hasFile('logo')) {
-            $path = $request->file('logo')->store('logos', 'public');
+            // Fitur upload logo hanya untuk pengguna berlangganan
+            if (!Auth::user()->hasActiveSubscription()) {
+                return back()->with('error', 'Fitur upload logo hanya tersedia untuk pengguna berlangganan.');
+            }
+            $file = $request->file('logo');
+            // Hitung hash untuk deduplikasi
+            $hash = md5_file($file->getRealPath());
+            $extension = $file->getClientOriginalExtension();
+            $hashedName = $hash . '.' . $extension;
+            $disk = Storage::disk('public');
+            if ($disk->exists('logos/' . $hashedName)) {
+                $path = 'logos/' . $hashedName;
+            } else {
+                $path = $file->storeAs('logos', $hashedName, 'public');
+            }
             $data['meta']['logo'] = $path;
         }
         $dailyReport->data = $data;
