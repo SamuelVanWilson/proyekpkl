@@ -8,38 +8,64 @@
     @endif
 
     {{-- Toolbar format teks --}}
-    <div class="flex flex-wrap items-center gap-2 mb-4">
-        {{-- Format teks dasar --}}
-        <button type="button" onclick="document.execCommand('bold', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm font-semibold" title="Tebal">B</button>
-        <button type="button" onclick="document.execCommand('italic', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm italic" title="Miring">I</button>
-        <button type="button" onclick="document.execCommand('underline', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm underline" title="Garis Bawah">U</button>
-        <button type="button" onclick="document.execCommand('strikeThrough', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm line-through" title="Coret">S</button>
-        {{-- Pemisah --}}
-        <span class="mx-1 border-l h-4 border-gray-300"></span>
-        {{-- Text alignment --}}
-        <button type="button" onclick="document.execCommand('justifyLeft', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm" title="Rata Kiri">L</button>
-        <button type="button" onclick="document.execCommand('justifyCenter', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm" title="Rata Tengah">C</button>
-        <button type="button" onclick="document.execCommand('justifyRight', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm" title="Rata Kanan">R</button>
-        <button type="button" onclick="document.execCommand('justifyFull', false, '')" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm" title="Rata Kanan/Kiri">J</button>
-        {{-- Pemisah --}}
-        <span class="mx-1 border-l h-4 border-gray-300"></span>
-        {{-- Font family --}}
-        <select onchange="document.execCommand('fontName', false, this.value)" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm">
-            <option value="Arial">Arial</option>
-            <option value="Times New Roman">Times New Roman</option>
-            <option value="Courier New">Courier New</option>
-            <option value="Helvetica">Helvetica</option>
-        </select>
-        {{-- Font size --}}
-        <select onchange="document.execCommand('fontSize', false, this.value)" class="bg-gray-200 hover:bg-gray-300 px-2 py-1 rounded text-sm">
-            <option value="1">8pt</option>
-            <option value="2">10pt</option>
-            <option value="3" selected>12pt</option>
-            <option value="4">14pt</option>
-            <option value="5">18pt</option>
-            <option value="6">24pt</option>
-            <option value="7">36pt</option>
-        </select>
+    <div x-data="{ formatOpen: false, alignOpen: false }" class="flex flex-wrap items-center gap-2 mb-4">
+        {{-- Format dropdown --}}
+        <div class="relative inline-block text-left">
+            <button type="button" @click="formatOpen = !formatOpen" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium flex items-center gap-1">
+                <ion-icon name="create-outline" class="text-lg"></ion-icon>
+                <span>Format</span>
+                <ion-icon name="chevron-down-outline" class="text-xs"></ion-icon>
+            </button>
+            <div x-show="formatOpen" @click.away="formatOpen = false" class="absolute z-20 mt-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg py-1">
+                <a href="#" onclick="document.execCommand('bold', false, ''); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tebal</a>
+                <a href="#" onclick="document.execCommand('italic', false, ''); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Miring</a>
+                <a href="#" onclick="document.execCommand('underline', false, ''); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Garis Bawah</a>
+                <a href="#" onclick="document.execCommand('strikeThrough', false, ''); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Coret</a>
+                <div class="border-t border-gray-200 my-1"></div>
+                {{-- Font family selector inside dropdown --}}
+                <div class="px-3 py-2">
+                    <label class="block text-xs mb-1">Font</label>
+                    <select onchange="document.execCommand('fontName', false, this.value); formatOpen=false;" class="w-full bg-gray-100 border border-gray-200 rounded-md text-sm py-1 px-2">
+                        <option value="Arial">Arial</option>
+                        <option value="Times New Roman">Times New Roman</option>
+                        <option value="Courier New">Courier New</option>
+                        <option value="Helvetica">Helvetica</option>
+                    </select>
+                </div>
+                <div class="px-3 py-2">
+                    <label class="block text-xs mb-1">Ukuran</label>
+                    <select onchange="document.execCommand('fontSize', false, this.value); formatOpen=false;" class="w-full bg-gray-100 border border-gray-200 rounded-md text-sm py-1 px-2">
+                        <option value="1">8pt</option>
+                        <option value="2">10pt</option>
+                        <option value="3" selected>12pt</option>
+                        <option value="4">14pt</option>
+                        <option value="5">18pt</option>
+                        <option value="6">24pt</option>
+                        <option value="7">36pt</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+        {{-- Align dropdown --}}
+        <div class="relative inline-block text-left">
+            <button type="button" @click="alignOpen = !alignOpen" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium flex items-center gap-1">
+                <ion-icon name="text-outline" class="text-lg"></ion-icon>
+                <span>Align</span>
+                <ion-icon name="chevron-down-outline" class="text-xs"></ion-icon>
+            </button>
+            <div x-show="alignOpen" @click.away="alignOpen = false" class="absolute z-20 mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg py-1">
+                <a href="#" onclick="document.execCommand('justifyLeft', false, ''); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kiri</a>
+                <a href="#" onclick="document.execCommand('justifyCenter', false, ''); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tengah</a>
+                <a href="#" onclick="document.execCommand('justifyRight', false, ''); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kanan</a>
+                <a href="#" onclick="document.execCommand('justifyFull', false, ''); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Justify</a>
+            </div>
+        </div>
+    </div>
+
+    {{-- Input Judul Laporan --}}
+    <div class="mb-4">
+        <label for="title" class="block text-sm font-medium text-gray-700">Judul Laporan</label>
+        <input type="text" id="title" wire:model="title" placeholder="Masukkan judul laporan" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
     </div>
 
     {{-- Input Tanggal --}}
@@ -83,15 +109,35 @@
 
     {{-- Tombol Aksi --}}
     <div class="mt-4 flex flex-wrap gap-2">
-        <button type="button" wire:click="addRow" class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
-            + Tambah Baris
+        {{-- Tambah & hapus baris --}}
+        <button type="button" wire:click="addRow" class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
+            <ion-icon name="add-outline" class="text-lg"></ion-icon>
+            <span>Baris</span>
         </button>
-        <button type="button" wire:click="addColumn" @if (count($columns) >= 26) disabled @endif class="bg-gray-200 hover:bg-gray-300 text-gray-700 px-4 py-2 rounded-lg text-sm font-medium">
-            + Tambah Kolom
+        <button type="button" wire:click="removeLastRow" @if(count($rows) <= 1) disabled @endif class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
+            <ion-icon name="remove-outline" class="text-lg"></ion-icon>
+            <span>Baris</span>
         </button>
-        <button type="button" wire:click="save" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium">
+        {{-- Tambah & hapus kolom --}}
+        <button type="button" wire:click="addColumn" @if (count($columns) >= 26) disabled @endif class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
+            <ion-icon name="add-outline" class="text-lg"></ion-icon>
+            <span>Kolom</span>
+        </button>
+        <button type="button" wire:click="removeLastColumn" @if(count($columns) <= 1) disabled @endif class="flex items-center gap-1 bg-gray-200 hover:bg-gray-300 text-gray-700 px-3 py-2 rounded-lg text-sm font-medium">
+            <ion-icon name="remove-outline" class="text-lg"></ion-icon>
+            <span>Kolom</span>
+        </button>
+
+        {{-- Simpan --}}
+        <button type="button" wire:click="save" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
             Simpan
         </button>
-        {{-- Tombol export CSV dihapus sesuai permintaan --}}
+
+        {{-- Preview PDF (tampil jika sudah disimpan) --}}
+        @if($reportId)
+        <a href="{{ route('client.laporan.preview', $reportId) }}" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
+            Preview
+        </a>
+        @endif
     </div>
 </div>

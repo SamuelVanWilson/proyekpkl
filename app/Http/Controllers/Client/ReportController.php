@@ -114,6 +114,40 @@ class ReportController extends Controller
         return $pdf->download($fileName);
     }
 
+    /**
+     * Halaman preview PDF dengan opsi meta (judul, logo).
+     */
+    public function preview(DailyReport $dailyReport)
+    {
+        $this->authorize('view', $dailyReport);
+        return view('client.laporan.preview', ['report' => $dailyReport]);
+    }
+
+    /**
+     * Update meta data (judul, logo) dari preview.
+     */
+    public function updatePreview(Request $request, DailyReport $dailyReport)
+    {
+        $this->authorize('update', $dailyReport);
+        $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
+            'logo'  => 'nullable|image|max:2048',
+        ]);
+        $data = $dailyReport->data ?? [];
+        // Pastikan struktur meta tersedia
+        if (!isset($data['meta'])) {
+            $data['meta'] = [];
+        }
+        $data['meta']['title'] = $validated['title'] ?? ($data['meta']['title'] ?? '');
+        if ($request->hasFile('logo')) {
+            $path = $request->file('logo')->store('logos', 'public');
+            $data['meta']['logo'] = $path;
+        }
+        $dailyReport->data = $data;
+        $dailyReport->save();
+        return back()->with('success', 'Informasi laporan diperbarui.');
+    }
+
     public function saveFormBuilder(Request $request, User $user = null) // Tambahkan User $user = null untuk Client
     {
         // Validasi sekarang memeriksa 'label' bukan 'name' untuk input pengguna

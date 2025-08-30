@@ -50,6 +50,20 @@ class SimpleTable extends Component
     public $rows = [];
 
     /**
+     * Judul laporan. Disimpan di meta data.
+     *
+     * @var string
+     */
+    public $title = '';
+
+    /**
+     * Baris yang dipilih untuk dihapus (optional)
+     *
+     * @var int|null
+     */
+    public $selectedRowIndex = null;
+
+    /**
      * Jalankan sekali ketika komponen di‑mount.
      * Jika diberikan reportId, muat data laporan untuk diedit.
      */
@@ -66,6 +80,8 @@ class SimpleTable extends Component
             if ($report) {
                 // Gunakan tanggal dari laporan
                 $this->date = $report->tanggal;
+                // Muat meta data jika ada
+                $this->title = $report->data['meta']['title'] ?? '';
                 // Jika data tersedia (laporan biasa), gunakan kolom dan baris tersimpan
                 if (!empty($report->data)) {
                     $this->columns = $report->data['columns'] ?? [];
@@ -109,6 +125,16 @@ class SimpleTable extends Component
     }
 
     /**
+     * Hapus baris terakhir.
+     */
+    public function removeLastRow()
+    {
+        if (!empty($this->rows)) {
+            array_pop($this->rows);
+        }
+    }
+
+    /**
      * Hapus baris berdasarkan indeks.
      *
      * @param int $index
@@ -134,6 +160,21 @@ class SimpleTable extends Component
         // Tambahkan sel kosong di setiap baris
         foreach ($this->rows as $i => $row) {
             $this->rows[$i][$next] = '';
+        }
+    }
+
+    /**
+     * Hapus kolom terakhir.
+     */
+    public function removeLastColumn()
+    {
+        $last = end($this->columns);
+        if ($last) {
+            array_pop($this->columns);
+            // Hapus data untuk kolom ini dari setiap baris
+            foreach ($this->rows as $i => $row) {
+                unset($this->rows[$i][$last]);
+            }
         }
     }
 
@@ -170,11 +211,8 @@ class SimpleTable extends Component
                 abort(403);
             }
         } else {
-            // Cari laporan berdasarkan user dan tanggal, atau buat baru
-            $report = DailyReport::firstOrNew([
-                'user_id' => Auth::id(),
-                'tanggal' => $this->date,
-            ]);
+            // Buat instance baru untuk laporan baru
+            $report = new DailyReport();
         }
 
         // Set nilai dan simpan
@@ -183,6 +221,9 @@ class SimpleTable extends Component
         $report->data = [
             'columns' => $this->columns,
             'rows'    => $this->rows,
+            'meta'    => [
+                'title' => $this->title,
+            ],
         ];
         $report->save();
         // Perbarui reportId (berguna saat edit)

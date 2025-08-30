@@ -101,6 +101,10 @@ Route::middleware('auth')->group(function () {
             Route::get('/laporan/histori/{dailyReport}/preview-pdf', [ReportController::class, 'previewPdf'])->name('laporan.histori.pdf');
             // Unduh PDF laporan
             Route::get('/laporan/histori/{dailyReport}/download', [ReportController::class, 'downloadPdf'])->name('laporan.histori.download');
+
+            // Halaman preview PDF dengan opsi judul & logo serta export, dapat diakses setelah laporan disimpan
+            Route::get('/laporan/{dailyReport}/preview', [ReportController::class, 'preview'])->name('laporan.preview');
+            Route::post('/laporan/{dailyReport}/preview', [ReportController::class, 'updatePreview'])->name('laporan.preview.update');
             Route::get('/profil', [ProfileController::class, 'index'])->name('profil.index');
             Route::get('/berlangganan', [ProfileController::class, 'show'])->name('subscribe.show');
             Route::post('/berlangganan/proses', [ProfileController::class, 'process'])->name('subscribe.process');

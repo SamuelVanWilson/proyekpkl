@@ -23,7 +23,17 @@
     <div class="container">
         <div class="header">
             @if(!empty($report->data))
-                <h2>Laporan Harian</h2>
+                @php
+                    $meta = $report->data['meta'] ?? [];
+                    $title = $meta['title'] ?? null;
+                    $logoPath = $meta['logo'] ?? null;
+                @endphp
+                @if($logoPath)
+                    <div style="text-align:center; margin-bottom:10px;">
+                        <img src="{{ public_path('storage/'.$logoPath) }}" style="max-height:60px;">
+                    </div>
+                @endif
+                <h2>{{ $title ?? 'Laporan Harian' }}</h2>
             @else
                 <h2>Laporan Penimbangan</h2>
             @endif
