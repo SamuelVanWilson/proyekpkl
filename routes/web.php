@@ -31,6 +31,13 @@ Route::middleware('guest')->group(function () {
     Route::get('/register/step3', [AuthController::class, 'showRegisterStep3'])->name('register.step3.show');
     Route::post('/register/step3', [AuthController::class, 'postRegisterStep3'])->name('register.step3.post');
 
+    // Rute sederhana untuk halaman lupa password. Ini bukan implementasi reset password Laravel
+    // secara penuh, namun setidaknya menghindari error rute tidak ditemukan. Anda bisa
+    // menyesuaikan implementasi sesuai kebutuhan (misal, menambahkan fitur kirim email).
+    Route::get('/forgot-password', function () {
+        return view('auth.forgot-password');
+    })->name('password.request');
+
     Route::get('/register/consent', [AuthController::class, 'showRegisterConsent'])->name('register.consent.show');
     Route::post('/register/consent', [AuthController::class, 'postRegisterConsent'])->name('register.consent.post');
 });
