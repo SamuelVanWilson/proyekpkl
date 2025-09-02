@@ -155,4 +155,46 @@
             Preview
         </button>
     </div>
+
+    {{-- Skrip untuk menyimpan draft ke localStorage dan memuatnya kembali saat halaman dimuat --}}
+    <script>
+        document.addEventListener('livewire:load', function () {
+            // Jika sedang membuat laporan baru (reportId null) dan ada draft, muat dari localStorage
+            if (!@this.get('reportId')) {
+                const draft = localStorage.getItem('simple-report-draft');
+                if (draft) {
+                    try {
+                        const data = JSON.parse(draft);
+                        if (data.columns && data.rows) {
+                            @this.set('columns', data.columns);
+                            @this.set('rows', data.rows);
+                            @this.set('title', data.title ?? '');
+                            @this.set('date', data.date ?? @this.get('date'));
+                        }
+                    } catch (e) {}
+                }
+            } else {
+                // Jika laporan sudah disimpan, hapus draft lama
+                localStorage.removeItem('simple-report-draft');
+            }
+
+            // Update draft setiap kali data tabel berubah. Event tableUpdated dikirim dari Livewire
+            document.addEventListener('tableUpdated', function () {
+                if (!@this.get('reportId')) {
+                    const data = {
+                        columns: @this.get('columns'),
+                        rows: @this.get('rows'),
+                        title: @this.get('title'),
+                        date: @this.get('date')
+                    };
+                    localStorage.setItem('simple-report-draft', JSON.stringify(data));
+                }
+            });
+
+            // Jika laporan baru saja disimpan, hapus draf
+            document.addEventListener('reportSaved', function () {
+                localStorage.removeItem('simple-report-draft');
+            });
+        });
+    </script>
 </div>

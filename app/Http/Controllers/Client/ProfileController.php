@@ -119,14 +119,21 @@ class ProfileController extends Controller
         // Cek apakah sudah ada pesanan pending untuk paket yang sama
         $pending = $user->subscriptions()->where('payment_status', 'pending')->where('plan', $plan)->latest()->first();
         if ($pending) {
-            // Jika sudah ada, gunakan pesanan tersebut
+            // Jika sudah ada pesanan pending, gunakan pesanan tersebut. Pastikan kolom number dan atribut lainnya terisi.
             $subscription = $pending;
+            if (empty($subscription->number)) {
+                $subscription->number = 'SUB-' . strtoupper(uniqid());
+            }
+            // Perbarui harga dan masa berlaku jika belum diisi atau berbeda dengan paket saat ini
+            $subscription->total_price = $price;
+            $subscription->subscription_expires_at = now()->addDays($duration);
+            $subscription->plan = $plan;
+            $subscription->save();
         } else {
-            // Buat pesanan baru
+            // Buat pesanan baru. Kolom number wajib diisi karena unique
             $subscription = $user->subscriptions()->create([
+                'number' => 'SUB-' . strtoupper(uniqid()),
                 'plan' => $plan,
-                'price' => $price,
-                'duration' => $duration,
                 'total_price' => $price,
                 'payment_status' => 'pending',
                 'subscription_expires_at' => now()->addDays($duration),
@@ -140,7 +147,7 @@ class ProfileController extends Controller
             $subscription->save();
         }
 
-        return redirect()->route('client.subscribe.show')->with([
+        return redirect()->route('subscribe.show')->with([
             'snapToken' => $subscription->snap_token,
             'subscription' => $subscription,
         ]);

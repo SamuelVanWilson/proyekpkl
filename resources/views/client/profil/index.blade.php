@@ -67,7 +67,9 @@
             <span class="text-sm text-gray-900">{{ $user->nomor_telepon }}</span>
         </div>
         @endif
-        
+        <div class="p-4">
+            <a href="{{ route('client.profil.edit') }}" class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium">Ubah Data</a>
+        </div>
     </div>
 </div>
 
@@ -75,11 +77,6 @@
     <div class="mt-6">
         <h2 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pengaturan</h2>
         <div class="mt-2 bg-white rounded-xl border border-gray-200 divide-y divide-gray-200">
-
-            <div class="p-4 flex justify-between items-center w-full text-left">
-                <a href="{{ route('client.profil.edit') }}" class="font-medium text-blue-600">Ubah Data</a>
-                <ion-icon name="settings-outline" class="text-gray-400 text-xl"></ion-icon>
-            </div>
 
             {{-- Tombol Install PWA --}}
             <button id="install-app-button" onclick="promptInstall()" style="display: none;" class="p-4 flex justify-between items-center w-full text-left">

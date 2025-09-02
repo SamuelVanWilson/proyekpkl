@@ -59,7 +59,7 @@
                 snap.pay('{{ $snapToken }}', {
                     onSuccess: function(result) {
                         console.log('Pembayaran sukses:', result);
-                        window.location.href = '{{ route('subscribe.process') }}';
+                        window.location.href = '{{ route('client.subscribe.process') }}';
                     },
                     onPending: function(result) {
                         console.log('Pembayaran menunggu:', result);
@@ -75,47 +75,66 @@
         </script>
     @else
         {{-- Belum ada pesanan -- tampilkan pilihan paket --}}
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div class="bg-white border border-gray-200 rounded-lg p-6 flex flex-col">
-                <h2 class="text-lg font-semibold mb-2">Paket Mingguan</h2>
-                <p class="text-3xl font-bold text-blue-700 mb-1">Rp7.000</p>
-                <ul class="text-sm text-gray-600 mb-4 space-y-1">
-                    <li>&bull; Akses laporan advanced</li>
-                    <li>&bull; Fitur grafik data</li>
-                    <li>&bull; Kuota ekspor PDF tanpa batas</li>
-                </ul>
-                <form method="POST" action="{{ route('client.subscribe.plan', 'mingguan') }}" class="mt-auto">
-                    @csrf
-                    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium">Pilih</button>
-                </form>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {{-- Paket Mingguan --}}
+            <div class="bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden flex flex-col">
+                {{-- Banner (gambar ilustrasi placeholder) --}}
+                <div class="h-32 md:h-36 bg-gray-100 flex items-center justify-center">
+                    <span class="text-gray-400 text-sm">Gambar Paket Mingguan</span>
+                </div>
+                <div class="p-6 flex flex-col flex-grow">
+                    <h2 class="text-lg font-semibold mb-2">Paket Mingguan</h2>
+                    <p class="text-3xl font-bold text-blue-700 mb-4">Rp7.000</p>
+                    <ul class="text-sm text-gray-600 mb-6 space-y-1 flex-grow">
+                        <li>&bull; Akses laporan advanced</li>
+                        <li>&bull; Fitur grafik data</li>
+                        <li>&bull; Ekspor PDF tanpa batas</li>
+                    </ul>
+                    <form method="POST" action="{{ route('client.subscribe.plan', 'mingguan') }}" class="mt-auto">
+                        @csrf
+                        <button class="w-full py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 shadow-md hover:brightness-110 transition">Pilih</button>
+                    </form>
+                </div>
             </div>
-            <div class="bg-white border border-gray-200 rounded-lg p-6 flex flex-col">
-                <h2 class="text-lg font-semibold mb-2">Paket Bulanan</h2>
-                <p class="text-3xl font-bold text-blue-700 mb-1">Rp10.000</p>
-                <ul class="text-sm text-gray-600 mb-4 space-y-1">
-                    <li>&bull; Akses laporan advanced</li>
-                    <li>&bull; Fitur grafik data</li>
-                    <li>&bull; Kuota ekspor PDF tanpa batas</li>
-                    <li>&bull; Kontrol laporan per bulan</li>
-                </ul>
-                <form method="POST" action="{{ route('client.subscribe.plan', 'bulanan') }}" class="mt-auto">
-                    @csrf
-                    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium">Pilih</button>
-                </form>
+            {{-- Paket Bulanan --}}
+            <div class="bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden flex flex-col">
+                <div class="h-32 md:h-36 bg-gray-100 flex items-center justify-center">
+                    <span class="text-gray-400 text-sm">Gambar Paket Bulanan</span>
+                </div>
+                <div class="p-6 flex flex-col flex-grow">
+                    <h2 class="text-lg font-semibold mb-2">Paket Bulanan</h2>
+                    <p class="text-3xl font-bold text-blue-700 mb-4">Rp10.000</p>
+                    <ul class="text-sm text-gray-600 mb-6 space-y-1 flex-grow">
+                        <li>&bull; Akses laporan advanced</li>
+                        <li>&bull; Fitur grafik data</li>
+                        <li>&bull; Ekspor PDF tanpa batas</li>
+                        <li>&bull; Kontrol laporan per bulan</li>
+                    </ul>
+                    <form method="POST" action="{{ route('client.subscribe.plan', 'bulanan') }}" class="mt-auto">
+                        @csrf
+                        <button class="w-full py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 shadow-md hover:brightness-110 transition">Pilih</button>
+                    </form>
+                </div>
             </div>
-            <div class="bg-white border border-gray-200 rounded-lg p-6 flex flex-col">
-                <h2 class="text-lg font-semibold mb-2">Paket 3 Bulan</h2>
-                <p class="text-3xl font-bold text-blue-700 mb-1">Rp20.000</p>
-                <ul class="text-sm text-gray-600 mb-4 space-y-1">
-                    <li>&bull; Akses laporan advanced</li>
-                    <li>&bull; Fitur grafik data</li>
-                    <li>&bull; Kuota ekspor PDF tanpa batas</li>
-                    <li>&bull; Lebih hemat per bulan</li>
-                </ul>
-                <form method="POST" action="{{ route('client.subscribe.plan', 'triwulan') }}" class="mt-auto">
-                    @csrf
-                    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium">Pilih</button>
-                </form>
+            {{-- Paket 3 Bulan --}}
+            <div class="bg-white border border-gray-200 rounded-lg shadow-lg overflow-hidden flex flex-col">
+                <div class="h-32 md:h-36 bg-gray-100 flex items-center justify-center">
+                    <span class="text-gray-400 text-sm">Gambar Paket 3 Bulan</span>
+                </div>
+                <div class="p-6 flex flex-col flex-grow">
+                    <h2 class="text-lg font-semibold mb-2">Paket 3 Bulan</h2>
+                    <p class="text-3xl font-bold text-blue-700 mb-4">Rp20.000</p>
+                    <ul class="text-sm text-gray-600 mb-6 space-y-1 flex-grow">
+                        <li>&bull; Akses laporan advanced</li>
+                        <li>&bull; Fitur grafik data</li>
+                        <li>&bull; Ekspor PDF tanpa batas</li>
+                        <li>&bull; Lebih hemat per bulan</li>
+                    </ul>
+                    <form method="POST" action="{{ route('client.subscribe.plan', 'triwulan') }}" class="mt-auto">
+                        @csrf
+                        <button class="w-full py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 shadow-md hover:brightness-110 transition">Pilih</button>
+                    </form>
+                </div>
             </div>
         </div>
     @endif

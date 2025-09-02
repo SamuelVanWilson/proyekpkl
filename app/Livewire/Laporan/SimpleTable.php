@@ -122,8 +122,8 @@ class SimpleTable extends Component
             $row[$col] = '';
         }
         $this->rows[] = $row;
-        // Emit peristiwa untuk sinkronisasi draft di localStorage
-        $this->emit('cellUpdated');
+        // Dispatch browser event agar skrip frontend dapat menyimpan draft ke localStorage
+        $this->dispatchBrowserEvent('tableUpdated');
     }
 
     /**
@@ -133,7 +133,7 @@ class SimpleTable extends Component
     {
         if (!empty($this->rows)) {
             array_pop($this->rows);
-            $this->emit('cellUpdated');
+            $this->dispatchBrowserEvent('tableUpdated');
         }
     }
 
@@ -146,7 +146,7 @@ class SimpleTable extends Component
     {
         unset($this->rows[$index]);
         $this->rows = array_values($this->rows);
-        $this->emit('cellUpdated');
+        $this->dispatchBrowserEvent('tableUpdated');
     }
 
     /**
@@ -165,7 +165,7 @@ class SimpleTable extends Component
         foreach ($this->rows as $i => $row) {
             $this->rows[$i][$next] = '';
         }
-        $this->emit('cellUpdated');
+        $this->dispatchBrowserEvent('tableUpdated');
     }
 
     /**
@@ -180,7 +180,7 @@ class SimpleTable extends Component
             foreach ($this->rows as $i => $row) {
                 unset($this->rows[$i][$last]);
             }
-            $this->emit('cellUpdated');
+            $this->dispatchBrowserEvent('tableUpdated');
         }
     }
 
@@ -196,7 +196,7 @@ class SimpleTable extends Component
         // Pastikan indeks dan kolom valid
         if (isset($this->rows[$rowIndex]) && in_array($column, $this->columns)) {
             $this->rows[$rowIndex][$column] = $value;
-            $this->emit('cellUpdated');
+            $this->dispatchBrowserEvent('tableUpdated');
         }
     }
 
@@ -267,8 +267,8 @@ class SimpleTable extends Component
         $this->reportId = $report->id;
 
         session()->flash('success', 'Laporan berhasil disimpan.');
-        // Emit peristiwa agar draft di localStorage diperbarui/dihapus
-        $this->emit('cellUpdated');
+        // Kirim event browser agar draf di localStorage dihapus setelah laporan tersimpan
+        $this->dispatchBrowserEvent('reportSaved');
         return null;
     }
 
