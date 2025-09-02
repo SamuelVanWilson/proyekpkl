@@ -31,54 +31,55 @@
         </div>
     </div>
 
-    {{-- Detail Data Diri --}}
-    <div class="mt-6">
-        <h2 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data Diri</h2>
-        {{-- Form untuk memperbarui profil --}}
-        <form action="{{ route('client.profil.update') }}" method="POST" class="mt-2 bg-white rounded-xl border border-gray-200 divide-y divide-gray-200">
-            @csrf
-            <div class="p-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Nama Lengkap</label>
-                <input type="text" name="name" value="{{ old('name', $user->name) }}" class="w-full border-gray-300 rounded-lg py-2 px-3 text-sm" required>
-                @error('name') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div class="p-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-                <input type="email" name="email" value="{{ old('email', $user->email) }}" class="w-full border-gray-300 rounded-lg py-2 px-3 text-sm" required>
-                @error('email') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div class="p-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Tanggal Lahir</label>
-                <input type="date" name="tanggal_lahir" value="{{ old('tanggal_lahir', $user->tanggal_lahir) }}" class="w-full border-gray-300 rounded-lg py-2 px-3 text-sm">
-                @error('tanggal_lahir') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div class="p-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Alamat</label>
-                <input type="text" name="alamat" value="{{ old('alamat', $user->alamat) }}" class="w-full border-gray-300 rounded-lg py-2 px-3 text-sm">
-                @error('alamat') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div class="p-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Pekerjaan</label>
-                <input type="text" name="pekerjaan" value="{{ old('pekerjaan', $user->pekerjaan) }}" class="w-full border-gray-300 rounded-lg py-2 px-3 text-sm">
-                @error('pekerjaan') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div class="p-4">
-                <label class="block text-sm font-medium text-gray-700 mb-1">Nomor Telepon</label>
-                <input type="text" name="nomor_telepon" value="{{ old('nomor_telepon', $user->nomor_telepon) }}" class="w-full border-gray-300 rounded-lg py-2 px-3 text-sm">
-                @error('nomor_telepon') <p class="text-sm text-red-500 mt-1">{{ $message }}</p> @enderror
-            </div>
-            <div class="p-4 flex justify-end">
-                <button type="submit" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                    Simpan Perubahan
-                </button>
-            </div>
-        </form>
+{{-- Detail Data Diri (hanya tampilan) --}}
+<div class="mt-6">
+    <h2 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Data Diri</h2>
+    <div class="mt-2 bg-white rounded-xl border border-gray-200 divide-y divide-gray-200">
+        <div class="p-4 flex justify-between items-center">
+            <span class="text-sm font-medium text-gray-700">Nama Lengkap</span>
+            <span class="text-sm text-gray-900">{{ $user->name }}</span>
+        </div>
+        <div class="p-4 flex justify-between items-center">
+            <span class="text-sm font-medium text-gray-700">Email</span>
+            <span class="text-sm text-gray-900">{{ $user->email }}</span>
+        </div>
+        @if($user->tanggal_lahir)
+        <div class="p-4 flex justify-between items-center">
+            <span class="text-sm font-medium text-gray-700">Tanggal Lahir</span>
+            <span class="text-sm text-gray-900">{{ \Carbon\Carbon::parse($user->tanggal_lahir)->translatedFormat('d F Y') }}</span>
+        </div>
+        @endif
+        @if($user->alamat)
+        <div class="p-4 flex justify-between items-center">
+            <span class="text-sm font-medium text-gray-700">Alamat</span>
+            <span class="text-sm text-gray-900">{{ $user->alamat }}</span>
+        </div>
+        @endif
+        @if($user->pekerjaan)
+        <div class="p-4 flex justify-between items-center">
+            <span class="text-sm font-medium text-gray-700">Pekerjaan</span>
+            <span class="text-sm text-gray-900">{{ $user->pekerjaan }}</span>
+        </div>
+        @endif
+        @if($user->nomor_telepon)
+        <div class="p-4 flex justify-between items-center">
+            <span class="text-sm font-medium text-gray-700">Nomor Telepon</span>
+            <span class="text-sm text-gray-900">{{ $user->nomor_telepon }}</span>
+        </div>
+        @endif
+        
     </div>
+</div>
 
     {{-- Aksi & Pengaturan --}}
     <div class="mt-6">
         <h2 class="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Pengaturan</h2>
         <div class="mt-2 bg-white rounded-xl border border-gray-200 divide-y divide-gray-200">
+
+            <div class="p-4 flex justify-between items-center w-full text-left">
+                <a href="{{ route('client.profil.edit') }}" class="font-medium text-blue-600">Ubah Data</a>
+                <ion-icon name="settings-outline" class="text-gray-400 text-xl"></ion-icon>
+            </div>
 
             {{-- Tombol Install PWA --}}
             <button id="install-app-button" onclick="promptInstall()" style="display: none;" class="p-4 flex justify-between items-center w-full text-left">

@@ -122,6 +122,8 @@ class SimpleTable extends Component
             $row[$col] = '';
         }
         $this->rows[] = $row;
+        // Emit peristiwa untuk sinkronisasi draft di localStorage
+        $this->emit('cellUpdated');
     }
 
     /**
@@ -131,6 +133,7 @@ class SimpleTable extends Component
     {
         if (!empty($this->rows)) {
             array_pop($this->rows);
+            $this->emit('cellUpdated');
         }
     }
 
@@ -143,6 +146,7 @@ class SimpleTable extends Component
     {
         unset($this->rows[$index]);
         $this->rows = array_values($this->rows);
+        $this->emit('cellUpdated');
     }
 
     /**
@@ -161,6 +165,7 @@ class SimpleTable extends Component
         foreach ($this->rows as $i => $row) {
             $this->rows[$i][$next] = '';
         }
+        $this->emit('cellUpdated');
     }
 
     /**
@@ -175,6 +180,7 @@ class SimpleTable extends Component
             foreach ($this->rows as $i => $row) {
                 unset($this->rows[$i][$last]);
             }
+            $this->emit('cellUpdated');
         }
     }
 
@@ -190,6 +196,7 @@ class SimpleTable extends Component
         // Pastikan indeks dan kolom valid
         if (isset($this->rows[$rowIndex]) && in_array($column, $this->columns)) {
             $this->rows[$rowIndex][$column] = $value;
+            $this->emit('cellUpdated');
         }
     }
 
@@ -201,6 +208,18 @@ class SimpleTable extends Component
         $this->validate([
             'date' => 'required|date',
         ]);
+
+        $user = Auth::user();
+
+        // Batasi jumlah laporan untuk pengguna tanpa langganan aktif
+        if (!$user->hasActiveSubscription()) {
+            $countReports = DailyReport::where('user_id', $user->id)->count();
+            // Jika reportId null berarti sedang membuat laporan baru. Izinkan jika masih di bawah batas 2.
+            if (!$this->reportId && $countReports >= 2) {
+                session()->flash('error', 'Pengguna tanpa langganan hanya dapat memiliki 2 laporan. Silakan hapus laporan lama atau berlangganan untuk menambah laporan.');
+                return null;
+            }
+        }
 
         // Jika reportId sudah ada, update laporan tersebut
         if ($this->reportId) {
@@ -248,6 +267,8 @@ class SimpleTable extends Component
         $this->reportId = $report->id;
 
         session()->flash('success', 'Laporan berhasil disimpan.');
+        // Emit peristiwa agar draft di localStorage diperbarui/dihapus
+        $this->emit('cellUpdated');
         return null;
     }
 

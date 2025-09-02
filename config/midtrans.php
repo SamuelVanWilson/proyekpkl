@@ -13,19 +13,25 @@
 | Midtrans【538212355415917†L305-L332】.
 |
 */
+
 return [
-    'merchant_id'   => env('MIDTRANS_MERCHANT_ID'),
+    // ID merchant Anda, dapat ditemukan pada dashboard Midtrans di menu
+    // Settings > Access Key. Nama kunci ini sengaja menggunakan ejaan
+    // "mercant" untuk mengikuti contoh dalam dokumentasi.
+    'mercant_id' => env('MIDTRANS_MERCHAT_ID'),
+
     // Client key digunakan di sisi frontend (JavaScript) untuk memanggil Snap.
-    'client_key'    => env('MIDTRANS_CLIENT_KEY'),
+    'client_key' => env('MIDTRANS_CLIENT_KEY'),
+
     // Server key digunakan di sisi backend untuk membuat transaksi Snap.
-    'server_key'    => env('MIDTRANS_SERVER_KEY'),
+    'server_key' => env('MIDTRANS_SERVER_KEY'),
+
     // Aktifkan ke production jika Anda sudah siap menerima pembayaran nyata.
-    'is_production' => (bool) env('MIDTRANS_IS_PRODUCTION', false),
+    'is_production' => false,
+
     // Sanitasi parameter menonaktifkan karakter yang tidak aman dalam permintaan.
-    'is_sanitized'  => (bool) (env('MIDTRANS_IS_SANITIZED', true)),
+    'is_sanitized' => false,
+
     // Aktifkan 3DSecure untuk transaksi kartu kredit jika diperlukan.
-    'is_3ds'        => (bool) (env('MIDTRANS_IS_3DS', true)),
-    'snap_url'      => (bool) env('MIDTRANS_IS_PRODUCTION', false)
-        ? 'https://app.midtrans.com/snap/snap.js'
-        : 'https://app.sandbox.midtrans.com/snap/snap.js',
+    'is_3ds' => false,
 ];

@@ -112,11 +112,18 @@ Route::middleware('auth')->group(function () {
             // Halaman preview PDF dengan opsi judul & logo serta export, dapat diakses setelah laporan disimpan
             Route::get('/laporan/{dailyReport}/preview', [ReportController::class, 'preview'])->name('laporan.preview');
             Route::post('/laporan/{dailyReport}/preview', [ReportController::class, 'updatePreview'])->name('laporan.preview.update');
+            // Profil
             Route::get('/profil', [ProfileController::class, 'index'])->name('profil.index');
-            Route::post('/profil', [ProfileController::class, 'update'])->name('profil.update');
+            // Halaman edit profil terpisah
+            Route::get('/profil/edit', [ProfileController::class, 'edit'])->name('profil.edit');
+            // Perbarui profil
+            Route::post('/profil/update', [ProfileController::class, 'update'])->name('profil.update');
+            // Nonaktifkan akun
             Route::post('/profil/deactivate', [ProfileController::class, 'deactivate'])->name('profil.deactivate');
             Route::get('/berlangganan', [ProfileController::class, 'show'])->name('subscribe.show');
             Route::post('/berlangganan/proses', [ProfileController::class, 'process'])->name('subscribe.process');
+            // Pilih paket langganan, memulai proses pembuatan pesanan dan snap token
+            Route::post('/berlangganan/{plan}', [ProfileController::class, 'start'])->name('subscribe.plan');
         });
 
         // --- FITUR PREMIUM (Butuh verifikasi email DAN langganan aktif) ---

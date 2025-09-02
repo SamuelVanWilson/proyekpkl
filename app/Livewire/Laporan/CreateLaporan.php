@@ -121,7 +121,17 @@ class CreateLaporan extends Component
     {
         $this->validate();
 
-        DB::transaction(function () {
+        $user = Auth::user();
+        // Batas laporan untuk pengguna tanpa langganan
+        if (!$user->hasActiveSubscription()) {
+            $reportCount = DailyReport::where('user_id', $user->id)->count();
+            if ($reportCount >= 2) {
+                session()->flash('error', 'Pengguna tanpa langganan hanya dapat memiliki 2 laporan. Silakan hapus laporan lama atau berlangganan untuk membuat laporan baru.');
+                return redirect()->route('client.laporan.histori');
+            }
+        }
+
+        DB::transaction(function () use ($user) {
             // Simpan semua data dari form dinamis dan kalkulasi ke satu kolom JSON
             $dataToStore = array_merge($this->rekapData, [
                 'jumlah_karung' => $this->jumlah_karung,
@@ -132,7 +142,7 @@ class CreateLaporan extends Component
             ]);
 
             $dailyReport = DailyReport::create([
-                'user_id' => Auth::id(),
+                'user_id' => $user->id,
                 'tanggal' => $this->rekapData['tanggal'], // Simpan tanggal di kolom terpisah untuk sorting
                 'data' => $dataToStore,
             ]);
@@ -141,7 +151,7 @@ class CreateLaporan extends Component
             foreach ($this->rincian as $item) {
                 if(!empty($item['total'])) {
                     Barang::create([
-                        'user_id' => Auth::id(),
+                        'user_id' => $user->id,
                         'daily_report_id' => $dailyReport->id,
                         'data' => $item,
                     ]);

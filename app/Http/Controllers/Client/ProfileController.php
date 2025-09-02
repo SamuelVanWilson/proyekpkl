@@ -15,45 +15,48 @@ class ProfileController extends Controller
     {
         $user = Auth::user();
 
-        // Nomor WhatsApp Anda (hardcode atau ambil dari .env)
-        $adminWhatsapp = '6281234567890'; // Ganti dengan nomor Anda
+        // Cek apakah user memiliki langganan aktif dan ambil subscription terakhir
+        $latestSubscription = $user->subscriptions()->latest()->first();
 
-        // Pesan template untuk permintaan ganti token
-        $pesanWhatsapp = "Halo Admin, saya {$user->name} ({$user->nama_pabrik}) dengan kode unik {$user->kode_unik} ingin meminta penggantian kode unik.";
-        $whatsappUrl = "https://api.whatsapp.com/send?phone={$adminWhatsapp}&text=" . urlencode($pesanWhatsapp);
+        return view('client.profil.index', [
+            'user' => $user,
+            'subscription' => $latestSubscription,
+        ]);
+    }
 
-        // Pastikan Anda membuat view 'client.profil.index'
-        return view('client.profil.index', compact('user', 'whatsappUrl'));
+    /**
+     * Tampilkan halaman edit profil.
+     *
+     * Halaman ini terpisah dari tampilan profil utama agar UI lebih bersih.
+     */
+    public function edit()
+    {
+        $user = Auth::user();
+        return view('client.profil.edit', [
+            'user' => $user,
+        ]);
     }
 
     public function show()
     {
         $user = Auth::user();
-
-        // Tentukan paket default dan harga. Paket bulanan: Rp10.000.
-        $plan = 'bulanan';
-        $totalPrice = 10000;
-
-        // Ambil pesanan langganan yang masih pending jika ada
-        $subscription = $user->subscriptions()->where('payment_status', 'pending')->latest()->first();
+        // Halaman ini menampilkan pilihan paket langganan. Semua logika pembuatan
+        // pesanan dilakukan di method start(). Kita tetap kirim subscription
+        // terbaru agar user tahu status mereka (pending atau paid).
+        $subscription = $user->subscriptions()->latest()->first();
         $snapToken = null;
 
-        // Hanya generate Snap token jika ada pesanan pending
-        if ($subscription) {
+        // Jika ada pesanan pending, pastikan Snap token tersedia
+        if ($subscription && $subscription->payment_status === 'pending') {
             if (!$subscription->snap_token) {
                 $midtransService = new CreateSnapTokenService($subscription);
-                $snapToken = $midtransService->getSnapToken();
-                $subscription->snap_token = $snapToken;
+                $subscription->snap_token = $midtransService->getSnapToken();
                 $subscription->save();
-            } else {
-                $snapToken = $subscription->snap_token;
             }
+            $snapToken = $subscription->snap_token;
         }
 
         return view('client.subscribe.show', [
-            'user' => $user,
-            'plan' => $plan,
-            'totalPrice' => $totalPrice,
             'subscription' => $subscription,
             'snapToken' => $snapToken,
         ]);
@@ -85,6 +88,65 @@ class ProfileController extends Controller
     }
 
     /**
+     * Mulai proses langganan berdasarkan paket yang dipilih.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  string $plan  Paket yang dipilih: mingguan, bulanan, triwulan
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function start(Request $request, string $plan)
+    {
+        $user = Auth::user();
+
+        // Tentukan harga dan durasi berdasarkan paket
+        switch ($plan) {
+            case 'mingguan':
+                $price = 7000;
+                $duration = 7; // hari
+                break;
+            case 'triwulan':
+                $price = 20000;
+                $duration = 90;
+                break;
+            case 'bulanan':
+            default:
+                $price = 10000;
+                $duration = 30;
+                $plan = 'bulanan';
+                break;
+        }
+
+        // Cek apakah sudah ada pesanan pending untuk paket yang sama
+        $pending = $user->subscriptions()->where('payment_status', 'pending')->where('plan', $plan)->latest()->first();
+        if ($pending) {
+            // Jika sudah ada, gunakan pesanan tersebut
+            $subscription = $pending;
+        } else {
+            // Buat pesanan baru
+            $subscription = $user->subscriptions()->create([
+                'plan' => $plan,
+                'price' => $price,
+                'duration' => $duration,
+                'total_price' => $price,
+                'payment_status' => 'pending',
+                'subscription_expires_at' => now()->addDays($duration),
+            ]);
+        }
+
+        // Dapatkan Snap Token dari Midtrans
+        if (!$subscription->snap_token) {
+            $midtransService = new CreateSnapTokenService($subscription);
+            $subscription->snap_token = $midtransService->getSnapToken();
+            $subscription->save();
+        }
+
+        return redirect()->route('client.subscribe.show')->with([
+            'snapToken' => $subscription->snap_token,
+            'subscription' => $subscription,
+        ]);
+    }
+
+    /**
      * Perbarui profil pengguna.
      */
     public function update(Request $request)
@@ -97,7 +159,17 @@ class ProfileController extends Controller
             'alamat' => 'nullable|string|max:255',
             'pekerjaan' => 'nullable|string|max:255',
             'nomor_telepon' => 'nullable|string|max:20',
+            'password' => 'nullable|confirmed|min:8',
         ]);
+
+        // Jika password diisi, hash dan simpan
+        if (!empty($validated['password'])) {
+            $user->password = bcrypt($validated['password']);
+        }
+
+        // Hapus password dari validated agar tidak di‑update massal
+        unset($validated['password']);
+
         $user->update($validated);
         return back()->with('success', 'Profil berhasil diperbarui.');
     }

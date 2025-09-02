@@ -30,10 +30,10 @@
 
         <nav class="fixed bottom-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-sm border-t border-gray-200 safe-area-bottom z-50">
             <div class="flex justify-around items-center h-full max-w-md mx-auto">
-                {{-- Tautan Laporan Harian --}}
+                {{-- Tautan Laporan --}}
                 <a href="{{ route('client.laporan.harian') }}" wire:navigate class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('client.laporan.harian') ? 'text-blue-500' : 'text-gray-500' }} hover:text-blue-500">
-                    <ion-icon name="today-outline" class="text-2xl"></ion-icon>
-                    <span class="text-xs font-medium">Hari Ini</span>
+                    <ion-icon name="document-text-outline" class="text-2xl"></ion-icon>
+                    <span class="text-xs font-medium">Laporan</span>
                 </a>
 
                 {{-- Tautan Histori Laporan --}}

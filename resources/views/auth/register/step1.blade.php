@@ -24,8 +24,5 @@
             <button class="px-4 py-2 rounded-md bg-blue-600 text-white">Lanjut</button>
         </div>
       </form>
-    <p class="text-center text-sm text-gray-600">
-        Sudah punya akun? <a href="{{ route('login') }}" class="font-medium text-blue-600 hover:underline">Masuk di sini</a>
-    </p>
 </div>
 @endsection

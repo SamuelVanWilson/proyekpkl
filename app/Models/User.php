@@ -90,7 +90,15 @@ class User extends Authenticatable
 
     public function hasActiveSubscription(): bool
     {
-        // Pengguna dianggap aktif jika tanggal kadaluarsa langganan ada di masa depan
-        return $this->subscription_expires_at && $this->subscription_expires_at->isFuture();
+        // Periksa apakah kolom subscription_expires_at masih berlaku
+        if ($this->subscription_expires_at && $this->subscription_expires_at->isFuture()) {
+            return true;
+        }
+
+        // Jika tidak, cek apakah ada langganan berstatus paid yang belum kedaluwarsa
+        return $this->subscriptions()
+            ->where('payment_status', 'paid')
+            ->where('subscription_expires_at', '>', now())
+            ->exists();
     }
 }
