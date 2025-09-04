@@ -23,7 +23,7 @@
             <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
                     <h2 class="text-lg font-semibold text-gray-700">Kolom Tabel Rincian</h2>
-                    <button type="button" @click="rincian.push({ name: '', label: '', type: 'text' })" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                    <button type="button" @click="rincian.push({ name: '', label: '', type: 'text' })" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
                         Tambah Kolom Rincian
                     </button>
                 </div>
@@ -58,7 +58,7 @@
             <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
                     <h2 class="text-lg font-semibold text-gray-700">Kolom Formulir Rekapitulasi</h2>
-                    <button type="button" @click="rekap.push({ name: '', label: '', type: 'text', formula: '', readonly: false, default_value: '' })" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                    <button type="button" @click="rekap.push({ name: '', label: '', type: 'text', formula: '', readonly: false, default_value: '' })" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
                         Tambah Kolom Rekap
                     </button>
                 </div>
@@ -105,7 +105,7 @@
                             <div class="flex justify-between items-center pt-1">
                                 <div class="flex items-center">
                                     <input type="hidden" :name="`rekap[${index}][readonly]`" value="0">
-                                    <input type="checkbox" :name="`rekap[${index}][readonly]`" value="1" :id="`readonly_${index}`" x-model="col.readonly" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <input type="checkbox" :name="`rekap[${index}][readonly]`" value="1" :id="`readonly_${index}`" x-model="col.readonly" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
                                     <label :for="`readonly_${index}`" class="ml-2 block text-sm text-gray-700">Read Only</label>
                                 </div>
                                 <button type="button" @click="rekap.splice(index, 1)" class="px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md">Hapus</button>

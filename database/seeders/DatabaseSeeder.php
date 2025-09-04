@@ -5,7 +5,6 @@ namespace Database\Seeders;
 use App\Models\User;
 // use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Facades\Hash;
 
 class DatabaseSeeder extends Seeder
 {
@@ -16,35 +15,6 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             AdminUserSeeder::class,
-        ]);
-        User::create([
-            'name' => 'Budi Santoso',
-            'email' => 'pro@gmail.com',
-            'password' => Hash::make('password'),
-            'alamat' => 'Jl. Merdeka No. 45, Jakarta',
-            'tanggal_lahir' => '2000-05-12',
-            'pekerjaan' => 'Mahasiswa',
-            'nomor_telepon' => '+6281234567890',
-            'role' => 'user',
-            'is_active' => true,
-            'subscription_plan' => 'bulanan',
-            'subscription_expires_at' => now()->addMonth(),
-            'offer_expires_at' => now()->addWeek(),
-        ]);
-
-        User::create([
-            'name' => 'Siti Aminah',
-            'email' => 'biasa@gmail.com',
-            'password' => Hash::make('password'),
-            'alamat' => 'Jl. Diponegoro No. 20, Bandung',
-            'tanggal_lahir' => '1998-11-03',
-            'pekerjaan' => 'Karyawan',
-            'nomor_telepon' => '+6282345678901',
-            'role' => 'user',
-            'is_active' => true,
-            'subscription_plan' => null,
-            'subscription_expires_at' => null,
-            'offer_expires_at' => null,
         ]);
     }
 }

@@ -77,7 +77,7 @@
 
 {{-- Tombol Tambah dengan dropdown pilihan laporan. Laporan advanced dikunci bagi yang belum berlangganan --}}
 <div x-data="{ open: false }" class="fixed bottom-20 right-5 z-50">
-    <button @click="open = !open" class="h-14 w-14 bg-blue-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-blue-600 transition-transform active:scale-90 focus:outline-none">
+    <button @click="open = !open" class="h-14 w-14 bg-green-500 rounded-full flex items-center justify-center text-white shadow-lg hover:bg-green-600 transition-transform active:scale-90 focus:outline-none">
         <ion-icon name="add-outline" class="text-3xl"></ion-icon>
     </button>
     <div x-show="open" @click.away="open = false" class="absolute bottom-16 right-0 mb-2 space-y-2">

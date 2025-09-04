@@ -10,8 +10,9 @@
         .spreadsheet tbody th { background-color: #f9fafb; font-weight: 500; font-size: 0.75rem; color: #6b7280; text-align: center; user-select: none; position: sticky; left: 0; width: 50px; min-width: 50px; z-index: 10; cursor: pointer; }
         .spreadsheet thead th:first-child { left: 0; z-index: 30; }
         .cell-input { width: 100%; height: 100%; border: none; padding: 5px 8px; font-size: 0.875rem; outline: none; background-color: transparent; }
-        .cell-input:focus { box-shadow: inset 0 0 0 2px #3b82f6; }
-        .spreadsheet tbody tr.bg-blue-100, .spreadsheet tbody tr.bg-blue-100 th { background-color: #dbeafe; }
+        /* Ubah warna highlight dan fokus input ke hijau agar konsisten dengan tema Excel */
+        .cell-input:focus { box-shadow: inset 0 0 0 2px #22c55e; }
+        .spreadsheet tbody tr.bg-green-100, .spreadsheet tbody tr.bg-green-100 th { background-color: #dcfce7; }
 
     </style>
 
@@ -65,7 +66,7 @@
                 {{-- Toolbar Aksi --}}
                 <div class="p-3 border-b border-gray-200 flex flex-wrap items-center gap-2">
                     <h2 class="text-lg font-semibold text-gray-800 mr-auto">Tabel Rincian</h2>
-                    <button wire:click="tambahBarisRincian" class="px-3 py-1.5 text-sm font-medium text-blue-600 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors">
+                    <button wire:click="tambahBarisRincian" class="px-3 py-1.5 text-sm font-medium text-green-600 bg-green-50 hover:bg-green-100 rounded-lg transition-colors">
                         Tambah Baris
                     </button>
                     <button wire:click="hapusBarisTerpilih" @if($selectedRowIndex === null) disabled @endif class="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed">
@@ -89,16 +90,16 @@
                         </thead>
                         <tbody>
                             @forelse($rincian as $index => $row)
-                                <tr wire:key="rincian-{{ $index }}" class="{{ $selectedRowIndex === $index ? 'bg-blue-100' : '' }}">
+                                <tr wire:key="rincian-{{ $index }}" class="{{ $selectedRowIndex === $index ? 'bg-green-100' : '' }}">
                                     <th wire:click="selectRow({{ $index }})" class="sticky left-0 z-10 w-12 bg-gray-50 hover:bg-gray-200 transition-colors cursor-pointer">
                                         {{ $index + 1 }}
                                     </th>
                                     @foreach($configRincian as $col)
                                         <td>
-                                            <input
+                                        <input
                                                 type="{{ $col['type'] }}"
                                                 wire:model.blur="rincian.{{ $index }}.{{ $col['name'] }}"
-                                                class="w-full h-full border-none bg-transparent px-2 text-sm focus:ring-0 focus:bg-blue-50" style="min-width: 150px;">
+                                                class="w-full h-full border-none bg-transparent px-2 text-sm focus:ring-0 focus:bg-green-50" style="min-width: 150px;">
                                         </td>
                                     @endforeach
                                 </tr>

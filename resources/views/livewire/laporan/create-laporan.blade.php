@@ -37,7 +37,7 @@
             {{-- Tombol Aksi --}}
             <div class="flex justify-end space-x-3">
                 <a href="{{ route('client.laporan.histori') }}" class="rounded-lg bg-gray-200 px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-300">Batal</a>
-                <button type="submit" class="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-blue-500">
+                <button type="submit" class="rounded-lg bg-green-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-green-700">
                     Simpan Laporan
                 </button>
             </div>

@@ -69,7 +69,7 @@
     {{-- Input Judul Laporan --}}
     <div class="mb-4">
         <label for="title" class="block text-sm font-medium text-gray-700">Judul Laporan</label>
-        <input type="text" id="title" wire:model="title" placeholder="Masukkan judul laporan" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+        <input type="text" id="title" wire:model="title" placeholder="Masukkan judul laporan" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500">
     </div>
 
     {{-- Input Tanggal --}}
@@ -138,7 +138,7 @@
             </button>
         </div>
         {{-- Simpan --}}
-        <button type="button" wire:click="save" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">
+        <button type="button" wire:click="save" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">
             Simpan
         </button>
         {{-- Preview: tombol non‑aktif jika laporan belum disimpan (reportId null) --}}

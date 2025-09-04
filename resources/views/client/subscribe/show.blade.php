@@ -59,7 +59,7 @@
                 snap.pay('{{ $snapToken }}', {
                     onSuccess: function(result) {
                         console.log('Pembayaran sukses:', result);
-                        window.location.href = '{{ route('client.subscribe.process') }}';
+                        window.location.href = '{{ route('subscribe.process') }}';
                     },
                     onPending: function(result) {
                         console.log('Pembayaran menunggu:', result);
@@ -90,7 +90,7 @@
                         <li>&bull; Fitur grafik data</li>
                         <li>&bull; Ekspor PDF tanpa batas</li>
                     </ul>
-                    <form method="POST" action="{{ route('client.subscribe.plan', 'mingguan') }}" class="mt-auto">
+                    <form method="POST" action="{{ route('subscribe.plan', 'mingguan') }}" class="mt-auto">
                         @csrf
                         <button class="w-full py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 shadow-md hover:brightness-110 transition">Pilih</button>
                     </form>
@@ -110,7 +110,7 @@
                         <li>&bull; Ekspor PDF tanpa batas</li>
                         <li>&bull; Kontrol laporan per bulan</li>
                     </ul>
-                    <form method="POST" action="{{ route('client.subscribe.plan', 'bulanan') }}" class="mt-auto">
+                    <form method="POST" action="{{ route('subscribe.plan', 'bulanan') }}" class="mt-auto">
                         @csrf
                         <button class="w-full py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 shadow-md hover:brightness-110 transition">Pilih</button>
                     </form>
@@ -130,7 +130,7 @@
                         <li>&bull; Ekspor PDF tanpa batas</li>
                         <li>&bull; Lebih hemat per bulan</li>
                     </ul>
-                    <form method="POST" action="{{ route('client.subscribe.plan', 'triwulan') }}" class="mt-auto">
+                    <form method="POST" action="{{ route('subscribe.plan', 'triwulan') }}" class="mt-auto">
                         @csrf
                         <button class="w-full py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 shadow-md hover:brightness-110 transition">Pilih</button>
                     </form>

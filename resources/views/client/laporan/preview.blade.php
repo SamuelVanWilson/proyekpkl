@@ -31,7 +31,7 @@
                             @csrf
                             <div>
                                 <label for="title" class="block text-sm font-medium text-gray-700">Judul Laporan</label>
-                                <input type="text" name="title" id="title" value="{{ $report->data['meta']['title'] ?? '' }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-blue-500 focus:border-blue-500">
+                                <input type="text" name="title" id="title" value="{{ $report->data['meta']['title'] ?? '' }}" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500">
                             </div>
                             <div>
                                 <label class="block text-sm font-medium text-gray-700">Logo Perusahaan</label>
@@ -45,7 +45,7 @@
                             </div>
                             <div class="mt-auto flex gap-2">
                                 <a href="{{ route('client.laporan.edit', $report) }}" class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg text-sm font-medium">Kembali</a>
-                                <button type="submit" class="flex-1 text-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium">Simpan Meta</button>
+                                <button type="submit" class="flex-1 text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium">Simpan Meta</button>
                             </div>
                         </form>
                         <div class="mt-4">
