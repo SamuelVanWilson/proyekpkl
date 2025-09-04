@@ -25,7 +25,7 @@
 
         <form class="mt-4" action="{{ route('verification.send') }}" method="POST">
             @csrf
-            <button type="submit" class="w-full sm:w-auto px-6 py-2.5 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 active:scale-95 transition-transform">
+            <button type="submit" class="w-full sm:w-auto px-6 py-2.5 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700 active:scale-95 transition-transform">
                 Kirim Ulang Email Verifikasi
             </button>
         </form>

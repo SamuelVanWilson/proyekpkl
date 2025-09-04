@@ -105,7 +105,8 @@
                                 <div
                                     contenteditable="true"
                                     class="min-w-[100px] outline-none p-1"
-                                    wire:input.debounce.500ms="updateCell({{ $rowIndex }}, '{{ $col }}', $event.target.innerHTML)"
+                                    wire:input.debounce.1000ms="updateCell({{ $rowIndex }}, '{{ $col }}', $event.target.innerHTML)"
+                                    wire:key="cell-{{ $rowIndex }}-{{ $col }}"
                                     >{!! $rows[$rowIndex][$col] ?? '' !!}</div>
                             </td>
                         @endforeach

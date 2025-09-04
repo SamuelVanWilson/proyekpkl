@@ -29,12 +29,12 @@
                 <p class="mt-1 text-gray-600">Coba semua fitur premium.</p>
                 <p class="mt-6 text-4xl font-bold text-gray-900">Rp 8.000</p>
                 <p class="mt-1 text-sm text-gray-500">per 7 hari</p>
-                <button class="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">Pilih Paket</button>
+                <button class="mt-8 w-full py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition">Pilih Paket</button>
             </div>
 
             {{-- Paket 1 Bulan (Paling Populer) --}}
-            <div class="border-2 border-blue-600 rounded-2xl p-6 flex flex-col relative">
-                <div class="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 px-3 py-1 bg-blue-600 text-white text-xs font-semibold rounded-full">PALING POPULER</div>
+            <div class="border-2 border-green-600 rounded-2xl p-6 flex flex-col relative">
+                <div class="absolute top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 px-3 py-1 bg-green-600 text-white text-xs font-semibold rounded-full">PALING POPULER</div>
                 <h3 class="text-lg font-semibold text-gray-900">Bulanan</h3>
                 <p class="mt-1 text-gray-600">Hemat lebih banyak.</p>
                 <p class="mt-6">
@@ -42,7 +42,7 @@
                     <span class="text-4xl font-bold text-gray-900 ml-2">Rp 10.000</span>
                 </p>
                 <p class="mt-1 text-sm text-gray-500">per bulan</p>
-                <button class="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">Pilih Paket</button>
+                <button class="mt-8 w-full py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition">Pilih Paket</button>
             </div>
 
             {{-- Paket 3 Bulan --}}
@@ -54,7 +54,7 @@
                     <span class="text-4xl font-bold text-gray-900 ml-2">Rp 30.000</span>
                 </p>
                 <p class="mt-1 text-sm text-gray-500">per 3 bulan</p>
-                <button class="mt-8 w-full py-3 rounded-lg bg-blue-600 text-white font-semibold hover:bg-blue-700 transition">Pilih Paket</button>
+                <button class="mt-8 w-full py-3 rounded-lg bg-green-600 text-white font-semibold hover:bg-green-700 transition">Pilih Paket</button>
             </div>
         </div>
     </div>

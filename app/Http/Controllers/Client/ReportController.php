@@ -113,6 +113,13 @@ class ReportController extends Controller
         $this->authorize('view', $dailyReport);
         $user = Auth::user();
 
+        // Validasi: pastikan judul laporan terisi sebelum mengunduh PDF
+        // Jika title kosong, jangan lanjutkan export dan berikan pesan kesalahan
+        $reportTitle = $dailyReport->data['meta']['title'] ?? null;
+        if (empty($reportTitle)) {
+            return back()->with('error', 'Judul laporan harus diisi sebelum mengunduh PDF. Silakan isi judul pada halaman laporan atau di preview.');
+        }
+
         // Batasi jumlah export PDF untuk pengguna non‑premium
         if (!$user->hasActiveSubscription()) {
             $exportCount = PdfExport::where('user_id', $user->id)->count();
@@ -125,18 +132,24 @@ class ReportController extends Controller
         $fileName = 'laporan-' . $dailyReport->tanggal . '-' . now()->timestamp . '.pdf';
 
         // Rekam aktivitas export PDF
-        PdfExport::create([
-            'user_id' => $user->id,
-            'daily_report_id' => $dailyReport->id,
-            'filename' => $fileName,
-            'type' => 'daily_report',
-            'filters' => null,
-            'data_snapshot' => $dailyReport->data,
-            'total_items' => 0,
-            'total_pages' => 0,
-            'file_path' => null,
-            'exported_at' => now(),
-        ]);
+        // Beberapa instalasi mungkin belum memiliki kolom 'daily_report_id' pada tabel pdf_exports.
+        // Kita cek skema terlebih dahulu untuk menghindari error SQL.
+        $exportData = [
+            'user_id'      => $user->id,
+            'filename'     => $fileName,
+            'type'         => 'daily_report',
+            'filters'      => null,
+            'data_snapshot'=> $dailyReport->data,
+            'total_items'  => 0,
+            'total_pages'  => 0,
+            'file_path'    => null,
+            'exported_at'  => now(),
+        ];
+        // Tambahkan daily_report_id jika kolom tersedia di database
+        if (\Illuminate\Support\Facades\Schema::hasColumn('pdf_exports', 'daily_report_id')) {
+            $exportData['daily_report_id'] = $dailyReport->id;
+        }
+        PdfExport::create($exportData);
 
         return $pdf->download($fileName);
     }

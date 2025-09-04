@@ -5,7 +5,7 @@
 @section('content')
 {{-- Header Halaman --}}
 <div class="mb-6">
-    <a href="{{ route('admin.users.index') }}" class="text-sm text-blue-600 flex items-center mb-2">
+    <a href="{{ route('admin.users.index') }}" class="text-sm text-green-600 flex items-center mb-2">
         <ion-icon name="arrow-back-outline" class="mr-1"></ion-icon>
         Kembali ke Manajemen Klien
     </a>

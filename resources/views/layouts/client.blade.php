@@ -35,19 +35,19 @@
         {{-- Navigasi bawah untuk mobile (md ke bawah) --}}
         <nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-sm border-t border-gray-200 safe-area-bottom z-50 {{ $hideNav ? 'hidden' : '' }}">
             <div class="flex justify-around items-center h-full max-w-md mx-auto">
-                <a href="{{ route('client.laporan.harian') }}" wire:navigate class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('client.laporan.harian') ? 'text-blue-500' : 'text-gray-500' }} hover:text-blue-500">
+                <a href="{{ route('client.laporan.harian') }}" class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('client.laporan.harian') ? 'text-green-500' : 'text-gray-500' }} hover:text-green-500">
                     <ion-icon name="document-text-outline" class="text-2xl"></ion-icon>
                     <span class="text-xs font-medium">Laporan</span>
                 </a>
-                <a href="{{ route('client.laporan.histori') }}" wire:navigate class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('client.laporan.histori') ? 'text-blue-500' : 'text-gray-500' }} hover:text-blue-500">
+                <a href="{{ route('client.laporan.histori') }}" class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('client.laporan.histori') ? 'text-green-500' : 'text-gray-500' }} hover:text-green-500">
                     <ion-icon name="archive-outline" class="text-2xl"></ion-icon>
                     <span class="text-xs font-medium">Histori</span>
                 </a>
-                <a href="{{ route('client.grafik.index') }}" wire:navigate class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('client.grafik.*') ? 'text-blue-500' : 'text-gray-500' }} hover:text-blue-500">
+                <a href="{{ route('client.grafik.index') }}" class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('client.grafik.*') ? 'text-green-500' : 'text-gray-500' }} hover:text-green-500">
                     <ion-icon name="stats-chart-outline" class="text-2xl"></ion-icon>
                     <span class="text-xs font-medium">Grafik</span>
                 </a>
-                <a href="{{ route('client.profil.index') }}" wire:navigate class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('client.profil.*') ? 'text-blue-500' : 'text-gray-500' }} hover:text-blue-500">
+                <a href="{{ route('client.profil.index') }}" class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('client.profil.*') ? 'text-green-500' : 'text-gray-500' }} hover:text-green-500">
                     <ion-icon name="person-circle-outline" class="text-2xl"></ion-icon>
                     <span class="text-xs font-medium">Profil</span>
                 </a>
@@ -56,19 +56,19 @@
 
         {{-- Navigasi samping untuk desktop (md ke atas) --}}
         <nav class="hidden md:flex flex-col items-center py-4 px-2 bg-white/80 backdrop-blur-sm border-r border-gray-200 fixed top-0 bottom-0 left-0 w-20 z-50 {{ $hideNav ? 'hidden' : '' }}">
-            <a href="{{ route('client.laporan.harian') }}" wire:navigate class="flex flex-col items-center mb-6 {{ request()->routeIs('client.laporan.harian') ? 'text-blue-500' : 'text-gray-500' }} hover:text-blue-500">
+            <a href="{{ route('client.laporan.harian') }}" class="flex flex-col items-center mb-6 {{ request()->routeIs('client.laporan.harian') ? 'text-green-500' : 'text-gray-500' }} hover:text-green-500">
                 <ion-icon name="document-text-outline" class="text-2xl mb-1"></ion-icon>
                 <span class="text-xs font-medium">Laporan</span>
             </a>
-            <a href="{{ route('client.laporan.histori') }}" wire:navigate class="flex flex-col items-center mb-6 {{ request()->routeIs('client.laporan.histori') ? 'text-blue-500' : 'text-gray-500' }} hover:text-blue-500">
+            <a href="{{ route('client.laporan.histori') }}" class="flex flex-col items-center mb-6 {{ request()->routeIs('client.laporan.histori') ? 'text-green-500' : 'text-gray-500' }} hover:text-green-500">
                 <ion-icon name="archive-outline" class="text-2xl mb-1"></ion-icon>
                 <span class="text-xs font-medium">Histori</span>
             </a>
-            <a href="{{ route('client.grafik.index') }}" wire:navigate class="flex flex-col items-center mb-6 {{ request()->routeIs('client.grafik.*') ? 'text-blue-500' : 'text-gray-500' }} hover:text-blue-500">
+            <a href="{{ route('client.grafik.index') }}" class="flex flex-col items-center mb-6 {{ request()->routeIs('client.grafik.*') ? 'text-green-500' : 'text-gray-500' }} hover:text-green-500">
                 <ion-icon name="stats-chart-outline" class="text-2xl mb-1"></ion-icon>
                 <span class="text-xs font-medium">Grafik</span>
             </a>
-            <a href="{{ route('client.profil.index') }}" wire:navigate class="flex flex-col items-center {{ request()->routeIs('client.profil.*') ? 'text-blue-500' : 'text-gray-500' }} hover:text-blue-500">
+            <a href="{{ route('client.profil.index') }}" class="flex flex-col items-center {{ request()->routeIs('client.profil.*') ? 'text-green-500' : 'text-gray-500' }} hover:text-green-500">
                 <ion-icon name="person-circle-outline" class="text-2xl mb-1"></ion-icon>
                 <span class="text-xs font-medium">Profil</span>
             </a>

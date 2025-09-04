@@ -59,7 +59,7 @@ class="mt-1 block w-full rounded-lg border @error('offer_expires_at') border-red
 
 <div class="mt-6 flex items-center justify-end gap-3">
 <a href="{{ route('admin.users.index') }}" class="px-4 py-2 rounded-lg border text-gray-700">Batal</a>
-<button type="submit" class="px-4 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Simpan Perubahan</button>
+<button type="submit" class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">Simpan Perubahan</button>
 </div>
 </form>
 </div>

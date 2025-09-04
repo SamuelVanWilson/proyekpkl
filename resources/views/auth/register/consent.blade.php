@@ -139,7 +139,7 @@
 
         <div class="flex items-center justify-between">
             <a href="{{ route('register.step3.show') }}" class="px-4 py-2 rounded-md border">Kembali</a>
-            <button class="px-4 py-2 rounded-md bg-blue-600 text-white">Selesai &amp; Daftar</button>
+            <button class="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700">Selesai &amp; Daftar</button>
         </div>
     </form>
 </div>

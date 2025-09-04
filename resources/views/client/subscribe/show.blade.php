@@ -43,11 +43,11 @@
         </div>
     @elseif($subscription && $subscription->payment_status === 'pending' && isset($snapToken))
         {{-- Pesanan sedang menunggu pembayaran --}}
-        <div class="bg-blue-50 border border-blue-200 p-4 rounded-lg mb-4">
-            <p class="text-blue-700 font-semibold">Pembayaran Pending</p>
+        <div class="bg-green-50 border border-green-200 p-4 rounded-lg mb-4">
+            <p class="text-green-700 font-semibold">Pembayaran Pending</p>
             <p class="text-sm">Paket: <strong>{{ $planNames[$subscription->plan] ?? ucfirst($subscription->plan) }}</strong></p>
             <p class="text-sm mb-2">Total: <strong>Rp{{ number_format($subscription->total_price, 0, ',', '.') }}</strong></p>
-            <button id="pay-button" class="bg-blue-600 hover:bg-blue-700 text-white font-bold w-full py-2 rounded-lg">
+            <button id="pay-button" class="bg-green-600 hover:bg-green-700 text-white font-bold w-full py-2 rounded-lg">
                 Bayar Sekarang
             </button>
         </div>
@@ -84,7 +84,7 @@
                 </div>
                 <div class="p-6 flex flex-col flex-grow">
                     <h2 class="text-lg font-semibold mb-2">Paket Mingguan</h2>
-                    <p class="text-3xl font-bold text-blue-700 mb-4">Rp7.000</p>
+                    <p class="text-3xl font-bold text-green-700 mb-4">Rp7.000</p>
                     <ul class="text-sm text-gray-600 mb-6 space-y-1 flex-grow">
                         <li>&bull; Akses laporan advanced</li>
                         <li>&bull; Fitur grafik data</li>
@@ -92,7 +92,7 @@
                     </ul>
                     <form method="POST" action="{{ route('subscribe.plan', 'mingguan') }}" class="mt-auto">
                         @csrf
-                        <button class="w-full py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 shadow-md hover:brightness-110 transition">Pilih</button>
+                        <button class="w-full py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-green-500 via-green-600 to-green-700 shadow-md hover:brightness-110 transition">Pilih</button>
                     </form>
                 </div>
             </div>
@@ -103,7 +103,7 @@
                 </div>
                 <div class="p-6 flex flex-col flex-grow">
                     <h2 class="text-lg font-semibold mb-2">Paket Bulanan</h2>
-                    <p class="text-3xl font-bold text-blue-700 mb-4">Rp10.000</p>
+                    <p class="text-3xl font-bold text-green-700 mb-4">Rp10.000</p>
                     <ul class="text-sm text-gray-600 mb-6 space-y-1 flex-grow">
                         <li>&bull; Akses laporan advanced</li>
                         <li>&bull; Fitur grafik data</li>
@@ -112,7 +112,7 @@
                     </ul>
                     <form method="POST" action="{{ route('subscribe.plan', 'bulanan') }}" class="mt-auto">
                         @csrf
-                        <button class="w-full py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 shadow-md hover:brightness-110 transition">Pilih</button>
+                        <button class="w-full py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-green-500 via-green-600 to-green-700 shadow-md hover:brightness-110 transition">Pilih</button>
                     </form>
                 </div>
             </div>
@@ -123,7 +123,7 @@
                 </div>
                 <div class="p-6 flex flex-col flex-grow">
                     <h2 class="text-lg font-semibold mb-2">Paket 3 Bulan</h2>
-                    <p class="text-3xl font-bold text-blue-700 mb-4">Rp20.000</p>
+                    <p class="text-3xl font-bold text-green-700 mb-4">Rp20.000</p>
                     <ul class="text-sm text-gray-600 mb-6 space-y-1 flex-grow">
                         <li>&bull; Akses laporan advanced</li>
                         <li>&bull; Fitur grafik data</li>
@@ -132,7 +132,7 @@
                     </ul>
                     <form method="POST" action="{{ route('subscribe.plan', 'triwulan') }}" class="mt-auto">
                         @csrf
-                        <button class="w-full py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-blue-500 via-blue-600 to-blue-700 shadow-md hover:brightness-110 transition">Pilih</button>
+                        <button class="w-full py-2 rounded-lg text-sm font-medium text-white bg-gradient-to-r from-green-500 via-green-600 to-green-700 shadow-md hover:brightness-110 transition">Pilih</button>
                     </form>
                 </div>
             </div>

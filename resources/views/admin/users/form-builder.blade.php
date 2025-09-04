@@ -13,7 +13,7 @@
     <div class="max-w-4xl mx-auto">
         <div class="mb-6">
             {{-- Header yang disesuaikan untuk admin --}}
-            <a href="{{ route('admin.users.index') }}" class="text-sm text-blue-600 hover:underline">&larr; Kembali ke Daftar Klien</a>
+            <a href="{{ route('admin.users.index') }}" class="text-sm text-green-600 hover:underline">&larr; Kembali ke Daftar Klien</a>
             <h1 class="text-2xl font-bold text-gray-800 mt-2">Atur Kolom Laporan</h1>
             <p class="text-gray-600 mt-1">Anda sedang mengubah konfigurasi untuk: <span class="font-semibold">{{ $user->name }}</span></p>
         </div>
@@ -26,7 +26,7 @@
             <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 mb-6">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
                     <h2 class="text-lg font-semibold text-gray-700">Kolom Tabel Rincian</h2>
-                    <button type="button" @click="rincian.push({ name: '', label: '', type: 'text' })" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                    <button type="button" @click="rincian.push({ name: '', label: '', type: 'text' })" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
                         Tambah Kolom Rincian
                     </button>1
                 </div>
@@ -60,12 +60,12 @@
             <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
                     <h2 class="text-lg font-semibold text-gray-700">Kolom Formulir Rekapitulasi</h2>
-                    <button type="button" @click="rekap.push({ name: '', label: '', type: 'text', formula: '', readonly: false, default_value: '' })" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                    <button type="button" @click="rekap.push({ name: '', label: '', type: 'text', formula: '', readonly: false, default_value: '' })" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
                         Tambah Kolom Rekap
                     </button>
                 </div>
                 <div class="space-y-4">
-                    <div class="p-4 bg-sky-50 border border-sky-200 rounded-lg text-sm text-sky-800">
+                    <div class="p-4 bg-green-50 border border-green-200 rounded-lg text-sm text-green-800">
                         <p>Kolom yang memiliki <strong>Rumus</strong> akan otomatis bersifat <strong>Read-Only</strong>.</p>
                     </div>
                     <template x-for="(col, index) in rekap" :key="index">
@@ -105,7 +105,7 @@
                             <div class="flex justify-between items-center pt-1">
                                 <div class="flex items-center">
                                     <input type="hidden" :name="`rekap[${index}][readonly]`" value="0">
-                                    <input type="checkbox" :name="`rekap[${index}][readonly]`" value="1" :id="`readonly_${index}`" x-model="col.readonly" class="h-4 w-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <input type="checkbox" :name="`rekap[${index}][readonly]`" value="1" :id="`readonly_${index}`" x-model="col.readonly" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
                                     <label :for="`readonly_${index}`" class="ml-2 block text-sm text-gray-700">Read Only</label>
                                 </div>
                                 <button type="button" @click="rekap.splice(index, 1)" class="px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md">Hapus</button>

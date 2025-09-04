@@ -13,7 +13,7 @@
 <div class="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
     <div class="bg-white p-5 rounded-xl shadow-sm">
         <div class="flex items-center">
-            <div class="flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center bg-blue-100 text-blue-600">
+            <div class="flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center bg-green-100 text-green-600">
                 <ion-icon name="people-outline" class="text-xl"></ion-icon>
             </div>
             <div class="ml-4">
@@ -44,7 +44,7 @@
                 <li>
                     <a href="{{ route('admin.users.activity', $report->user) }}" class="block hover:bg-gray-50 p-4">
                         <div class="flex items-center justify-between">
-                            <p class="text-sm font-medium text-blue-600 truncate">{{ $report->user->name }}</p>
+                            <p class="text-sm font-medium text-green-600 truncate">{{ $report->user->name }}</p>
                             <p class="text-xs text-gray-500">{{ $report->created_at->diffForHumans() }}</p>
                         </div>
                         <div class="mt-2 text-sm text-gray-600">

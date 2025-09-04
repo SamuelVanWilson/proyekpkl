@@ -68,7 +68,7 @@
         </div>
         @endif
         <div class="p-4">
-            <a href="{{ route('client.profil.edit') }}" class="w-full block text-center bg-blue-600 hover:bg-blue-700 text-white py-2 rounded-lg text-sm font-medium">Ubah Data</a>
+            <a href="{{ route('client.profil.edit') }}" class="w-full block text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium">Ubah Data</a>
         </div>
     </div>
 </div>
@@ -80,13 +80,13 @@
 
             {{-- Tombol Install PWA --}}
             <button id="install-app-button" onclick="promptInstall()" style="display: none;" class="p-4 flex justify-between items-center w-full text-left">
-                <span class="font-medium text-blue-600">Install Aplikasi</span>
+                <span class="font-medium text-green-600">Install Aplikasi</span>
                 <ion-icon name="download-outline" class="text-gray-400 text-xl"></ion-icon>
             </button>
 
             {{-- Tombol Fullscreen Toggle --}}
             <button onclick="toggleFullscreen()" class="p-4 flex justify-between items-center w-full text-left">
-                <span class="font-medium text-blue-600">Mode Fullscreen</span>
+                <span class="font-medium text-green-600">Mode Fullscreen</span>
                 <ion-icon name="scan-outline" class="text-gray-400 text-xl"></ion-icon>
             </button>
 

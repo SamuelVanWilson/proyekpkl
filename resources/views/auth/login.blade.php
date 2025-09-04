@@ -30,20 +30,20 @@
 
         {{-- Tombol Submit --}}
         <div class="pt-2">
-            <button type="submit" class="w-full flex justify-center py-3 px-4 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition-transform">
+            <button type="submit" class="w-full flex justify-center py-3 px-4 rounded-lg font-semibold text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-transform">
                 Masuk
             </button>
         </div>
 
     {{-- Lupa Password --}}
     <div class="text-center mt-2">
-        <a href="{{ route('password.request') }}" class="text-sm text-blue-600 hover:underline">Lupa password?</a>
+        <a href="{{ route('password.request') }}" class="text-sm text-green-600 hover:underline">Lupa password?</a>
     </div>
     </form>
 
     {{-- Link ke Halaman Registrasi --}}
     <p class="text-center text-sm text-gray-600">
-        Belum punya akun? <a href="{{ route('register') }}" class="font-medium text-blue-600 hover:underline">Daftar sekarang</a>
+        Belum punya akun? <a href="{{ route('register') }}" class="font-medium text-green-600 hover:underline">Daftar sekarang</a>
     </p>
 </div>
 @endsection

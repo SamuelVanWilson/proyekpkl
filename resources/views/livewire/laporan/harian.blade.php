@@ -72,7 +72,7 @@
                     <button wire:click="hapusBarisTerpilih" @if($selectedRowIndex === null) disabled @endif class="px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-lg transition-colors disabled:bg-gray-100 disabled:text-gray-400 disabled:cursor-not-allowed">
                         Hapus Baris
                     </button>
-                    <a href="{{ route('client.laporan.form-builder') }}" wire:navigate class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                    <a href="{{ route('client.laporan.form-builder') }}" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
                         Konfigurasi
                     </a>
                 </div>

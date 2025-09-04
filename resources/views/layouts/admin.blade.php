@@ -23,7 +23,7 @@
         @layer components {
             .input-modern {
                 @apply mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
-                    focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500;
+                    focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500;
             }
         }
     </style>
@@ -35,7 +35,7 @@
         {{-- ... (Isi sidebar tetap sama) ... --}}
         <div class="flex flex-col flex-grow pt-5">
             <div class="flex items-center flex-shrink-0 px-4">
-                <ion-icon name="server-outline" class="text-2xl mr-3 text-blue-400"></ion-icon>
+                <ion-icon name="server-outline" class="text-2xl mr-3 text-green-400"></ion-icon>
                 <span class="text-xl font-semibold">Admin Panel</span>
             </div>
             <nav class="mt-5 flex-1 px-2 space-y-1">
@@ -78,11 +78,11 @@
     <!-- Navigasi Bawah untuk Mobile -->
     <nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/95 backdrop-blur-sm border-t border-gray-200">
         <div class="flex justify-around items-center h-full">
-            <a href="{{ route('admin.dashboard') }}" class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('admin.dashboard') ? 'text-blue-600' : 'text-gray-500' }} hover:text-blue-600">
+            <a href="{{ route('admin.dashboard') }}" class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('admin.dashboard') ? 'text-green-600' : 'text-gray-500' }} hover:text-green-600">
                 <ion-icon name="grid-outline" class="text-2xl"></ion-icon>
                 <span class="text-xs font-medium">Dashboard</span>
             </a>
-            <a href="{{ route('admin.users.index') }}" class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('admin.users.*') ? 'text-blue-600' : 'text-gray-500' }} hover:text-blue-600">
+            <a href="{{ route('admin.users.index') }}" class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('admin.users.*') ? 'text-green-600' : 'text-gray-500' }} hover:text-green-600">
                 <ion-icon name="people-outline" class="text-2xl"></ion-icon>
                 <span class="text-xs font-medium">Klien</span>
             </a>

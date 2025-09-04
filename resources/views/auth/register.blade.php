@@ -90,13 +90,13 @@
         </div>
 
         <div class="pt-2">
-            <button type="submit" class="w-full flex justify-center py-3 px-4 rounded-lg font-semibold text-white bg-blue-600 hover:bg-blue-700 active:scale-95 transition-transform">
+            <button type="submit" class="w-full flex justify-center py-3 px-4 rounded-lg font-semibold text-white bg-green-600 hover:bg-green-700 active:scale-95 transition-transform">
                 Daftar
             </button>
         </div>
     </form>
     <p class="text-center text-sm text-gray-600">
-        Sudah punya akun? <a href="{{ route('login') }}" class="font-medium text-blue-600 hover:underline">Masuk di sini</a>
+        Sudah punya akun? <a href="{{ route('login') }}" class="font-medium text-green-600 hover:underline">Masuk di sini</a>
     </p>
 </div>
 @endsection
