@@ -13,7 +13,6 @@
         /* Ubah warna highlight dan fokus input ke hijau agar konsisten dengan tema Excel */
         .cell-input:focus { box-shadow: inset 0 0 0 2px #22c55e; }
         .spreadsheet tbody tr.bg-green-100, .spreadsheet tbody tr.bg-green-100 th { background-color: #dcfce7; }
-
     </style>
 
     {{-- OPTIMASI: Menambahkan indikator saat koneksi offline --}}
@@ -30,13 +29,11 @@
                 // Jika ada data, kirim ke Livewire untuk dimuat
                 $dispatch('loadDataFromLocalStorage', { data: JSON.parse(savedData) });
             }
-
             // Awasi perubahan pada data $rincian dari Livewire
             $watch('$wire.rincian', (newData) => {
                 console.log('Data changed, saving to local storage...');
                 localStorage.setItem(this.storageKey, JSON.stringify(newData));
             });
-
             // Dengar event dari server untuk membersihkan local storage
             window.addEventListener('laporanDisimpan', () => {
                 console.log('Laporan disimpan, clearing local storage...');
@@ -44,7 +41,6 @@
             });
         }
     }" class="flex flex-col gap-6 mb-[20em]" >
-
 
             {{-- Pesan Sukses --}}
             @if (session('success'))
@@ -138,8 +134,7 @@
                                     @php
                                         $value = $rekap[$field['name']] ?? 0;
                                         $type = $field['type'] ?? 'text';
-                                        $formattedValue = $value; // Nilai default
-
+                                        $formattedValue = $value;
                                         switch ($type) {
                                             case 'rupiah':
                                                 $formattedValue = 'Rp ' . number_format((float)$value, 0, ',', '.');
@@ -161,7 +156,7 @@
                                     {{ $formattedValue }}
                                 </div>
                             @else
-                                {{-- Blok ini untuk nilai yang bisa diedit (tidak ada perubahan) --}}
+                                {{-- Nilai yang bisa diedit --}}
                                 <input type="{{ $field['type'] }}" wire:model.blur="rekap.{{ $field['name'] }}" class="input-modern">
                             @endif
                         </div>

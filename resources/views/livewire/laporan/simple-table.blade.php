@@ -82,10 +82,6 @@
     </div>
 
     {{-- Tabel Data Dinamis --}}
-    <!--
-        Gunakan overflow-y-auto dan tinggi maksimum agar tabel tidak membuat halaman terlalu panjang. 
-        max-h-96 (24rem) memastikan ketinggian tabel terbatas pada perangkat mobile.
-    -->
     <div class="overflow-x-auto overflow-y-auto max-h-96">
         <table class="min-w-full bg-white border border-gray-200 rounded-lg">
             <thead class="bg-gray-50">
@@ -142,7 +138,7 @@
         <button type="button" wire:click="save" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">
             Simpan
         </button>
-        {{-- Preview: tombol non‑aktif jika laporan belum disimpan (reportId null) --}}
+        {{-- Preview: tombol non‑aktif jika laporan belum disimpan --}}
         <button
             type="button"
             wire:click="preview"
@@ -178,21 +174,19 @@
                 // Jika laporan sudah disimpan, hapus draft lama
                 localStorage.removeItem('simple-report-draft');
             }
-
-            // Update draft setiap kali data tabel berubah. Event tableUpdated dikirim dari Livewire
+            // Update draft setiap kali data tabel berubah
             document.addEventListener('tableUpdated', function () {
                 if (!@this.get('reportId')) {
                     const data = {
                         columns: @this.get('columns'),
-                        rows: @this.get('rows'),
-                        title: @this.get('title'),
-                        date: @this.get('date')
+                        rows:    @this.get('rows'),
+                        title:   @this.get('title'),
+                        date:    @this.get('date'),
                     };
                     localStorage.setItem('simple-report-draft', JSON.stringify(data));
                 }
             });
-
-            // Jika laporan baru saja disimpan, hapus draf
+            // Jika laporan baru saja disimpan, hapus draft
             document.addEventListener('reportSaved', function () {
                 localStorage.removeItem('simple-report-draft');
             });
