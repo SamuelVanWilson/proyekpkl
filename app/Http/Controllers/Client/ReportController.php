@@ -277,7 +277,10 @@ class ReportController extends Controller
         if ($user) {
             return redirect()->route('admin.users.index')->with('success', 'Konfigurasi form untuk ' . $user->name . ' berhasil disimpan.');
         } else {
-            return redirect()->route('client.laporan.harian')->with('success', 'Struktur laporan Anda berhasil diperbarui!');
+            // Setelah menyimpan konfigurasi sebagai pengguna biasa/premium, arahkan ke halaman laporan sesuai status langganan.
+            // Gunakan nama rute yang benar tanpa prefix "client." karena rute yang didefinisikan di web.php adalah lapiran.harian dan lapiran.advanced.
+            $targetRoute = Auth::user()->hasActiveSubscription() ? 'laporan.advanced' : 'laporan.harian';
+            return redirect()->route($targetRoute)->with('success', 'Struktur laporan Anda berhasil diperbarui!');
         }
     }
 

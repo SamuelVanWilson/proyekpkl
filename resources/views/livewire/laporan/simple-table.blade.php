@@ -66,50 +66,61 @@
         </div>
     </div>
 
-    {{-- Input Judul Laporan --}}
-    <div class="mb-4">
-        <label for="title" class="block text-sm font-medium text-gray-700">Judul Laporan</label>
-        <input type="text" id="title" wire:model="title" placeholder="Masukkan judul laporan" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500">
+    {{-- Detail Laporan (judul & tanggal) --}}
+    <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-4">
+        <h2 class="text-lg font-semibold text-gray-800">Detail Laporan</h2>
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+                <label for="title" class="block text-sm font-medium text-gray-700">Judul Laporan</label>
+                <input type="text" id="title" wire:model="title" placeholder="Masukkan judul laporan" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500">
+            </div>
+            <div>
+                <label for="date" class="block text-sm font-medium text-gray-700">Tanggal Laporan</label>
+                <input type="date" id="date" wire:model="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+                @error('date')
+                    <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+        </div>
     </div>
 
-    {{-- Input Tanggal --}}
-    <div class="mb-4">
-        <label for="date" class="block text-sm font-medium text-gray-700">Tanggal Laporan</label>
-        <input type="date" id="date" wire:model="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-        @error('date')
-            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-        @enderror
-    </div>
-
-    {{-- Tabel Data Dinamis --}}
-    <div class="overflow-x-auto overflow-y-auto max-h-96">
-        <table class="min-w-full bg-white border border-gray-200 rounded-lg">
-            <thead class="bg-gray-50">
-                <tr>
-                    <th class="py-2 px-3 border-b bg-gray-100 text-center">#</th>
-                    @foreach ($columns as $col)
-                        <th class="py-2 px-3 border-b text-center">{{ $col }}</th>
-                    @endforeach
-                </tr>
-            </thead>
-            <tbody>
-                @foreach ($rows as $rowIndex => $row)
+    {{-- KARTU TABEL RINCIAN --}}
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full mb-4">
+        <div class="p-3 border-b border-gray-200 flex flex-wrap items-center gap-2">
+            <h2 class="text-lg font-semibold text-gray-800 mr-auto">Tabel Rincian</h2>
+            <a href="{{ route('client.laporan.form-builder') }}" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                Konfigurasi
+            </a>
+        </div>
+        <div class="flex-grow overflow-auto">
+            <table class="min-w-full bg-white border border-gray-200">
+                <thead class="bg-gray-50">
                     <tr>
-                        <td class="py-2 px-3 border-b bg-gray-50 text-center">{{ $rowIndex + 1 }}</td>
+                        <th class="py-2 px-3 border-b bg-gray-100 text-center">#</th>
                         @foreach ($columns as $col)
-                            <td class="py-1 px-1 border-b border-r">
-                                <div
-                                    contenteditable="true"
-                                    class="min-w-[100px] outline-none p-1"
-                                    wire:input.debounce.1000ms="updateCell({{ $rowIndex }}, '{{ $col }}', $event.target.innerHTML)"
-                                    wire:key="cell-{{ $rowIndex }}-{{ $col }}"
-                                    >{!! $rows[$rowIndex][$col] ?? '' !!}</div>
-                            </td>
+                            <th class="py-2 px-3 border-b text-center">{{ $col }}</th>
                         @endforeach
                     </tr>
-                @endforeach
-            </tbody>
-        </table>
+                </thead>
+                <tbody>
+                    @foreach ($rows as $rowIndex => $row)
+                        <tr>
+                            <td class="py-2 px-3 border-b bg-gray-50 text-center">{{ $rowIndex + 1 }}</td>
+                            @foreach ($columns as $col)
+                                <td class="py-1 px-1 border-b border-r">
+                                    <div
+                                        contenteditable="true"
+                                        class="min-w-[100px] outline-none p-1"
+                                        wire:input.debounce.1000ms="updateCell({{ $rowIndex }}, '{{ $col }}', $event.target.innerHTML)"
+                                        wire:key="cell-{{ $rowIndex }}-{{ $col }}"
+                                    >{!! $rows[$rowIndex][$col] ?? '' !!}</div>
+                                </td>
+                            @endforeach
+                        </tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
     </div>
 
     {{-- Tombol Aksi --}}
