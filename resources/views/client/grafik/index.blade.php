@@ -25,15 +25,21 @@
             </p>
         </div>
     @else
-        {{-- Render grafik dinamis untuk setiap field numerik --}}
-        @foreach($datasets as $field => $ds)
+        {{-- Grafik Total Uang --}}
         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-            <h2 class="font-semibold text-gray-800">{{ $ds['label'] }}</h2>
+            <h2 class="font-semibold text-gray-800">Pendapatan (Rp)</h2>
             <div class="mt-4">
-                <canvas id="chart-{{ $field }}" height="200"></canvas>
+                <canvas id="grafikTotalUang" height="200"></canvas>
             </div>
         </div>
-        @endforeach
+
+        {{-- Grafik Total Netto --}}
+        <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
+            <h2 class="font-semibold text-gray-800">Total Berat Netto (Kg)</h2>
+            <div class="mt-4">
+                <canvas id="grafikTotalNetto" height="200"></canvas>
+            </div>
+        </div>
     @endif
 </div>
 
@@ -41,57 +47,85 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
+    // Pastikan script ini hanya berjalan jika ada data
     @if(!$labels->isEmpty())
         const labels = @json($labels);
-        const datasets = @json($datasets);
-        // Daftar warna hijau yang berbeda
-        const colors = [
-            'rgb(5, 150, 105)',
-            'rgb(16, 185, 129)',
-            'rgb(4, 120, 87)',
-            'rgb(22, 163, 74)',
-            'rgb(34, 197, 94)',
-            'rgb(52, 211, 153)',
-        ];
-        let colorIndex = 0;
-        Object.keys(datasets).forEach(function(key) {
-            const ctx = document.getElementById('chart-' + key).getContext('2d');
-            const data = datasets[key].data;
-            // Jika kehabisan warna, mulai lagi dari awal
-            const color = colors[colorIndex % colors.length];
-            colorIndex++;
-            new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: datasets[key].label,
-                        data: data,
-                        borderColor: color,
-                        backgroundColor: color.replace('rgb', 'rgba').replace(')', ', 0.1)'),
-                        fill: true,
-                        tension: 0.3,
-                        pointBackgroundColor: color,
-                        pointBorderColor: '#fff',
-                        pointHoverRadius: 6,
-                        pointHoverBackgroundColor: color,
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {
-                        y: {
-                            beginAtZero: true
-                        }
-                    },
-                    plugins: {
-                        legend: {
-                            display: false
+        const dataTotalUang = @json($dataTotalUang);
+        const dataTotalNetto = @json($dataTotalNetto);
+
+        // --- Konfigurasi Grafik Pendapatan ---
+        const ctxUang = document.getElementById('grafikTotalUang').getContext('2d');
+        new Chart(ctxUang, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Uang (Rp)',
+                    data: dataTotalUang,
+                    borderColor: 'rgb(59, 130, 246)',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: 'rgb(59, 130, 246)',
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 7,
+                    pointHoverBackgroundColor: 'rgb(59, 130, 246)',
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value, index, values) {
+                                return new Intl.NumberFormat('id-ID').format(value);
+                            }
                         }
                     }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
                 }
-            });
+            }
+        });
+
+        // --- Konfigurasi Grafik Berat Netto ---
+        const ctxNetto = document.getElementById('grafikTotalNetto').getContext('2d');
+        new Chart(ctxNetto, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Total Netto (Kg)',
+                    data: dataTotalNetto,
+                    borderColor: 'rgb(16, 185, 129)',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointBackgroundColor: 'rgb(16, 185, 129)',
+                    pointBorderColor: '#fff',
+                    pointHoverRadius: 7,
+                    pointHoverBackgroundColor: 'rgb(16, 185, 129)',
+                }]
+            },
+             options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                },
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                }
+            }
         });
     @endif
 </script>

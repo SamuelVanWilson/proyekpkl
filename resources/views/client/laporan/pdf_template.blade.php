@@ -41,57 +41,32 @@
 
         {{-- Jika laporan memiliki data (laporan biasa), tampilkan tabel dinamis; jika tidak, tampilkan rekapitulasi seperti biasa --}}
         @if(!empty($report->data))
-            @php
-                $meta = $report->data['meta'] ?? [];
-                $headerRowIndex = isset($meta['header_row']) && $meta['header_row'] > 0 ? $meta['header_row'] - 1 : 0;
-                $detailPosition = $meta['detail_pos'] ?? 'top';
-                $rows = $report->data['rows'] ?? [];
-                $columns = $report->data['columns'] ?? [];
-                // Ambil judul kolom dari baris pilihan
-                $headerValues = [];
-                if (isset($rows[$headerRowIndex])) {
-                    foreach ($columns as $col) {
-                        $headerValues[] = strip_tags($rows[$headerRowIndex][$col] ?? '');
-                    }
-                } else {
-                    $headerValues = $columns;
-                }
-            @endphp
+            <h3>Informasi Laporan</h3>
+            <table class="rekap-table">
+                <tr><td>Tanggal</td><td>{{ \Carbon\Carbon::parse($report->tanggal)->isoFormat('D MMMM Y') }}</td></tr>
+            </table>
 
-            @if($detailPosition === 'top')
-                <h3>Informasi Laporan</h3>
-                <table class="rekap-table">
-                    <tr><td>Tanggal</td><td>{{ \Carbon\Carbon::parse($report->tanggal)->isoFormat('D MMMM Y') }}</td></tr>
-                </table>
-            @endif
             <h3>Data Laporan</h3>
             <table>
                 <thead>
                     <tr>
                         <th>#</th>
-                        @foreach($headerValues as $header)
-                            <th>{{ $header }}</th>
+                        @foreach($report->data['columns'] as $col)
+                            <th>{{ $col }}</th>
                         @endforeach
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($rows as $rowIndex => $row)
-                        @continue($rowIndex == $headerRowIndex)
+                    @foreach($report->data['rows'] as $rowIndex => $row)
                         <tr>
                             <td>{{ $rowIndex + 1 }}</td>
-                            @foreach($columns as $col)
+                            @foreach($report->data['columns'] as $col)
                                 <td>{!! $row[$col] ?? '' !!}</td>
                             @endforeach
                         </tr>
                     @endforeach
                 </tbody>
             </table>
-            @if($detailPosition === 'bottom')
-                <h3>Informasi Laporan</h3>
-                <table class="rekap-table">
-                    <tr><td>Tanggal</td><td>{{ \Carbon\Carbon::parse($report->tanggal)->isoFormat('D MMMM Y') }}</td></tr>
-                </table>
-            @endif
         @else
             <h3>Rekapitulasi</h3>
             <table class="rekap-table">

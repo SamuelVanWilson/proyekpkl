@@ -37,36 +37,11 @@
                                 <label class="block text-sm font-medium text-gray-700">Logo Perusahaan</label>
                                 @if(!empty($report->data['meta']['logo']))
                                     <div class="mb-2">
-                                        <img src="{{ Storage::url($report->data['meta']['logo']) }}" alt="Logo" class="h-16 object-contain border rounded">
+                                        <img src="{{ asset('storage/'.$report->data['meta']['logo']) }}" alt="Logo" class="h-16 object-contain border rounded">
                                     </div>
                                 @endif
                                 <input type="file" name="logo" class="block w-full text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md cursor-pointer focus:outline-none">
                                 <p class="text-xs text-gray-500 mt-1">Unggah logo baru (opsional)</p>
-                            </div>
-                            <div>
-                                <label for="header_row" class="block text-sm font-medium text-gray-700">Baris Judul Kolom</label>
-                                <select name="header_row" id="header_row" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500">
-                                    {{-- Pilihan baris judul kolom: 1 hingga jumlah baris yang ada --}}
-                                    @php
-                                        $rowCount = isset($report->data['rows']) ? count($report->data['rows']) : 0;
-                                        $selectedHeader = $report->data['meta']['header_row'] ?? 1;
-                                    @endphp
-                                    @for($i = 1; $i <= max($rowCount, 1); $i++)
-                                        <option value="{{ $i }}" {{ $selectedHeader == $i ? 'selected' : '' }}>Baris {{ $i }}</option>
-                                    @endfor
-                                </select>
-                                <p class="text-xs text-gray-500 mt-1">Pilih baris mana yang akan dijadikan sebagai judul kolom di PDF.</p>
-                            </div>
-                            <div>
-                                <label for="detail_pos" class="block text-sm font-medium text-gray-700">Posisi Detail Laporan</label>
-                                @php
-                                    $detailPos = $report->data['meta']['detail_pos'] ?? 'top';
-                                @endphp
-                                <select name="detail_pos" id="detail_pos" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500">
-                                    <option value="top" {{ $detailPos === 'top' ? 'selected' : '' }}>Di Atas Tabel</option>
-                                    <option value="bottom" {{ $detailPos === 'bottom' ? 'selected' : '' }}>Di Bawah Tabel</option>
-                                </select>
-                                <p class="text-xs text-gray-500 mt-1">Tentukan apakah detail laporan tampil di atas atau di bawah tabel data di PDF.</p>
                             </div>
                             <div class="mt-auto flex gap-2">
                                 <a href="{{ route('client.laporan.edit', $report) }}" class="flex-1 text-center bg-gray-200 hover:bg-gray-300 text-gray-800 py-2 rounded-lg text-sm font-medium">Kembali</a>
