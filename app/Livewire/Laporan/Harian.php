@@ -10,78 +10,17 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use App\Models\Barang;
 
-/**
- * Komponen Livewire untuk halaman Laporan Advanced.
- *
- * Komponen ini memuat konfigurasi kolom rincian dan rekap dari table configuration,
- * menyediakan fitur tambah/hapus baris, menghitung ulang rumus rekap, menyimpan laporan,
- * serta memuat data laporan dari penyimpanan lokal (localStorage) saat offline.
- */
 class Harian extends Component
 {
-    /**
-     * Model laporan yang sedang dikerjakan.
-     *
-     * @var \App\Models\DailyReport
-     */
     public $report;
-
-    /**
-     * Data rincian sebagai array baris. Setiap baris adalah array kolom.
-     *
-     * @var array<int, array<string, mixed>>
-     */
     public $rincian = [];
-
-    /**
-     * Data rekap sebagai key => value.
-     *
-     * @var array<string, mixed>
-     */
     public $rekap = [];
-
-    /**
-     * Konfigurasi kolom rincian dari TableConfiguration.
-     *
-     * @var array<int, array<string, mixed>>
-     */
     public $configRincian = [];
-
-    /**
-     * Konfigurasi kolom rekap dari TableConfiguration.
-     *
-     * @var array<int, array<string, mixed>>
-     */
     public $configRekap = [];
-
-    /**
-     * Indeks baris yang dipilih saat ini (untuk penghapusan).
-     *
-     * @var int|null
-     */
     public $selectedRowIndex = null;
 
-    /**
-     * Judul laporan untuk laporan advanced.
-     * Disimpan dalam meta data report->data['meta'].
-     *
-     * @var string
-     */
-    public $title = '';
-
-    /**
-     * Listener Livewire untuk memuat data dari localStorage.
-     *
-     * @var array<string, string>
-     */
     protected $listeners = ['loadDataFromLocalStorage' => 'loadFromLocalStorage'];
 
-    /**
-     * Memuat data dari localStorage ketika event dipicu dari Alpine.
-     *
-     * @param array<string, mixed> $data
-     * @return void
-     */
     public function loadFromLocalStorage($data)
     {
         // Hanya isi data jika $rincian di server masih kosong (laporan baru)
@@ -93,21 +32,13 @@ class Harian extends Component
         }
     }
 
-    /**
-     * Lifecycle hook Livewire: load konfigurasi dan laporan saat komponen di-mount.
-     */
+
     public function mount()
     {
         $this->loadConfig();
         $this->loadOrCreateReport();
     }
 
-    /**
-     * Parsing string angka dengan pemisah ribuan/koma menjadi float.
-     *
-     * @param mixed $value
-     * @return float
-     */
     private function parseNumber($value): float
     {
         if (is_null($value) || $value === '') {
@@ -117,82 +48,63 @@ class Harian extends Component
         $cleaned = preg_replace('/[^\d,.]/', '', (string) $value);
         // 2. Ganti koma desimal gaya Eropa dengan titik.
         $cleaned = str_replace(',', '.', $cleaned);
-        // 3. Hapus titik pemisah ribuan kecuali tiga karakter terakhir (desimal)
+        // 3. Hapus titik pemisah ribuan.
         $cleaned = str_replace('.', '', substr($cleaned, 0, -3)) . substr($cleaned, -3);
 
         return (float) $cleaned;
     }
 
-    /**
-     * Memuat konfigurasi kolom rincian dan rekap dari TableConfiguration.
-     * Jika tidak ada konfigurasi user, gunakan konfigurasi default.
-     */
     public function loadConfig()
     {
-        $config = TableConfiguration::where('user_id', Auth::id())
+        $config = \App\Models\TableConfiguration::where('user_id', \Illuminate\Support\Facades\Auth::id())
                                     ->where('table_name', 'daily_reports')
                                     ->first();
 
         if ($config && !empty($config->columns)) {
             $this->configRincian = $config->columns['rincian'] ?? [];
-            $this->configRekap   = $config->columns['rekap']   ?? [];
+            $this->configRekap = $config->columns['rekap'] ?? [];
         } else {
             // Konfigurasi default jika tidak ada
-            $this->configRincian = [
-                ['name' => 'total', 'label' => 'Total', 'type' => 'number'],
-            ];
+            $this->configRincian = [['name' => 'total', 'label' => 'Total', 'type' => 'number']];
             $this->configRekap = [
                 ['name' => 'tanggal', 'label' => 'Tanggal', 'type' => 'date', 'formula' => null, 'readonly' => false],
-                ['name' => 'lokasi',  'label' => 'Lokasi',  'type' => 'text', 'formula' => null, 'readonly' => false],
+                ['name' => 'lokasi', 'label' => 'Lokasi', 'type' => 'text', 'formula' => null, 'readonly' => false],
                 ['name' => 'total_bruto', 'label' => 'Total Bruto', 'type' => 'number', 'formula' => 'SUM(total)', 'readonly' => true],
             ];
         }
     }
 
-    /**
-     * Memuat laporan existing atau membuat laporan baru untuk hari ini.
-     * Jika sudah ada laporan hari ini, gunakan data yang ada.
-     */
     public function loadOrCreateReport()
     {
-        $this->report = DailyReport::firstOrNew([
-            'user_id' => Auth::id(),
+        $this->report = \App\Models\DailyReport::firstOrNew([
+            'user_id' => \Illuminate\Support\Facades\Auth::id(),
             'tanggal' => now()->toDateString(),
         ]);
 
         if ($this->report->exists && isset($this->report->data['rincian'])) {
-            // Laporan lama: muat rincian dan rekap
             $this->rincian = $this->report->data['rincian'];
-            $this->rekap   = $this->report->data['rekap'];
+            $this->rekap = $this->report->data['rekap'];
         } else {
-            // Laporan baru: buat 10 baris kosong dan siapkan nilai rekap default
+            // Bagian ini hanya berjalan saat membuat laporan BARU
             $this->rincian = [];
             for ($i = 0; $i < 10; $i++) {
                 $this->tambahBarisRincian(false);
             }
 
-            // Set nilai rekap awal: gunakan default_value jika ada, jika tidak gunakan tanggal sekarang untuk tipe date
-            foreach ($this->configRekap as $field) {
+            // --- PERBAIKAN BUG NILAI DEFAULT ---
+            foreach($this->configRekap as $field) {
+                // Prioritaskan nilai default jika ada dan tidak kosong
                 if (isset($field['default_value']) && $field['default_value'] !== '') {
                     $this->rekap[$field['name']] = $field['default_value'];
                 } else {
-                    $this->rekap[$field['name']] = ($field['type'] === 'date') ? now()->format('Y-m-d') : '';
+                    // Jika tidak ada default, gunakan logika lama
+                    $this->rekap[$field['name']] = ($field['type'] == 'date') ? now()->format('Y-m-d') : '';
                 }
             }
         }
         $this->hitungUlang();
-
-        // Ambil judul dari meta jika ada
-        $meta = $this->report->data['meta'] ?? [];
-        $this->title = $meta['title'] ?? '';
     }
 
-    /**
-     * Menambah baris rincian baru.
-     *
-     * @param bool $recalculate
-     * @return void
-     */
     public function tambahBarisRincian($recalculate = true)
     {
         $newRow = [];
@@ -206,22 +118,11 @@ class Harian extends Component
         }
     }
 
-    /**
-     * Pilih atau batal pilih baris (untuk dihapus).
-     *
-     * @param int $index
-     * @return void
-     */
     public function selectRow($index)
     {
         $this->selectedRowIndex = $this->selectedRowIndex === $index ? null : $index;
     }
 
-    /**
-     * Hapus baris yang dipilih.
-     *
-     * @return void
-     */
     public function hapusBarisTerpilih()
     {
         if ($this->selectedRowIndex !== null && isset($this->rincian[$this->selectedRowIndex])) {
@@ -232,33 +133,29 @@ class Harian extends Component
         }
     }
 
-    /**
-     * Trigger Livewire update setiap perubahan input.
-     * Menghitung ulang rekap saat input berubah.
-     */
+    // PERUBAHAN: Method ini sekarang hanya dipanggil saat input kehilangan fokus (blur)
     public function updated($name, $value)
     {
         $this->hitungUlang();
     }
 
-    /**
-     * Hitung ulang semua formula rekap berdasarkan data rincian dan rekap saat ini.
-     * Mendukung fungsi custom PAIRPALC, SUM, SUBT, serta variabel rekap.
-     */
     public function hitungUlang()
     {
         foreach ($this->configRekap as $field) {
             if (!empty($field['formula'])) {
                 $formula = $field['formula'];
 
-                // Tahap 1: FUNGSI BARU PAIRPALC(kolom1 * kolom2)
-                preg_match_all('/PAIRPALC\(([^ "\)]+)\s*([*+\/-])\s*([^"\)]+)\)/', $formula, $pairpMatches, PREG_SET_ORDER);
+                // --- Tahap 1: FUNGSI BARU PAIRPALC(kolom1 * kolom2) ---
+                // Mencari semua fungsi PAIRPALC
+                preg_match_all('/PAIRPALC\(([^ "]+)\s*([*+\/-])\s*([^")]+)\)/', $formula, $pairpMatches, PREG_SET_ORDER);
+
                 foreach ($pairpMatches as $match) {
                     $col1 = trim($match[1]);
                     $operator = trim($match[2]);
                     $col2 = trim($match[3]);
                     $totalPairResult = 0;
-                    // Hitung per baris rincian
+
+                    // Lakukan perhitungan per baris di tabel rincian
                     foreach ($this->rincian as $row) {
                         $val1 = $this->parseNumber($row[$col1] ?? 0);
                         $val2 = $this->parseNumber($row[$col2] ?? 0);
@@ -275,181 +172,89 @@ class Harian extends Component
                     $formula = str_replace($match[0], $totalPairResult, $formula);
                 }
 
-                // Tahap 2: Fungsi Agregat SUM()
+
+                // --- Tahap 2: Fungsi Agregat (SUM, SUBT) ---
+                // Kalkulator SUM()
                 preg_match_all('/SUM\((.*?)\)/', $formula, $sumMatches);
                 foreach ($sumMatches[1] as $colToSum) {
                     $sum = collect($this->rincian)->sum(fn($item) => $this->parseNumber($item[trim($colToSum)] ?? 0));
-                    $formula = str_replace('SUM(' . trim($colToSum) . ')', $sum, $formula);
+                    $formula = str_replace("SUM(" . trim($colToSum) . ")", $sum, $formula);
                 }
 
-                // Tahap 3: Fungsi SUBT(initial, col)
-                preg_match_all('/SUBT\(([^,]+),\s*([^\)]+)\)/', $formula, $subtMatches, PREG_SET_ORDER);
+                // Kalkulator SUBT()
+                preg_match_all('/SUBT\(([^,]+),\s*([^)]+)\)/', $formula, $subtMatches, PREG_SET_ORDER);
                 foreach ($subtMatches as $match) {
                     $initialValueExpr = trim($match[1]);
-                    $colToSubtract    = trim($match[2]);
-                    $initialValue = is_numeric($initialValueExpr)
-                        ? (float) $initialValueExpr
-                        : $this->parseNumber($this->rekap[$initialValueExpr] ?? 0);
+                    $colToSubtract = trim($match[2]);
+                    $initialValue = is_numeric($initialValueExpr) ? (float)$initialValueExpr : $this->parseNumber($this->rekap[$initialValueExpr] ?? 0);
                     $sumOfSubtractColumn = collect($this->rincian)->sum(fn($item) => $this->parseNumber($item[$colToSubtract] ?? 0));
                     $result = $initialValue - $sumOfSubtractColumn;
                     $formula = str_replace($match[0], $result, $formula);
                 }
 
-                // Tahap 4: Ganti variabel rekap ke nilainya (case-insensitive)
                 foreach ($this->rekap as $key => $value) {
-                    if (is_string($key) && strpos(strtolower($formula), strtolower($key)) !== false) {
-                        $numericValue = $this->parseNumber($value);
-                        // Ganti semua variasi huruf besar/kecil
-                        $formula = preg_replace('/\b' . preg_quote($key, '/') . '\b/i', (string) $numericValue, $formula);
+                    if (is_string($key)) {
+                        // PERUBAHAN: Bandingkan dalam huruf kecil semua (case-insensitive)
+                        if (strpos(strtolower($formula), strtolower($key)) !== false) {
+                            $numericValue = $this->parseNumber($value);
+                            // Ganti nama kolom di formula (apapun kapitalisasinya) dengan nilainya
+                            $formula = preg_replace('/\b' . preg_quote($key, '/') . '\b/i', (string)$numericValue, $formula);
+                        }
                     }
                 }
 
-                // Tahap 5: Evaluasi formula sanitized
+                // --- Tahap 4: Evaluasi Final ---
+                // Hitung hasil akhir dari formula yang sudah diproses
                 $this->rekap[$field['name']] = $this->evaluateFormula($formula);
             }
         }
     }
 
-    /**
-     * Evaluasi ekspresi matematika sederhana secara aman.
-     * Hanya karakter matematika dasar yang diperbolehkan.
-     *
-     * @param string $formula
-     * @return float
-     */
+
     private function evaluateFormula($formula)
     {
         try {
+            // Sanitasi sederhana untuk keamanan, hanya izinkan karakter matematika dasar
             $sanitizedFormula = preg_replace('/[^-0-9\.\+\*\/ \(\)]/', '', $formula);
             if (empty($sanitizedFormula) || !preg_match('/[0-9]/', $sanitizedFormula)) {
                 return 0;
             }
+            // Menggunakan @ untuk menekan error jika formula tidak valid (misal: "5 * ")
             return @eval("return {$sanitizedFormula};") ?? 0;
         } catch (\Throwable $e) {
-            Log::error('Formula evaluation error: ' . $e->getMessage() . ' | Original Formula: ' . $formula);
-            return 0;
+            Log::error("Formula evaluation error: " . $e->getMessage() . " | Original Formula: " . $formula);
+            return 0; // Kembalikan 0 jika ada error
         }
     }
 
-    /**
-     * Simpan laporan ke database.
-     * Perbarui tanggal laporan jika kolom rekap menyediakan tanggal.
-     *
-     * @return null
-     */
+    // OPTIMASI: Menambahkan feedback loading pada proses simpan
     public function simpanLaporan()
     {
-        // Persiapkan data yang akan disimpan. Selalu sertakan meta title.
-        $cleanRincian = array_values(array_filter($this->rincian, fn($row) => collect($row)->filter()->isNotEmpty()));
-        $meta = $this->report->data['meta'] ?? [];
-        $meta['title'] = $this->title;
         $dataToStore = [
-            'meta'    => $meta,
-            'rekap'   => $this->rekap,
-            'rincian' => $cleanRincian,
+            'rekap' => $this->rekap,
+            'rincian' => array_values(array_filter($this->rincian, fn($row) => collect($row)->filter()->isNotEmpty()))
         ];
 
-        DB::transaction(function () use ($dataToStore) {
-            // Perbarui tanggal laporan berdasarkan kolom rekap 'tanggal' jika tersedia
-            if (isset($this->rekap['tanggal']) && !empty($this->rekap['tanggal'])) {
-                try {
-                    $this->report->tanggal = \Carbon\Carbon::parse($this->rekap['tanggal'])->toDateString();
-                } catch (\Exception $e) {
-                    // Jika parsing gagal, simpan nilai apa adanya
-                    $this->report->tanggal = $this->rekap['tanggal'];
-                }
-            }
-            // Simpan struktur data laporan
+        \Illuminate\Support\Facades\DB::transaction(function () use ($dataToStore) {
             $this->report->data = $dataToStore;
             $this->report->save();
-
-            // Segarkan entri Barang (rincian) untuk laporan ini
-            Barang::where('daily_report_id', $this->report->id)->delete();
+            \App\Models\Barang::where('daily_report_id', $this->report->id)->delete();
             foreach ($dataToStore['rincian'] as $item) {
-                Barang::create([
-                    'user_id'        => Auth::id(),
-                    'daily_report_id'=> $this->report->id,
-                    'data'           => $item,
+                \App\Models\Barang::create([
+                    'user_id' => \Illuminate\Support\Facades\Auth::id(),
+                    'daily_report_id' => $this->report->id,
+                    'data' => $item,
                 ]);
             }
         });
 
-        // Beritahu frontend bahwa laporan telah disimpan
         $this->dispatch('laporanDisimpan');
+
         session()->flash('success', 'Laporan hari ini berhasil disimpan/diperbarui!');
-        // Tidak ada redirect karena kita tetap di halaman advanced
+        // Setelah simpan, tetap di halaman advanced dan tidak redirect ke laporan biasa
         return null;
     }
 
-    /**
-     * Hapus baris terakhir dari rincian.
-     * Digunakan untuk menyamakan UX dengan laporan biasa.
-     *
-     * @return void
-     */
-    public function removeLastRow()
-    {
-        if (!empty($this->rincian)) {
-            array_pop($this->rincian);
-            $this->hitungUlang();
-        }
-    }
-
-    /**
-     * Buat laporan baru dengan mengosongkan data dan meta.
-     * Mempertahankan konfigurasi tabel saat ini.
-     *
-     * @return void
-     */
-    public function newReport()
-    {
-        // Buat report baru tanpa id
-        $this->report = new DailyReport([
-            'user_id' => Auth::id(),
-            'tanggal' => now()->toDateString(),
-        ]);
-        // Reset rincian menjadi jumlah baris default (10) dengan kolom config
-        $this->rincian = [];
-        for ($i = 0; $i < 10; $i++) {
-            $newRow = [];
-            foreach ($this->configRincian as $col) {
-                $newRow[$col['name']] = '';
-            }
-            $this->rincian[] = $newRow;
-        }
-        // Reset rekap
-        $this->rekap = [];
-        foreach ($this->configRekap as $field) {
-            if (isset($field['default_value']) && $field['default_value'] !== '') {
-                $this->rekap[$field['name']] = $field['default_value'];
-            } else {
-                $this->rekap[$field['name']] = ($field['type'] === 'date') ? now()->format('Y-m-d') : '';
-            }
-        }
-        // Reset meta
-        $this->title = '';
-        // Hapus local storage via event
-        $this->dispatch('laporanDisimpan');
-    }
-
-    /**
-     * Simpan laporan lalu tampilkan preview PDF.
-     *
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function preview()
-    {
-        // Pastikan laporan tersimpan
-        $this->simpanLaporan();
-        // Redirect ke halaman preview
-        return redirect()->route('client.laporan.preview', $this->report->id);
-    }
-
-    /**
-     * Render komponen.
-     *
-     * @return \Illuminate\Contracts\View\View
-     */
     public function render()
     {
         return view('livewire.laporan.harian');

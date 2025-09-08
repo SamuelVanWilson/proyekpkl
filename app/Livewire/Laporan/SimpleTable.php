@@ -7,11 +7,17 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\DailyReport;
 
 /**
- * Komponen Livewire untuk laporan sederhana (biasa).
+ * Komponen Livewire untuk Laporan Biasa.
  *
- * Menyediakan tabel dinamis mirip spreadsheet dengan kolom A-Z dan baris tak terbatas.
- * Pengguna dapat menambah/menghapus baris dan kolom, mengedit sel dengan format dasar,
- * menyimpan laporan ke database, dan melihat preview PDF.
+ * Komponen ini menampilkan grid mirip Excel dengan kolom berlabel A, B, C
+ * dan seterusnya sampai Z serta baris bernomor 1 sampai tak terbatas.
+ * Pengguna dapat menambah baris maupun kolom secara dinamis. Setiap sel
+ * bersifat editable (contenteditable) sehingga Anda dapat mengetik data
+ * bebas, bahkan menerapkan format teks seperti bold/italic dengan toolbar.
+ * Saat menyimpan, data disimpan sebagai struktur JSON dalam kolom
+ * `data` pada tabel daily_reports berupa array `columns` dan `rows`.
+ * Fitur rekapitulasi tetap khusus untuk laporan lanjutan berbayar sehingga
+ * tidak diimplementasikan di sini.
  */
 class SimpleTable extends Component
 {
@@ -23,68 +29,73 @@ class SimpleTable extends Component
     public $reportId = null;
 
     /**
-     * Tanggal laporan.
+     * Tanggal laporan. Digunakan sebagai kunci unik untuk setiap hari.
      *
      * @var string
      */
     public $date;
 
     /**
-     * Array daftar kolom (huruf A-Z).
+     * Daftar kolom saat ini. Berupa huruf A, B, C, dst.
      *
-     * @var array<int, string>
+     * @var array<int,string>
      */
     public $columns = [];
 
     /**
-     * Array daftar baris. Setiap baris adalah array keyed by kolom.
+     * Data baris. Setiap baris adalah array yang diindeks oleh huruf kolom.
      *
-     * @var array<int, array<string, mixed>>
+     * @var array<int, array<string,mixed>>
      */
     public $rows = [];
 
     /**
-     * Judul laporan. Disimpan dalam meta.
+     * Judul laporan. Disimpan di meta data.
      *
      * @var string
      */
     public $title = '';
 
     /**
-     * Baris yang dipilih untuk dihapus.
+     * Baris yang dipilih untuk dihapus (optional)
      *
      * @var int|null
      */
     public $selectedRowIndex = null;
 
     /**
-     * Inisialisasi komponen. Jika reportId diberikan, muat data laporan.
-     *
-     * @param int|null $reportId
+     * Jalankan sekali ketika komponen di‑mount.
+     * Jika diberikan reportId, muat data laporan untuk diedit.
      */
     public function mount($reportId = null)
     {
         $this->reportId = $reportId;
-        // Jika ID laporan diberikan, muat laporan dari database
+
+        // Jika ID laporan diberikan, coba muat dari database
         if ($this->reportId) {
             $report = DailyReport::where('id', $this->reportId)
                 ->where('user_id', Auth::id())
                 ->first();
+
             if ($report) {
-                $this->date  = $report->tanggal;
+                // Gunakan tanggal dari laporan
+                $this->date = $report->tanggal;
+                // Muat meta data jika ada
                 $this->title = $report->data['meta']['title'] ?? '';
-                // Gunakan data tersimpan jika ada
+                // Jika data tersedia (laporan biasa), gunakan kolom dan baris tersimpan
                 if (!empty($report->data)) {
                     $this->columns = $report->data['columns'] ?? [];
-                    $this->rows    = $report->data['rows']    ?? [];
+                    $this->rows = $report->data['rows'] ?? [];
                 }
             }
         }
-        // Inisialisasi kolom default jika kosong
+
+        // Jika belum ada kolom (laporan baru), inisialisasi default A-E
         if (empty($this->columns)) {
             $this->columns = range('A', 'E');
         }
-        // Inisialisasi baris default jika kosong
+
+        // Jika belum ada baris (laporan baru), inisialisasi 10 baris
         if (empty($this->rows)) {
             for ($i = 0; $i < 10; $i++) {
                 $row = [];
@@ -94,31 +105,29 @@ class SimpleTable extends Component
                 $this->rows[] = $row;
             }
         }
-        // Set tanggal default untuk laporan baru
+        // Pastikan tanggal terisi jika belum (misalnya laporan baru)
         if (empty($this->date)) {
             $this->date = now()->format('Y-m-d');
         }
     }
 
     /**
-     * Tambah baris baru di tabel.
-     *
-     * @return void
+     * Tambah baris kosong baru.
      */
     public function addRow()
     {
+        // Tambah baris baru dengan kolom yang ada saat ini
         $row = [];
         foreach ($this->columns as $col) {
             $row[$col] = '';
         }
         $this->rows[] = $row;
+        // Dispatch event Livewire 3: table updated
         $this->dispatch('tableUpdated');
     }
 
     /**
      * Hapus baris terakhir.
-     *
-     * @return void
      */
     public function removeLastRow()
     {
@@ -129,10 +138,9 @@ class SimpleTable extends Component
     }
 
     /**
-     * Hapus baris berdasarkan index.
+     * Hapus baris berdasarkan indeks.
      *
      * @param int $index
-     * @return void
      */
     public function removeRow($index)
     {
@@ -142,18 +150,18 @@ class SimpleTable extends Component
     }
 
     /**
-     * Tambah kolom baru sampai Z.
-     *
-     * @return void
+     * Tambahkan kolom baru hingga maksimal Z.
      */
     public function addColumn()
     {
+        // Ambil huruf terakhir, tentukan huruf berikutnya
         $last = end($this->columns);
         if ($last === 'Z') {
-            return;
+            return; // tidak bisa lebih dari Z
         }
         $next = chr(ord($last) + 1);
         $this->columns[] = $next;
+        // Tambahkan sel kosong di setiap baris
         foreach ($this->rows as $i => $row) {
             $this->rows[$i][$next] = '';
         }
@@ -162,14 +170,13 @@ class SimpleTable extends Component
 
     /**
      * Hapus kolom terakhir.
-     *
-     * @return void
      */
     public function removeLastColumn()
     {
         $last = end($this->columns);
         if ($last) {
             array_pop($this->columns);
+            // Hapus data untuk kolom ini dari setiap baris
             foreach ($this->rows as $i => $row) {
                 unset($this->rows[$i][$last]);
             }
@@ -178,17 +185,18 @@ class SimpleTable extends Component
     }
 
     /**
-     * Perbarui nilai sel.
+     * Perbarui nilai sel berdasarkan indeks baris dan nama kolom.
      *
-     * @param int $rowIndex
-     * @param string $column
-     * @param string $value
-     * @return void
+     * @param int $rowIndex Indeks baris
+     * @param string $column Nama kolom (huruf)
+     * @param string $value Nilai baru (HTML dari cell)
      */
     public function updateCell($rowIndex, $column, $value)
     {
+        // Pastikan indeks dan kolom valid
         if (isset($this->rows[$rowIndex]) && in_array($column, $this->columns)) {
-            // Sanitasi: hanya izinkan tag sederhana untuk styling
+            // Sanitasi nilai sel untuk menghapus tag link atau tag berbahaya
+            // Hanya izinkan beberapa tag sederhana seperti bold/italic/underline/strike/span untuk styling
             $cleanValue = strip_tags($value, '<b><i><u><s><span>');
             $this->rows[$rowIndex][$column] = $cleanValue;
             $this->dispatch('tableUpdated');
@@ -196,31 +204,33 @@ class SimpleTable extends Component
     }
 
     /**
-     * Simpan laporan ke database.
-     * Memperbarui existing report jika reportId ada, atau membuat baru jika tidak.
-     *
-     * @return null
+     * Simpan laporan ke database sebagai DailyReport.
      */
     public function save()
     {
         $this->validate([
             'date' => 'required|date',
         ]);
+
         $user = Auth::user();
-        // Batasi jumlah laporan untuk pengguna non‑premium (max 2)
+
+        // Batasi jumlah laporan untuk pengguna tanpa langganan aktif
         if (!$user->hasActiveSubscription()) {
             $countReports = DailyReport::where('user_id', $user->id)->count();
+            // Jika reportId null berarti sedang membuat laporan baru. Izinkan jika masih di bawah batas 2.
             if (!$this->reportId && $countReports >= 2) {
                 session()->flash('error', 'Pengguna tanpa langganan hanya dapat memiliki 2 laporan. Silakan hapus laporan lama atau berlangganan untuk menambah laporan.');
                 return null;
             }
         }
-        // Update existing report
+
+        // Jika reportId sudah ada, update laporan tersebut
         if ($this->reportId) {
             $report = DailyReport::where('id', $this->reportId)
                 ->where('user_id', Auth::id())
                 ->first();
             if ($report) {
+                // Gunakan Carbon untuk memastikan tanggal disimpan dalam format YYYY-MM-DD
                 $report->tanggal = \Carbon\Carbon::parse($this->date)->toDateString();
                 $report->data = [
                     'columns' => $this->columns,
@@ -245,9 +255,10 @@ class SimpleTable extends Component
                 ]);
             }
         } else {
-            // Create new report
+            // Membuat laporan baru tanpa mempertimbangkan tanggal
             $report = DailyReport::create([
                 'user_id' => Auth::id(),
+                // Pastikan tanggal tersimpan dengan benar
                 'tanggal' => \Carbon\Carbon::parse($this->date)->toDateString(),
                 'data' => [
                     'columns' => $this->columns,
@@ -259,30 +270,33 @@ class SimpleTable extends Component
             ]);
         }
         $this->reportId = $report->id;
+
         session()->flash('success', 'Laporan berhasil disimpan.');
+        // Dispatch event agar frontend mengetahui laporan telah disimpan
         $this->dispatch('reportSaved');
         return null;
     }
 
     /**
-     * Simpan laporan lalu arahkan ke halaman preview.
-     *
-     * @return \Illuminate\Http\RedirectResponse
+     * Simpan laporan lalu alihkan ke halaman preview.
      */
     public function preview()
     {
         $this->validate([
             'date' => 'required|date',
         ]);
+
+        // Pastikan data tersimpan terlebih dahulu
         $this->save();
+        // Redirect ke halaman preview dengan ID laporan yang baru disimpan
         return redirect()->route('client.laporan.preview', $this->reportId);
     }
-
+    
     /**
-     * Render komponen.
-     *
-     * @return \Illuminate\Contracts\View\View
+     * Fitur export CSV dihapus karena permintaan pengguna. PDF diekspor melalui controller.
      */
+    // public function export() {}
+
     public function render()
     {
         return view('livewire.laporan.simple-table');
