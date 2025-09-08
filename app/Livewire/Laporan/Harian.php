@@ -251,7 +251,8 @@ class Harian extends Component
         $this->dispatch('laporanDisimpan');
 
         session()->flash('success', 'Laporan hari ini berhasil disimpan/diperbarui!');
-        return $this->redirect(route('client.laporan.harian'), navigate: true);
+        // Setelah simpan, tetap di halaman advanced dan tidak redirect ke laporan biasa
+        return null;
     }
 
     public function render()

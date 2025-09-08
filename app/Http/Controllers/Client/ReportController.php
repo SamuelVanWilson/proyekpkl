@@ -175,13 +175,25 @@ class ReportController extends Controller
         $validated = $request->validate([
             'title' => 'nullable|string|max:255',
             'logo'  => 'nullable|image|max:1024', // batas 1MB
+            'header_row' => 'nullable|integer|min:1',
+            'detail_pos' => 'nullable|in:top,bottom',
         ]);
         $data = $dailyReport->data ?? [];
         // Pastikan struktur meta tersedia
         if (!isset($data['meta'])) {
             $data['meta'] = [];
         }
+        // Simpan judul
         $data['meta']['title'] = $validated['title'] ?? ($data['meta']['title'] ?? '');
+        // Simpan pilihan baris header jika disediakan
+        if (!empty($validated['header_row'])) {
+            $data['meta']['header_row'] = (int) $validated['header_row'];
+        }
+        // Simpan pilihan posisi detail
+        if (!empty($validated['detail_pos'])) {
+            $data['meta']['detail_pos'] = $validated['detail_pos'];
+        }
+        // Tangani upload logo
         if ($request->hasFile('logo')) {
             // Fitur upload logo hanya untuk pengguna berlangganan
             if (!Auth::user()->hasActiveSubscription()) {
@@ -202,7 +214,9 @@ class ReportController extends Controller
         }
         $dailyReport->data = $data;
         $dailyReport->save();
-        return back()->with('success', 'Informasi laporan diperbarui.');
+
+        // Redirect kembali ke halaman preview agar meta yang baru tersimpan langsung terlihat.
+        return redirect()->route('client.laporan.preview', $dailyReport)->with('success', 'Informasi laporan diperbarui.');
     }
 
     public function saveFormBuilder(Request $request, User $user = null) // Tambahkan User $user = null untuk Client
