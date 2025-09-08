@@ -122,9 +122,12 @@ class ReportController extends Controller
 
         // Batasi jumlah export PDF untuk pengguna non‑premium
         if (!$user->hasActiveSubscription()) {
-            $exportCount = PdfExport::where('user_id', $user->id)->count();
-            if ($exportCount >= 3) {
-                return back()->with('error', 'Limit export PDF gratis (3x) telah tercapai. Silakan berlangganan untuk export tanpa batas.');
+            // Hitung ekspor PDF untuk tanggal saat ini saja agar free limit reset setiap hari
+            $exportCountToday = PdfExport::where('user_id', $user->id)
+                ->whereDate('exported_at', today())
+                ->count();
+            if ($exportCountToday >= 3) {
+                return back()->with('error', 'Limit export PDF gratis (3x per hari) telah tercapai. Silakan berlangganan untuk export tanpa batas.');
             }
         }
 

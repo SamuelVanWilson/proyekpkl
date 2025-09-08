@@ -115,10 +115,20 @@
                 </div>
             </div>
 
-            {{-- KARTU FORMULIR REKAPITULASI --}}
+            {{-- KARTU DETAIL LAPORAN --}}
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
-                <h2 class="text-lg font-semibold text-gray-800">Formulir Rekapitulasi</h2>
+                <h2 class="text-lg font-semibold text-gray-800">Detail Laporan</h2>
+                {{-- Judul dan tanggal laporan (tidak dapat diubah) --}}
                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Judul Laporan</label>
+                        <input type="text" value="{{ $report->data['meta']['title'] ?? '' }}" disabled class="input-modern bg-gray-100">
+                    </div>
+                    <div>
+                        <label class="text-sm font-medium text-gray-600">Tanggal Laporan</label>
+                        <input type="date" value="{{ $report->tanggal ?? now()->format('Y-m-d') }}" disabled class="input-modern bg-gray-100">
+                    </div>
+                    {{-- Kolom rekap lainnya --}}
                     @foreach($configRekap as $field)
                         <div>
                             <label class="text-sm font-medium text-gray-600 capitalize">{{ $field['label'] ?? $field['name'] }}</label>

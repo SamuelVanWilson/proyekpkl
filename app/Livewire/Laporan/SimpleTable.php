@@ -195,7 +195,10 @@ class SimpleTable extends Component
     {
         // Pastikan indeks dan kolom valid
         if (isset($this->rows[$rowIndex]) && in_array($column, $this->columns)) {
-            $this->rows[$rowIndex][$column] = $value;
+            // Sanitasi nilai sel untuk menghapus tag link atau tag berbahaya
+            // Hanya izinkan beberapa tag sederhana seperti bold/italic/underline/strike/span untuk styling
+            $cleanValue = strip_tags($value, '<b><i><u><s><span>');
+            $this->rows[$rowIndex][$column] = $cleanValue;
             $this->dispatch('tableUpdated');
         }
     }
@@ -227,7 +230,8 @@ class SimpleTable extends Component
                 ->where('user_id', Auth::id())
                 ->first();
             if ($report) {
-                $report->tanggal = $this->date;
+                // Gunakan Carbon untuk memastikan tanggal disimpan dalam format YYYY-MM-DD
+                $report->tanggal = \Carbon\Carbon::parse($this->date)->toDateString();
                 $report->data = [
                     'columns' => $this->columns,
                     'rows'    => $this->rows,
@@ -240,7 +244,7 @@ class SimpleTable extends Component
                 // Jika tidak ditemukan, buat baru
                 $report = DailyReport::create([
                     'user_id' => Auth::id(),
-                    'tanggal' => $this->date,
+                    'tanggal' => \Carbon\Carbon::parse($this->date)->toDateString(),
                     'data' => [
                         'columns' => $this->columns,
                         'rows'    => $this->rows,
@@ -254,7 +258,8 @@ class SimpleTable extends Component
             // Membuat laporan baru tanpa mempertimbangkan tanggal
             $report = DailyReport::create([
                 'user_id' => Auth::id(),
-                'tanggal' => $this->date,
+                // Pastikan tanggal tersimpan dengan benar
+                'tanggal' => \Carbon\Carbon::parse($this->date)->toDateString(),
                 'data' => [
                     'columns' => $this->columns,
                     'rows'    => $this->rows,

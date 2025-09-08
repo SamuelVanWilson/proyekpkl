@@ -28,9 +28,14 @@
         <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
             <div class="flex justify-between items-start">
                 <div>
-                    {{-- Judul laporan berbeda antara laporan biasa dan advanced --}}
+                    {{-- Judul laporan: gunakan judul meta dari data jika ada, jika tidak isi default. --}}
                     @if(!empty($report->data))
-                        <p class="text-sm font-semibold text-gray-800">Laporan Biasa</p>
+                        @php
+                            // Ambil judul dari meta, fallback "Laporan Tidak Diketahui" jika kosong
+                            $judul = $report->data['meta']['title'] ?? '';
+                            $judul = trim($judul) !== '' ? $judul : 'Laporan Tidak Diketahui';
+                        @endphp
+                        <p class="text-sm font-semibold text-gray-800">{{ $judul }}</p>
                     @else
                         <p class="text-sm font-semibold text-gray-800">{{ $report->lokasi }}</p>
                     @endif
