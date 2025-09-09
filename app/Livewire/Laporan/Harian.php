@@ -67,15 +67,7 @@ class Harian extends Component
      *
      * @var string
      */
-    public $title = '';
-
-    /**
-     * Judul laporan untuk laporan advanced.
-     * Disimpan dalam meta data report->data['meta'].
-     *
-     * @var string
-     */
-    public $title = '';
+    public $reportTitle = '';
 
     /**
      * Listener Livewire untuk memuat data dari localStorage.
@@ -134,7 +126,7 @@ class Harian extends Component
         $this->hitungUlang();
         // Ambil judul dari meta jika ada
         $meta = $this->report->data['meta'] ?? [];
-        $this->title = $meta['title'] ?? '';
+        $this->reportTitle = $meta['title'] ?? '';
     }
 
     /**
@@ -370,7 +362,8 @@ class Harian extends Component
         // Persiapkan data yang akan disimpan. Selalu sertakan meta title.
         $cleanRincian = array_values(array_filter($this->rincian, fn($row) => collect($row)->filter()->isNotEmpty()));
         $meta = $this->report->data['meta'] ?? [];
-        $meta['title'] = $this->title;
+        // Simpan judul laporan dari properti reportTitle
+        $meta['title'] = $this->reportTitle;
         $dataToStore = [
             'meta'    => $meta,
             'rekap'   => $this->rekap,
@@ -451,8 +444,8 @@ class Harian extends Component
                 $this->rekap[$field['name']] = ($field['type'] === 'date') ? now()->format('Y-m-d') : '';
             }
         }
-        // Reset meta
-        $this->title = '';
+        // Reset judul laporan untuk laporan baru
+        $this->reportTitle = '';
         // Hapus local storage via event
         $this->dispatch('laporanDisimpan');
     }

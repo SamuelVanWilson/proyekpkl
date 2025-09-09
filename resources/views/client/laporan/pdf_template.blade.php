@@ -33,10 +33,20 @@
                 $meta = $report->data['meta'] ?? [];
                 $title = $meta['title'] ?? null;
                 $logoPath = $meta['logo'] ?? null;
+                $logoData = null;
+                // Jika ada logo, encode sebagai base64 agar DomPDF dapat menampilkannya
+                if ($logoPath) {
+                    $filePath = storage_path('app/public/' . $logoPath);
+                    if (file_exists($filePath)) {
+                        $mime     = mime_content_type($filePath);
+                        $contents = file_get_contents($filePath);
+                        $logoData = 'data:' . $mime . ';base64,' . base64_encode($contents);
+                    }
+                }
             @endphp
-            @if($logoPath)
+            @if($logoData)
                 <div style="text-align:center; margin-bottom:10px;">
-                    <img src="{{ Storage::url($report->data['meta']['logo']) }}" style="max-height:60px;">
+                    <img src="{{ $logoData }}" style="max-height:60px; max-width:220px; object-fit:contain;">
                 </div>
             @endif
             <h2>{{ $title ?? 'Laporan Harian' }}</h2>
@@ -184,10 +194,12 @@
                     </tr>
                 </thead>
                 <tbody>
+                    @php $rowNo = 0; @endphp
                     @foreach($rows as $rowIndex => $row)
                         @continue($rowIndex == $headerRowIndex)
+                        @php $rowNo++; @endphp
                         <tr>
-                            <td>{{ $rowIndex + 1 }}</td>
+                            <td>{{ $rowNo }}</td>
                             @foreach($columns as $col)
                                 <td>{!! $row[$col] ?? '' !!}</td>
                             @endforeach

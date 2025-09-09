@@ -164,7 +164,7 @@
                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="text-sm font-medium text-gray-600">Judul Laporan</label>
-                        <input type="text" wire:model.lazy="title" class="input-modern" placeholder="Masukkan judul laporan">
+                        <input type="text" wire:model.lazy="reportTitle" class="input-modern" placeholder="Masukkan judul laporan">
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-600">Tanggal Laporan</label>

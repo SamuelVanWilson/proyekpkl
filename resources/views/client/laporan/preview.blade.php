@@ -43,6 +43,11 @@
                                 <input type="file" name="logo" class="block w-full text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md cursor-pointer focus:outline-none">
                                 <p class="text-xs text-gray-500 mt-1">Unggah logo baru (opsional)</p>
                             </div>
+                            @php
+                                // Hanya tampilkan pilihan baris header untuk laporan biasa (bukan advanced)
+                                $isAdvanced = isset($report->data['rincian']) && !empty($report->data['rincian']);
+                            @endphp
+                            @if(!$isAdvanced)
                             <div>
                                 <label for="header_row" class="block text-sm font-medium text-gray-700">Baris Judul Kolom</label>
                                 <select name="header_row" id="header_row" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500">
@@ -57,6 +62,7 @@
                                 </select>
                                 <p class="text-xs text-gray-500 mt-1">Pilih baris mana yang akan dijadikan sebagai judul kolom di PDF.</p>
                             </div>
+                            @endif
                             <div>
                                 <label for="detail_pos" class="block text-sm font-medium text-gray-700">Posisi Detail Laporan</label>
                                 @php
