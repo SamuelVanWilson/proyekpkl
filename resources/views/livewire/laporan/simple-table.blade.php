@@ -70,6 +70,9 @@
     <div class="mb-4">
         <label for="title" class="block text-sm font-medium text-gray-700">Judul Laporan</label>
         <input type="text" id="title" wire:model="title" placeholder="Masukkan judul laporan" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500">
+        @error('title')
+            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+        @enderror
     </div>
 
     {{-- Input Tanggal --}}
@@ -86,16 +89,19 @@
         <table class="min-w-full bg-white border border-gray-200 rounded-lg">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="py-2 px-3 border-b bg-gray-100 text-center">#</th>
-                    @foreach ($columns as $col)
-                        <th class="py-2 px-3 border-b text-center">{{ $col }}</th>
+                    <th class="py-2 px-3 border-b bg-gray-100 text-center cursor-pointer" wire:click="selectRow(null)">#</th>
+                    @foreach ($columns as $colIndex => $col)
+                        <th
+                            class="py-2 px-3 border-b text-center cursor-pointer"
+                            wire:click="selectColumn({{ $colIndex }})"
+                        >{{ $col }}</th>
                     @endforeach
                 </tr>
             </thead>
             <tbody>
                 @foreach ($rows as $rowIndex => $row)
                     <tr>
-                        <td class="py-2 px-3 border-b bg-gray-50 text-center">{{ $rowIndex + 1 }}</td>
+                        <td class="py-2 px-3 border-b bg-gray-50 text-center cursor-pointer" wire:click="selectRow({{ $rowIndex }})">{{ $rowIndex + 1 }}</td>
                         @foreach ($columns as $col)
                             <td class="py-1 px-1 border-b border-r">
                                 <div
@@ -151,6 +157,63 @@
                    @endif">
             Preview
         </button>
+    </div>
+
+    {{-- Hapus baris/kolom terpilih --}}
+    <div class="mt-3 flex flex-col sm:flex-row gap-2">
+        <button type="button"
+            wire:click="deleteSelectedRow"
+            @if(is_null($selectedRowIndex)) disabled @endif
+            class="px-3 py-2 rounded-lg text-sm font-medium border border-red-500 text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            Hapus Baris Terpilih
+        </button>
+        <button type="button"
+            wire:click="deleteSelectedColumn"
+            @if(is_null($selectedColumnIndex)) disabled @endif
+            class="px-3 py-2 rounded-lg text-sm font-medium border border-red-500 text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">
+            Hapus Kolom Terpilih
+        </button>
+    </div>
+
+    {{-- Konfigurasi Detail Laporan --}}
+    <div class="mt-6 p-4 border border-gray-300 rounded-lg">
+        <h3 class="font-semibold mb-3 text-gray-700">Table Configuration (Detail Laporan)</h3>
+        {{-- Form konfigurasi field --}}
+        <div class="space-y-2 mb-3">
+            @foreach($detailSchema as $i => $field)
+                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                    <input type="text" class="input-modern w-full sm:w-1/3" placeholder="Label"
+                           wire:model.lazy="detailSchema.{{ $i }}.label">
+                    <select class="input-modern w-full sm:w-1/4" wire:model="detailSchema.{{ $i }}.type">
+                        <option value="text">Teks</option>
+                        <option value="number">Angka</option>
+                        <option value="date">Tanggal</option>
+                    </select>
+                    {{-- Tombol hapus field --}}
+                    @if($field['key'] !== 'title' && $field['key'] !== 'tanggal_raw')
+                        <button type="button" wire:click="removeDetailField({{ $i }})"
+                            class="px-2 py-1 rounded bg-red-500 text-white text-xs hover:bg-red-600">Hapus</button>
+                    @endif
+                </div>
+            @endforeach
+            <button type="button" wire:click="addDetailField"
+                    class="mt-2 px-3 py-1.5 rounded bg-gray-200 text-gray-700 text-sm hover:bg-gray-300">+ Tambah Field</button>
+        </div>
+        {{-- Form pengisian detail --}}
+        <div class="space-y-3">
+            @foreach($detailSchema as $field)
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $field['label'] }}</label>
+                    @if($field['type'] === 'number')
+                        <input type="number" class="input-modern w-full" wire:model.lazy="detailValues.{{ $field['key'] }}">
+                    @elseif($field['type'] === 'date')
+                        <input type="date" class="input-modern w-full" wire:model.lazy="detailValues.{{ $field['key'] }}">
+                    @else
+                        <input type="text" class="input-modern w-full" wire:model.lazy="detailValues.{{ $field['key'] }}">
+                    @endif
+                </div>
+            @endforeach
+        </div>
     </div>
 
     {{-- Skrip untuk menyimpan draft ke localStorage dan memuatnya kembali saat halaman dimuat --}}

@@ -73,7 +73,7 @@
                                         <option value="{{ $i }}" {{ $selectedHeader == $i ? 'selected' : '' }}>Baris {{ $i }}</option>
                                     @endfor
                                 </select>
-                                <p class="text-xs text-gray-500 mt-1">Pilih baris mana yang akan dijadikan sebagai judul kolom di PDF. <br> <b> (# = Baris 1, 1 = Baris 2, 2 = Baris 3)</b></p>
+                                <p class="text-xs text-gray-500 mt-1">Pilih baris mana yang akan dijadikan sebagai judul kolom di PDF.</p>
                             </div>
                             @endif
                             <div>
