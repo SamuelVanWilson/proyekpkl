@@ -5,7 +5,6 @@ namespace App\Http\Controllers\Client;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use Carbon\Carbon;
-
 use Illuminate\Support\Facades\Auth;
 use App\Models\User;
 use App\Models\TableConfiguration;
@@ -13,34 +12,41 @@ use App\Models\DailyReport;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Storage;
 use App\Models\PdfExport;
-
-// Tambahkan trait untuk otorisasi agar metode authorize() tersedia
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 
+/**
+ * Controller untuk halaman laporan pengguna (client).
+ * Menyediakan fungsi untuk menampilkan form laporan (biasa & advanced), histori,
+ * preview PDF, update meta data (judul, logo), download PDF, dan form builder.
+ */
 class ReportController extends Controller
 {
     use AuthorizesRequests;
+
     /**
-     * Menampilkan halaman laporan "live" untuk hari ini.
-     * Halaman ini ditenagai oleh komponen Livewire 'Laporan\Harian'.
+     * Tampilkan halaman laporan harian dengan komponen Livewire Harian.
+     *
+     * @return \Illuminate\Contracts\View\View
      */
     public function harian()
     {
-        // View ini hanya bertugas memuat komponen Livewire
         return view('client.laporan.harian');
     }
 
     /**
-     * Tampilkan halaman laporan harian standar (biasa).
+     * Tampilkan halaman laporan sederhana (biasa) dengan komponen SimpleTable.
+     *
+     * @return \Illuminate\Contracts\View\View
      */
     public function biasa()
     {
-        // Halaman ini memuat komponen Livewire laporan.create-laporan
         return view('client.laporan.biasa');
     }
 
     /**
-     * Tampilkan halaman laporan advanced. Pastikan pengguna telah berlangganan.
+     * Tampilkan halaman laporan advanced. Hanya untuk pengguna dengan langganan aktif.
+     *
+     * @return \Illuminate\Contracts\View\View
      */
     public function advanced()
     {
@@ -48,7 +54,9 @@ class ReportController extends Controller
     }
 
     /**
-     * Menampilkan halaman histori (daftar laporan lama).
+     * Tampilkan halaman histori laporan.
+     *
+     * @return \Illuminate\Contracts\View\View
      */
     public function histori()
     {
@@ -56,47 +64,44 @@ class ReportController extends Controller
         $reports = DailyReport::where('user_id', $user->id)
                               ->orderBy('tanggal', 'desc')
                               ->paginate(15);
-
         return view('client.laporan.histori', compact('reports'));
     }
 
     /**
-     * Menampilkan preview PDF dari halaman histori.
+     * Tampilkan preview PDF dari laporan.
+     *
+     * @param \App\Models\DailyReport $dailyReport
+     * @return \Illuminate\Contracts\View\View
      */
     public function previewPdf(DailyReport $dailyReport)
     {
-        // Pastikan klien hanya bisa melihat laporannya sendiri
         $this->authorize('view', $dailyReport);
-
-        // Di sini kita perlu logika untuk merender PDF dari data JSON
-        // Untuk sekarang, kita pass datanya saja
         $data = [
             'report' => $dailyReport,
-            // Anda perlu mengambil konfigurasi form untuk render PDF yang dinamis
         ];
-
         return view('client.laporan.pdf_template', $data);
-        // $pdf = Pdf::loadView('client.laporan.pdf_template', $data);
-        // return $pdf->stream('laporan-'. $dailyReport->tanggal .'.pdf');
     }
 
     /**
-     * Tampilkan form edit untuk laporan. Laporan biasa akan memuat komponen SimpleTable dengan reportId.
+     * Tampilkan form edit laporan sederhana. Hanya untuk laporan biasa (data json) yang ada.
+     *
+     * @param \App\Models\DailyReport $dailyReport
+     * @return \Illuminate\Http\RedirectResponse|\Illuminate\Contracts\View\View
      */
     public function edit(DailyReport $dailyReport)
     {
-        // Pastikan user memiliki laporan ini
         $this->authorize('update', $dailyReport);
-        // Jika laporan biasa (memiliki data), gunakan halaman laporan biasa
         if (!empty($dailyReport->data)) {
             return view('client.laporan.biasa', ['reportId' => $dailyReport->id]);
         }
-        // Untuk laporan advanced, sementara belum ada dukungan edit
         return redirect()->route('client.laporan.histori')->with('message', 'Edit laporan advanced belum tersedia.');
     }
 
     /**
      * Hapus laporan dari database.
+     *
+     * @param \App\Models\DailyReport $dailyReport
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function destroy(DailyReport $dailyReport)
     {
@@ -106,23 +111,22 @@ class ReportController extends Controller
     }
 
     /**
-     * Generate dan download PDF dari laporan menggunakan DomPDF.
+     * Download laporan sebagai PDF menggunakan DomPDF.
+     *
+     * @param \App\Models\DailyReport $dailyReport
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\RedirectResponse
      */
     public function downloadPdf(DailyReport $dailyReport)
     {
         $this->authorize('view', $dailyReport);
         $user = Auth::user();
-
-        // Validasi: pastikan judul laporan terisi sebelum mengunduh PDF
-        // Jika title kosong, jangan lanjutkan export dan berikan pesan kesalahan
+        // Pastikan judul laporan terisi sebelum export
         $reportTitle = $dailyReport->data['meta']['title'] ?? null;
         if (empty($reportTitle)) {
             return back()->with('error', 'Judul laporan harus diisi sebelum mengunduh PDF. Silakan isi judul pada halaman laporan atau di preview.');
         }
-
-        // Batasi jumlah export PDF untuk pengguna non‑premium
+        // Batasi jumlah export per hari untuk user free
         if (!$user->hasActiveSubscription()) {
-            // Hitung ekspor PDF untuk tanggal saat ini saja agar free limit reset setiap hari
             $exportCountToday = PdfExport::where('user_id', $user->id)
                 ->whereDate('exported_at', today())
                 ->count();
@@ -130,13 +134,9 @@ class ReportController extends Controller
                 return back()->with('error', 'Limit export PDF gratis (3x per hari) telah tercapai. Silakan berlangganan untuk export tanpa batas.');
             }
         }
-
         $pdf = Pdf::loadView('client.laporan.pdf_template', ['report' => $dailyReport]);
         $fileName = 'laporan-' . $dailyReport->tanggal . '-' . now()->timestamp . '.pdf';
-
-        // Rekam aktivitas export PDF
-        // Beberapa instalasi mungkin belum memiliki kolom 'daily_report_id' pada tabel pdf_exports.
-        // Kita cek skema terlebih dahulu untuk menghindari error SQL.
+        // Rekam aktivitas export
         $exportData = [
             'user_id'      => $user->id,
             'filename'     => $fileName,
@@ -148,17 +148,18 @@ class ReportController extends Controller
             'file_path'    => null,
             'exported_at'  => now(),
         ];
-        // Tambahkan daily_report_id jika kolom tersedia di database
         if (\Illuminate\Support\Facades\Schema::hasColumn('pdf_exports', 'daily_report_id')) {
             $exportData['daily_report_id'] = $dailyReport->id;
         }
         PdfExport::create($exportData);
-
         return $pdf->download($fileName);
     }
 
     /**
-     * Halaman preview PDF dengan opsi meta (judul, logo).
+     * Tampilkan halaman preview PDF dengan opsi meta (judul, logo, header row, posisi detail).
+     *
+     * @param \App\Models\DailyReport $dailyReport
+     * @return \Illuminate\Contracts\View\View
      */
     public function preview(DailyReport $dailyReport)
     {
@@ -167,40 +168,42 @@ class ReportController extends Controller
     }
 
     /**
-     * Update meta data (judul, logo) dari preview.
+     * Update meta data (judul, logo, baris header, posisi detail) dari halaman preview.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\DailyReport $dailyReport
+     * @return \Illuminate\Http\RedirectResponse
      */
     public function updatePreview(Request $request, DailyReport $dailyReport)
     {
         $this->authorize('update', $dailyReport);
         $validated = $request->validate([
-            'title' => 'nullable|string|max:255',
-            'logo'  => 'nullable|image|max:1024', // batas 1MB
+            'title'      => 'nullable|string|max:255',
+            'logo'       => 'nullable|image|max:1024',
             'header_row' => 'nullable|integer|min:1',
             'detail_pos' => 'nullable|in:top,bottom',
         ]);
         $data = $dailyReport->data ?? [];
-        // Pastikan struktur meta tersedia
         if (!isset($data['meta'])) {
             $data['meta'] = [];
         }
         // Simpan judul
         $data['meta']['title'] = $validated['title'] ?? ($data['meta']['title'] ?? '');
-        // Simpan pilihan baris header jika disediakan
+        // Simpan pilihan header row
         if (!empty($validated['header_row'])) {
             $data['meta']['header_row'] = (int) $validated['header_row'];
         }
-        // Simpan pilihan posisi detail
+        // Simpan posisi detail
         if (!empty($validated['detail_pos'])) {
             $data['meta']['detail_pos'] = $validated['detail_pos'];
         }
         // Tangani upload logo
         if ($request->hasFile('logo')) {
-            // Fitur upload logo hanya untuk pengguna berlangganan
             if (!Auth::user()->hasActiveSubscription()) {
+                // Jangan redirect ke halaman berlangganan, hanya tampilkan pesan
                 return back()->with('error', 'Fitur upload logo hanya tersedia untuk pengguna berlangganan.');
             }
             $file = $request->file('logo');
-            // Hitung hash untuk deduplikasi
             $hash = md5_file($file->getRealPath());
             $extension = $file->getClientOriginalExtension();
             $hashedName = $hash . '.' . $extension;
@@ -214,101 +217,95 @@ class ReportController extends Controller
         }
         $dailyReport->data = $data;
         $dailyReport->save();
-
-        // Redirect kembali ke halaman preview agar meta yang baru tersimpan langsung terlihat.
         return redirect()->route('client.laporan.preview', $dailyReport)->with('success', 'Informasi laporan diperbarui.');
     }
 
-    public function saveFormBuilder(Request $request, User $user = null) // Tambahkan User $user = null untuk Client
+    /**
+     * Simpan konfigurasi form builder (rincian & rekap) untuk user atau admin.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Models\User|null $user
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function saveFormBuilder(Request $request, User $user = null)
     {
-        // Validasi sekarang memeriksa 'label' bukan 'name' untuk input pengguna
         $validated = $request->validate([
-            'rincian' => 'sometimes|array',
-            'rincian.*.label' => 'required_with:rincian|string', // Cek 'label'
-            'rincian.*.type' => 'required_with:rincian|string',
-
-            'rekap' => 'sometimes|array',
-            'rekap.*.label' => 'required_with:rekap|string', // Cek 'label'
-            'rekap.*.type' => 'required_with:rekap|string',
-            'rekap.*.formula' => 'nullable|string',
+            'rincian'            => 'sometimes|array',
+            'rincian.*.label'    => 'required_with:rincian|string',
+            'rincian.*.type'     => 'required_with:rincian|string',
+            'rekap'              => 'sometimes|array',
+            'rekap.*.label'      => 'required_with:rekap|string',
+            'rekap.*.type'       => 'required_with:rekap|string',
+            'rekap.*.formula'    => 'nullable|string',
             'rekap.*.default_value' => 'nullable|string',
-            'rekap.*.readonly' => 'sometimes|boolean',
+            'rekap.*.readonly'   => 'sometimes|boolean',
         ]);
-
         $processedColumns = [];
-
-        // Proses Tabel Rincian
+        // Proses rincian
         if (!empty($validated['rincian'])) {
             foreach ($validated['rincian'] as $col) {
                 $processedColumns['rincian'][] = [
-                    // 'name' dibuat secara otomatis dari 'label'
-                    'name' => \Illuminate\Support\Str::slug($col['label'], '_'),
-                    'label' => $col['label'], // Simpan 'label' asli
-                    'type' => $col['type'],
+                    'name'  => \Illuminate\Support\Str::slug($col['label'], '_'),
+                    'label' => $col['label'],
+                    'type'  => $col['type'],
                 ];
             }
         } else {
             $processedColumns['rincian'] = [];
         }
-
-        // Proses Formulir Rekapitulasi
+        // Proses rekap
         if (!empty($validated['rekap'])) {
             foreach ($validated['rekap'] as $col) {
                 $processedColumns['rekap'][] = [
-                    'name' => \Illuminate\Support\Str::slug($col['label'], '_'),
-                    'label' => $col['label'],
-                    'type' => $col['type'],
-                    'formula' => $col['formula'] ?? null,
-                    'default_value' => $col['default_value'] ?? null,
-                    'readonly' => !empty($col['readonly']),
+                    'name'         => \Illuminate\Support\Str::slug($col['label'], '_'),
+                    'label'        => $col['label'],
+                    'type'         => $col['type'],
+                    'formula'      => $col['formula'] ?? null,
+                    'default_value'=> $col['default_value'] ?? null,
+                    'readonly'     => !empty($col['readonly']),
                 ];
             }
         } else {
             $processedColumns['rekap'] = [];
         }
-
-        // Logika untuk menentukan user_id
+        // Tentukan user_id untuk konfigurasi
         $userId = $user ? $user->id : Auth::id();
-
         TableConfiguration::updateOrCreate(
             ['user_id' => $userId, 'table_name' => 'daily_reports'],
             ['columns' => $processedColumns]
         );
-
-        // Redirect yang sesuai untuk setiap peran
         if ($user) {
             return redirect()->route('admin.users.index')->with('success', 'Konfigurasi form untuk ' . $user->name . ' berhasil disimpan.');
         } else {
-            return redirect()->route('client.laporan.harian')->with('success', 'Struktur laporan Anda berhasil diperbarui!');
+            // Setelah menyimpan konfigurasi sebagai pengguna biasa/premium, arahkan ke halaman laporan sesuai status langganan.
+            // Gunakan nama rute yang benar tanpa prefix "client." karena rute yang didefinisikan di web.php adalah lapiran.harian dan lapiran.advanced.
+            $targetRoute = Auth::user()->hasActiveSubscription() ? 'laporan.advanced' : 'laporan.harian';
+            return redirect()->route($targetRoute)->with('success', 'Struktur laporan Anda berhasil diperbarui!');
         }
     }
 
-
-    // Terapkan pada method showFormBuilder() di KEDUA controller
+    /**
+     * Tampilkan form builder untuk konfigurasi laporan.
+     *
+     * @param \App\Models\User|null $user
+     * @return \Illuminate\Contracts\View\View
+     */
     public function showFormBuilder(User $user = null)
     {
         $userId = $user ? $user->id : Auth::id();
-
         $config = TableConfiguration::firstOrNew(
             ['user_id' => $userId, 'table_name' => 'daily_reports'],
             ['columns' => ['rincian' => [], 'rekap' => []]]
         );
-
         $columns = $config->columns;
-
-        // --- LOGIKA BARU: Pastikan 'label' selalu ada ---
-        // Loop untuk Rincian
+        // Pastikan setiap kolom memiliki label
         if (!empty($columns['rincian'])) {
             foreach ($columns['rincian'] as $key => $col) {
                 if (empty($col['label'])) {
-                    // Jika tidak ada label (data lama), buat dari nama
-                    // Ubah underscore menjadi spasi dan kapitalisasi setiap kata
                     $columns['rincian'][$key]['label'] = ucwords(str_replace('_', ' ', $col['name']));
                 }
             }
         }
-
-        // Loop untuk Rekapitulasi
         if (!empty($columns['rekap'])) {
             foreach ($columns['rekap'] as $key => $col) {
                 if (empty($col['label'])) {
@@ -316,11 +313,9 @@ class ReportController extends Controller
                 }
             }
         }
-
         if ($user) {
             return view('admin.users.form-builder', compact('user', 'config', 'columns'));
-        } else {
-            return view('client.laporan.form-builder', compact('columns'));
         }
+        return view('client.laporan.form-builder', compact('columns'));
     }
 }
