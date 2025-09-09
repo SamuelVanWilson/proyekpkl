@@ -89,19 +89,30 @@
         <table class="min-w-full bg-white border border-gray-200 rounded-lg">
             <thead class="bg-gray-50">
                 <tr>
-                    <th class="py-2 px-3 border-b bg-gray-100 text-center cursor-pointer" wire:click="selectRow(null)">#</th>
+                    <th
+                        class="py-2 px-3 border-b bg-gray-100 text-center cursor-pointer select-none"
+                        wire:click="selectRow(null)"
+                        @class(['bg-green-100 text-green-800' => $selectedRowIndex === null])
+                    >
+                        #
+                    </th>
                     @foreach ($columns as $colIndex => $col)
                         <th
-                            class="py-2 px-3 border-b text-center cursor-pointer"
+                            class="py-2 px-3 border-b text-center cursor-pointer select-none"
                             wire:click="selectColumn({{ $colIndex }})"
+                            @class(['bg-green-100 text-green-800' => $selectedColumnIndex === $colIndex])
                         >{{ $col }}</th>
                     @endforeach
                 </tr>
             </thead>
             <tbody>
                 @foreach ($rows as $rowIndex => $row)
-                    <tr>
-                        <td class="py-2 px-3 border-b bg-gray-50 text-center cursor-pointer" wire:click="selectRow({{ $rowIndex }})">{{ $rowIndex + 1 }}</td>
+                    <tr @class(['bg-green-50' => $selectedRowIndex === $rowIndex])>
+                        <td
+                            class="py-2 px-3 border-b bg-gray-50 text-center cursor-pointer select-none"
+                            wire:click="selectRow({{ $rowIndex }})"
+                            @class(['bg-green-100 text-green-800' => $selectedRowIndex === $rowIndex])
+                        >{{ $rowIndex + 1 }}</td>
                         @foreach ($columns as $col)
                             <td class="py-1 px-1 border-b border-r">
                                 <div
@@ -120,41 +131,16 @@
 
     {{-- Tombol Aksi --}}
     <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-        {{-- Grup baris: plus dan minus --}}
-        <div class="flex justify-between items-center rounded-lg overflow-hidden bg-gray-200 text-gray-700 text-sm font-medium">
-            <button type="button" wire:click="addRow" class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1">
-                <span class="text-base font-bold">+</span><span>Baris</span>
-            </button>
-            <span class="h-full w-px bg-gray-300"></span>
-            <button type="button" wire:click="removeLastRow" @if(count($rows) <= 1) disabled @endif class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
-                <span class="text-base font-bold">−</span><span>Baris</span>
-            </button>
-        </div>
-        {{-- Grup kolom: plus dan minus --}}
-        <div class="flex justify-between items-center rounded-lg overflow-hidden bg-gray-200 text-gray-700 text-sm font-medium">
-            <button type="button" wire:click="addColumn" @if(count($columns) >= 26) disabled @endif class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
-                <span class="text-base font-bold">+</span><span>Kolom</span>
-            </button>
-            <span class="h-full w-px bg-gray-300"></span>
-            <button type="button" wire:click="removeLastColumn" @if(count($columns) <= 1) disabled @endif class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
-                <span class="text-base font-bold">−</span><span>Kolom</span>
-            </button>
-        </div>
-        {{-- Simpan --}}
+        <button type="button" wire:click="addRow" class="flex items-center justify-center px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-medium">
+            + Baris
+        </button>
+        <button type="button" wire:click="addColumn" class="flex items-center justify-center px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-medium" @if(count($columns) >= 26) disabled @endif>
+            + Kolom
+        </button>
         <button type="button" wire:click="save" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">
             Simpan
         </button>
-        {{-- Preview: tombol non‑aktif jika laporan belum disimpan --}}
-        <button
-            type="button"
-            wire:click="preview"
-            @if(!$reportId) disabled @endif
-            class="px-4 py-2 rounded-lg text-sm font-medium w-full
-                   @if(!$reportId)
-                       bg-green-300 text-gray-500 cursor-not-allowed
-                   @else
-                       bg-green-600 hover:bg-green-700 text-white
-                   @endif">
+        <button type="button" wire:click="preview" class="px-4 py-2 rounded-lg text-sm font-medium w-full {{ $reportId ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-300 text-gray-500 cursor-not-allowed' }}" @if(!$reportId) disabled @endif>
             Preview
         </button>
     </div>

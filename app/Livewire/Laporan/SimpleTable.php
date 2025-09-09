@@ -231,11 +231,51 @@ class SimpleTable extends Component
     public function updateCell($rowIndex, $column, $value)
     {
         if (isset($this->rows[$rowIndex]) && in_array($column, $this->columns)) {
-            // Sanitasi: izinkan tag dasar dan div/p untuk format & align
-            $cleanValue = strip_tags($value, '<b><i><u><s><span><div><p><br>');
+            // Bersihkan HTML dan konversi <font> tag menjadi span dengan style agar jenis font dan ukuran tersimpan
+            $cleanValue = $this->normalizeHtml($value);
             $this->rows[$rowIndex][$column] = $cleanValue;
             $this->dispatch('tableUpdated');
         }
+    }
+
+    /**
+     * Normalisasi HTML untuk sel tabel.
+     * Menghapus tag <script> dan <a>, mengonversi tag <font> menjadi <span style="...">,
+     * serta mengizinkan tag inline aman. Ini memastikan format seperti jenis font dan ukuran
+     * font yang dipilih pengguna tetap tersimpan saat laporan dimuat ulang.
+     *
+     * @param string $html
+     * @return string
+     */
+    private function normalizeHtml(string $html): string
+    {
+        // Buang <script> dan <a> agar tidak tersimpan link
+        $html = preg_replace('#<script.*?</script>#is', '', $html);
+        $html = preg_replace('#<a[^>]*>(.*?)</a>#i', '$1', $html);
+        // Konversi tag <font> menjadi <span style="...">
+        $html = preg_replace_callback('#<font([^>]*)>#i', function ($m) {
+            $attrs = $m[1];
+            $face = null;
+            $size = null;
+            if (preg_match('/face="?([^"\']+)"?/i', $attrs, $f)) {
+                $face = $f[1] ?? null;
+            }
+            if (preg_match('/size="?([1-7])"?/i', $attrs, $s)) {
+                $size = $s[1] ?? null;
+            }
+            $map = [1 => '8pt', 2 => '10pt', 3 => '12pt', 4 => '14pt', 5 => '18pt', 6 => '24pt', 7 => '36pt'];
+            $style = '';
+            if ($face) {
+                $style .= 'font-family:' . $face . ';';
+            }
+            if ($size) {
+                $style .= 'font-size:' . ($map[$size] ?? '12pt') . ';';
+            }
+            return '<span style="' . $style . '">';
+        }, $html);
+        $html = str_ireplace('</font>', '</span>', $html);
+        // Izinkan tag inline aman
+        return strip_tags($html, '<b><strong><i><em><u><s><span><div><p><br>');
     }
 
     /**
