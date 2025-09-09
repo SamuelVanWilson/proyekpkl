@@ -13,6 +13,19 @@
             {{ session('success') }}
         </div>
     @endif
+    {{-- Tampilkan pesan error dan validasi jika ada --}}
+    @if(session('error'))
+        <div class="bg-red-100 border border-red-300 text-red-800 p-3 rounded mb-4 text-sm">
+            {{ session('error') }}
+        </div>
+    @endif
+    @if ($errors->any())
+        <div class="bg-red-100 border border-red-300 text-red-800 p-3 rounded mb-4 text-sm">
+            @foreach ($errors->all() as $msg)
+                <div>{{ $msg }}</div>
+            @endforeach
+        </div>
+    @endif
     {{-- Layout responsive: stack on mobile, side‑by‑side on large screens --}}
     <div class="flex flex-col lg:flex-row gap-6">
         <template x-for="section in order" :key="section">
@@ -40,8 +53,8 @@
                                         <img src="{{ Storage::url($report->data['meta']['logo']) }}" alt="Logo" class="h-16 object-contain border rounded">
                                     </div>
                                 @endif
-                                <input type="file" name="logo" class="block w-full text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md cursor-pointer focus:outline-none">
-                                <p class="text-xs text-gray-500 mt-1">Unggah logo baru (opsional)</p>
+                                <input type="file" name="logo" accept=".jpg,.jpeg,.png,image/jpeg,image/png" class="block w-full text-sm text-gray-700 bg-gray-50 border border-gray-200 rounded-md cursor-pointer focus:outline-none">
+                                <p class="text-xs text-gray-500 mt-1">Unggah logo baru (opsional). Format yang didukung: JPG, JPEG, PNG</p>
                             </div>
                             @php
                                 // Hanya tampilkan pilihan baris header untuk laporan biasa (bukan advanced)
@@ -60,7 +73,7 @@
                                         <option value="{{ $i }}" {{ $selectedHeader == $i ? 'selected' : '' }}>Baris {{ $i }}</option>
                                     @endfor
                                 </select>
-                                <p class="text-xs text-gray-500 mt-1">Pilih baris mana yang akan dijadikan sebagai judul kolom di PDF.</p>
+                                <p class="text-xs text-gray-500 mt-1">Pilih baris mana yang akan dijadikan sebagai judul kolom di PDF. <br> <b> (# = Baris 1, 1 = Baris 2, 2 = Baris 3)</b></p>
                             </div>
                             @endif
                             <div>

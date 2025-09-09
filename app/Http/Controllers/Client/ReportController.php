@@ -177,11 +177,16 @@ class ReportController extends Controller
     public function updatePreview(Request $request, DailyReport $dailyReport)
     {
         $this->authorize('update', $dailyReport);
+        // Validasi masukan meta. Judul boleh kosong, logo harus berformat JPG/JPEG/PNG agar pengguna mendapat notifikasi
         $validated = $request->validate([
             'title'      => 'nullable|string|max:255',
-            'logo'       => 'nullable|image|max:1024',
+            // Terima hanya file gambar dengan ekstensi jpg, jpeg atau png. Gunakan rule file+mimes agar validasi jelas.
+            'logo'       => 'nullable|file|mimes:jpg,jpeg,png|max:5120',
             'header_row' => 'nullable|integer|min:1',
             'detail_pos' => 'nullable|in:top,bottom',
+        ], [
+            'logo.mimes' => 'Format logo harus JPG, JPEG, atau PNG.',
+            'logo.max'   => 'Ukuran logo maksimal 5 MB.',
         ]);
         $data = $dailyReport->data ?? [];
         if (!isset($data['meta'])) {
@@ -199,12 +204,13 @@ class ReportController extends Controller
         }
         // Tangani upload logo
         if ($request->hasFile('logo')) {
+            // Jika user tidak berlangganan, tampilkan pesan error dan jangan proses upload
             if (!Auth::user()->hasActiveSubscription()) {
-                // Jangan redirect ke halaman berlangganan, hanya tampilkan pesan
-                return back()->with('error', 'Fitur upload logo hanya tersedia untuk pengguna berlangganan.');
+                return back()->with('error', 'Upload logo hanya tersedia bagi pengguna berlangganan.');
             }
             $file = $request->file('logo');
-            $hash = md5_file($file->getRealPath());
+            // Hash nama file untuk mencegah tabrakan nama dan menyimpan ke penyimpanan publik
+            $hash      = md5_file($file->getRealPath());
             $extension = $file->getClientOriginalExtension();
             $hashedName = $hash . '.' . $extension;
             $disk = Storage::disk('public');
@@ -213,6 +219,7 @@ class ReportController extends Controller
             } else {
                 $path = $file->storeAs('logos', $hashedName, 'public');
             }
+            // Simpan path logo ke meta. Nantinya template PDF akan membaca dari storage path.
             $data['meta']['logo'] = $path;
         }
         $dailyReport->data = $data;

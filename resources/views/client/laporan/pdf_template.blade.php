@@ -32,9 +32,10 @@
             @php
                 $meta = $report->data['meta'] ?? [];
                 $title = $meta['title'] ?? null;
+                // Ambil path logo dari meta. Template ini memuat logo dari storage (storage/app/public)
                 $logoPath = $meta['logo'] ?? null;
                 $logoData = null;
-                // Jika ada logo, encode sebagai base64 agar DomPDF dapat menampilkannya
+                // Jika ada logo, encode sebagai base64 agar DomPDF dapat menampilkannya (mendukung JPG, JPEG, PNG)
                 if ($logoPath) {
                     $filePath = storage_path('app/public/' . $logoPath);
                     if (file_exists($filePath)) {
