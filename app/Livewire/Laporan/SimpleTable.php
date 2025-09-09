@@ -94,18 +94,21 @@ class SimpleTable extends Component
                 ->where('user_id', Auth::id())
                 ->first();
             if ($report) {
-                $this->date  = $report->tanggal;
+                $this->date  = optional($report->tanggal)->toDateString();
                 $this->title = $report->data['meta']['title'] ?? '';
+                // Jika laporan memiliki konfigurasi simple table tersimpan (simple_config)
+                if (!empty($report->data['simple_config']['columns'])) {
+                    $this->columns = $report->data['simple_config']['columns'];
+                }
                 // Gunakan data tersimpan jika ada
                 if (!empty($report->data)) {
-                    $this->columns = $report->data['columns'] ?? [];
                     $this->rows    = $report->data['rows']    ?? [];
                 }
             }
         }
-        // Inisialisasi kolom default jika kosong
+        // Inisialisasi kolom default jika kosong, gunakan 5 kolom awal A-E
         if (empty($this->columns)) {
-            $this->columns = range('A', 'E');
+            $this->columns = ['A', 'B', 'C', 'D', 'E'];
         }
         // Inisialisasi baris default jika kosong
         if (empty($this->rows)) {
@@ -321,6 +324,10 @@ class SimpleTable extends Component
                     ],
                     'detail_schema' => $this->detailSchema,
                     'detail_values' => $this->detailValues,
+                    // Simpan konfigurasi kolom khusus untuk laporan ini
+                    'simple_config' => [
+                        'columns' => $this->columns,
+                    ],
                 ];
                 $report->save();
             } else {
@@ -352,6 +359,10 @@ class SimpleTable extends Component
                     ],
                     'detail_schema' => $this->detailSchema,
                     'detail_values' => $this->detailValues,
+                    // Simpan konfigurasi kolom untuk laporan baru
+                    'simple_config' => [
+                        'columns' => $this->columns,
+                    ],
                 ],
             ]);
         }
@@ -421,13 +432,12 @@ class SimpleTable extends Component
     public function deleteSelectedColumn()
     {
         if ($this->selectedColumnIndex !== null && isset($this->columns[$this->selectedColumnIndex])) {
+            // Hanya kosongkan isi kolom, jangan hapus label kolom
             $colKey = $this->columns[$this->selectedColumnIndex];
-            // Hapus kolom dari daftar kolom
-            array_splice($this->columns, $this->selectedColumnIndex, 1);
-            // Hapus kolom dari setiap baris
             foreach ($this->rows as $r => $row) {
-                unset($this->rows[$r][$colKey]);
+                $this->rows[$r][$colKey] = '';
             }
+            // Reset pilihan kolom
             $this->selectedColumnIndex = null;
             $this->dispatch('tableUpdated');
         }

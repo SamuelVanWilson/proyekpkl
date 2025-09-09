@@ -113,8 +113,8 @@
                             wire:click="selectRow({{ $rowIndex }})"
                             @class(['bg-green-100 text-green-800' => $selectedRowIndex === $rowIndex])
                         >{{ $rowIndex + 1 }}</td>
-                        @foreach ($columns as $col)
-                            <td class="py-1 px-1 border-b border-r">
+                        @foreach ($columns as $colIndex => $col)
+                            <td class="py-1 px-1 border-b border-r {{ $selectedColumnIndex === $colIndex ? 'bg-green-50' : '' }}">
                                 <div
                                     contenteditable="true"
                                     class="min-w-[100px] outline-none p-1"
@@ -160,6 +160,16 @@
             Hapus Kolom Terpilih
         </button>
     </div>
+
+    {{-- Link ke konfigurasi tabel untuk laporan ini --}}
+    @if($reportId)
+        <div class="mt-4">
+            <a href="{{ route('client.laporan.simple.config.edit', $reportId) }}"
+               class="inline-block px-4 py-2 bg-gray-100 hover:bg-gray-200 border rounded-md text-sm font-medium text-gray-800">
+                Konfigurasi Tabel
+            </a>
+        </div>
+    @endif
 
     {{-- Konfigurasi Detail Laporan --}}
     <div class="mt-6 p-4 border border-gray-300 rounded-lg">

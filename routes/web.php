@@ -124,6 +124,12 @@ Route::middleware('auth')->group(function () {
             Route::post('/berlangganan/proses', [ProfileController::class, 'process'])->name('subscribe.process');
             // Pilih paket langganan, memulai proses pembuatan pesanan dan snap token
             Route::post('/berlangganan/{plan}', [ProfileController::class, 'start'])->name('subscribe.plan');
+
+            // Konfigurasi tabel untuk laporan biasa (simple)
+            Route::get('/laporan-biasa/{dailyReport}/konfigurasi', [\App\Http\Controllers\Client\SimpleTableConfigController::class, 'edit'])
+                ->name('laporan.simple.config.edit');
+            Route::put('/laporan-biasa/{dailyReport}/konfigurasi', [\App\Http\Controllers\Client\SimpleTableConfigController::class, 'update'])
+                ->name('laporan.simple.config.update');
         });
 
         // --- FITUR PREMIUM (Butuh verifikasi email DAN langganan aktif) ---
