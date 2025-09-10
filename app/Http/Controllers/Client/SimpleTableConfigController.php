@@ -4,82 +4,57 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use App\Models\DailyReport;
 
-/**
- * Controller untuk konfigurasi tabel laporan sederhana (SimpleTable).
- * Setiap laporan memiliki konfigurasi kolom sendiri sehingga halaman baru
- * tidak mewarisi konfigurasi dari laporan lain.
- */
 class SimpleTableConfigController extends Controller
 {
-    /**
-     * Tampilkan formulir konfigurasi untuk laporan sederhana.
-     *
-     * @param \App\Models\DailyReport $report
-     * @return \Illuminate\Contracts\View\View
-     */
-    public function edit(DailyReport $report)
+    public function edit(DailyReport $dailyReport)
     {
-        // Pastikan pengguna adalah pemilik laporan
-        if ($report->user_id !== auth()->id()) {
-            // Jika laporan bukan milik user, kembalikan 404 agar halaman tidak dapat diakses
-            abort(404);
-        }
+        // Only owner can edit
+        abort_unless($dailyReport->user_id === Auth::id(), 403);
 
-        // Ambil konfigurasi dari data report jika ada
-        $columns = $report->data['simple_config']['columns'] ?? null;
-        $columnCount = is_array($columns) ? count($columns) : 5;
+        $data = $dailyReport->data ?? [];
+        $schema = $data['detail_schema'] ?? [
+            ['key'=>'title','label'=>'Judul Laporan','type'=>'text','readonly'=>true],
+            ['key'=>'tanggal_raw','label'=>'Tanggal Laporan','type'=>'date','readonly'=>true],
+        ];
 
-        return view('client.laporan.simple-table-config', [
-            'report' => $report,
-            'columnCount' => $columnCount,
+        return view('client.laporan.simple-config', [
+            'report' => $dailyReport,
+            'schema' => $schema,
         ]);
     }
 
-    /**
-     * Simpan konfigurasi kolom untuk laporan sederhana.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Models\DailyReport $report
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function update(Request $request, DailyReport $report)
+    public function update(Request $request, DailyReport $dailyReport)
     {
-        // Pastikan pengguna adalah pemilik laporan
-        if ($report->user_id !== auth()->id()) {
-            abort(404);
-        }
+        abort_unless($dailyReport->user_id === Auth::id(), 403);
 
-        $validated = $request->validate([
-            'column_count' => ['required','integer','min:1','max:26'],
-        ]);
-        $count = (int) $validated['column_count'];
-        $letters = range('A', 'Z');
-        $newColumns = array_slice($letters, 0, $count);
-
-        // Perbarui konfigurasi simple
-        $data = $report->data ?? [];
-        $data['simple_config']['columns'] = $newColumns;
-
-        // Perbarui nilai-nilai baris agar sesuai jumlah kolom baru
-        $rows = $data['rows'] ?? [];
-        $rebuilt = [];
-        $minRows = max(count($rows), 6);
-        for ($i = 0; $i < $minRows; $i++) {
-            $rebuilt[$i] = [];
-            foreach ($newColumns as $col) {
-                $rebuilt[$i][$col] = (string) ($rows[$i][$col] ?? '');
+        $fields = $request->input('fields', []);
+        // Keep only text/number/date, reject others
+        $allowed = ['text','number','date'];
+        $normalized = [];
+        foreach ($fields as $f) {
+            $type = in_array($f['type'] ?? 'text', $allowed) ? $f['type'] : 'text';
+            $key  = preg_replace('/[^a-z0-9_]+/','_', strtolower($f['key'] ?? ''));
+            $label= trim($f['label'] ?? '');
+            if ($key && $label) {
+                $normalized[] = ['key'=>$key,'label'=>$label,'type'=>$type,'readonly'=>false];
             }
         }
-        $data['rows'] = $rebuilt;
-        $data['columns'] = $newColumns;
 
-        $report->data = $data;
-        $report->save();
+        // Always prepend default mandatory fields
+        $schema = array_merge([
+            ['key'=>'title','label'=>'Judul Laporan','type'=>'text','readonly'=>true],
+            ['key'=>'tanggal_raw','label'=>'Tanggal Laporan','type'=>'date','readonly'=>true],
+        ], $normalized);
 
-        // Redirect kembali ke halaman edit laporan untuk report ini
-        return redirect()->route('client.laporan.edit', $report)
-            ->with('success', 'Konfigurasi tabel disimpan.');
+        $data = $dailyReport->data ?? [];
+        $data['detail_schema'] = $schema;
+        $dailyReport->data = $data;
+        $dailyReport->save();
+
+        return redirect()->route('client.laporan.simple.config.edit', $dailyReport->id)
+            ->with('success','Konfigurasi tersimpan dan hanya berlaku untuk laporan ini.');
     }
 }

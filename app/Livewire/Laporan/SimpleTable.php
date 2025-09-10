@@ -397,7 +397,12 @@ class SimpleTable extends Component
      */
     public function selectRow($index)
     {
-        $this->selectedRowIndex = $index;
+        // Toggle: jika klik baris yang sama -> batalkan pilihan
+        if ($this->selectedRowIndex === $index) {
+            $this->selectedRowIndex = null;
+        } else {
+            $this->selectedRowIndex = $index;
+        }
     }
 
     /**
@@ -408,7 +413,12 @@ class SimpleTable extends Component
      */
     public function selectColumn($index)
     {
-        $this->selectedColumnIndex = $index;
+        // Toggle: jika klik kolom yang sama -> batalkan pilihan
+        if ($this->selectedColumnIndex === $index) {
+            $this->selectedColumnIndex = null;
+        } else {
+            $this->selectedColumnIndex = $index;
+        }
     }
 
     /**

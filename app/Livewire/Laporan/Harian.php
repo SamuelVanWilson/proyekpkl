@@ -414,43 +414,6 @@ class Harian extends Component
     }
 
     /**
-     * Buat laporan baru dengan mengosongkan data dan meta.
-     * Mempertahankan konfigurasi tabel saat ini.
-     *
-     * @return void
-     */
-    public function newReport()
-    {
-        // Buat report baru tanpa id
-        $this->report = new DailyReport([
-            'user_id' => Auth::id(),
-            'tanggal' => now()->toDateString(),
-        ]);
-        // Reset rincian menjadi jumlah baris default (10) dengan kolom config
-        $this->rincian = [];
-        for ($i = 0; $i < 10; $i++) {
-            $newRow = [];
-            foreach ($this->configRincian as $col) {
-                $newRow[$col['name']] = '';
-            }
-            $this->rincian[] = $newRow;
-        }
-        // Reset rekap
-        $this->rekap = [];
-        foreach ($this->configRekap as $field) {
-            if (isset($field['default_value']) && $field['default_value'] !== '') {
-                $this->rekap[$field['name']] = $field['default_value'];
-            } else {
-                $this->rekap[$field['name']] = ($field['type'] === 'date') ? now()->format('Y-m-d') : '';
-            }
-        }
-        // Reset judul laporan untuk laporan baru
-        $this->reportTitle = '';
-        // Hapus local storage via event
-        $this->dispatch('laporanDisimpan');
-    }
-
-    /**
      * Simpan laporan lalu tampilkan preview PDF.
      *
      * @return \Illuminate\Http\RedirectResponse
@@ -461,20 +424,6 @@ class Harian extends Component
         $this->simpanLaporan();
         // Redirect ke halaman preview PDF
         return redirect()->route('client.laporan.preview', $this->report->id);
-    }
-
-    /**
-     * Hapus baris terakhir dari rincian.
-     * Digunakan untuk menyamakan UX dengan laporan biasa.
-     *
-     * @return void
-     */
-    public function removeLastRow()
-    {
-        if (!empty($this->rincian)) {
-            array_pop($this->rincian);
-            $this->hitungUlang();
-        }
     }
 
     /**
@@ -514,18 +463,6 @@ class Harian extends Component
         $this->dispatch('laporanDisimpan');
     }
 
-    /**
-     * Simpan laporan lalu tampilkan preview PDF.
-     *
-     * @return \Illuminate\Http\RedirectResponse
-     */
-    public function preview()
-    {
-        // Pastikan laporan tersimpan
-        $this->simpanLaporan();
-        // Redirect ke halaman preview
-        return redirect()->route('client.laporan.preview', $this->report->id);
-    }
 
     /**
      * Render komponen.
