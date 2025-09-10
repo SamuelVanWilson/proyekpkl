@@ -84,6 +84,24 @@
         @enderror
     </div>
 
+    {{-- Tambahan field detail laporan dari schema konfigurasi. 
+         Hanya ditampilkan di sini (bukan konfigurasi). 
+         Input akan disesuaikan dengan tipe (text/number/date). */}
+    @foreach ($detailSchema as $field)
+        @if($field['key'] !== 'title' && $field['key'] !== 'tanggal_raw')
+            <div class="mb-4">
+                <label class="block text-sm font-medium text-gray-700">{{ $field['label'] }}</label>
+                @if($field['type'] === 'number')
+                    <input type="number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" wire:model.defer="detailValues.{{ $field['key'] }}">
+                @elseif($field['type'] === 'date')
+                    <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" wire:model.defer="detailValues.{{ $field['key'] }}">
+                @else
+                    <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" wire:model.defer="detailValues.{{ $field['key'] }}">
+                @endif
+            </div>
+        @endif
+    @endforeach
+
     {{-- Tabel Data Dinamis --}}
     <div class="overflow-x-auto overflow-y-auto max-h-96">
         <table class="min-w-full bg-white border border-gray-200 rounded-lg">
@@ -171,46 +189,7 @@
         </div>
     @endif
 
-    {{-- Konfigurasi Detail Laporan --}}
-    <div class="mt-6 p-4 border border-gray-300 rounded-lg">
-        <h3 class="font-semibold mb-3 text-gray-700">Table Configuration (Detail Laporan)</h3>
-        {{-- Form konfigurasi field --}}
-        <div class="space-y-2 mb-3">
-            @foreach($detailSchema as $i => $field)
-                <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-                    <input type="text" class="input-modern w-full sm:w-1/3" placeholder="Label"
-                           wire:model.lazy="detailSchema.{{ $i }}.label">
-                    <select class="input-modern w-full sm:w-1/4" wire:model="detailSchema.{{ $i }}.type">
-                        <option value="text">Teks</option>
-                        <option value="number">Angka</option>
-                        <option value="date">Tanggal</option>
-                    </select>
-                    {{-- Tombol hapus field --}}
-                    @if($field['key'] !== 'title' && $field['key'] !== 'tanggal_raw')
-                        <button type="button" wire:click="removeDetailField({{ $i }})"
-                            class="px-2 py-1 rounded bg-red-500 text-white text-xs hover:bg-red-600">Hapus</button>
-                    @endif
-                </div>
-            @endforeach
-            <button type="button" wire:click="addDetailField"
-                    class="mt-2 px-3 py-1.5 rounded bg-gray-200 text-gray-700 text-sm hover:bg-gray-300">+ Tambah Field</button>
-        </div>
-        {{-- Form pengisian detail --}}
-        <div class="space-y-3">
-            @foreach($detailSchema as $field)
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">{{ $field['label'] }}</label>
-                    @if($field['type'] === 'number')
-                        <input type="number" class="input-modern w-full" wire:model.lazy="detailValues.{{ $field['key'] }}">
-                    @elseif($field['type'] === 'date')
-                        <input type="date" class="input-modern w-full" wire:model.lazy="detailValues.{{ $field['key'] }}">
-                    @else
-                        <input type="text" class="input-modern w-full" wire:model.lazy="detailValues.{{ $field['key'] }}">
-                    @endif
-                </div>
-            @endforeach
-        </div>
-    </div>
+    {{-- Bagian konfigurasi detail laporan dihapus dari halaman ini. Konfigurasi dilakukan di halaman terpisah. --}}
 
     {{-- Skrip untuk menyimpan draft ke localStorage dan memuatnya kembali saat halaman dimuat --}}
     <script>

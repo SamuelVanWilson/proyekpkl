@@ -432,10 +432,17 @@ class SimpleTable extends Component
     public function deleteSelectedColumn()
     {
         if ($this->selectedColumnIndex !== null && isset($this->columns[$this->selectedColumnIndex])) {
-            // Hanya kosongkan isi kolom, jangan hapus label kolom
+            // Kosongkan isi kolom yang dipilih (label tetap)
             $colKey = $this->columns[$this->selectedColumnIndex];
             foreach ($this->rows as $r => $row) {
                 $this->rows[$r][$colKey] = '';
+            }
+            // Hapus kolom terakhir agar jumlah kolom berkurang satu
+            $lastKey = array_pop($this->columns);
+            if ($lastKey !== null) {
+                foreach ($this->rows as $r => $row) {
+                    unset($this->rows[$r][$lastKey]);
+                }
             }
             // Reset pilihan kolom
             $this->selectedColumnIndex = null;

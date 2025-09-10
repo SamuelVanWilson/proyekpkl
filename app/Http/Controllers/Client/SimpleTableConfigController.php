@@ -22,7 +22,10 @@ class SimpleTableConfigController extends Controller
     public function edit(DailyReport $report)
     {
         // Pastikan pengguna adalah pemilik laporan
-        if ($report->user_id !== auth()->id()) { abort(403); }
+        if ($report->user_id !== auth()->id()) {
+            // Jika laporan bukan milik user, kembalikan 404 agar halaman tidak dapat diakses
+            abort(404);
+        }
 
         // Ambil konfigurasi dari data report jika ada
         $columns = $report->data['simple_config']['columns'] ?? null;
@@ -43,7 +46,10 @@ class SimpleTableConfigController extends Controller
      */
     public function update(Request $request, DailyReport $report)
     {
-        if ($report->user_id !== auth()->id()) { abort(403); }
+        // Pastikan pengguna adalah pemilik laporan
+        if ($report->user_id !== auth()->id()) {
+            abort(404);
+        }
 
         $validated = $request->validate([
             'column_count' => ['required','integer','min:1','max:26'],
@@ -72,7 +78,8 @@ class SimpleTableConfigController extends Controller
         $report->data = $data;
         $report->save();
 
-        return redirect()->route('client.laporan.harian')
+        // Redirect kembali ke halaman edit laporan untuk report ini
+        return redirect()->route('client.laporan.edit', $report)
             ->with('success', 'Konfigurasi tabel disimpan.');
     }
 }
