@@ -96,13 +96,42 @@ class SimpleTable extends Component
             if ($report) {
                 $this->date  = optional($report->tanggal)->toDateString();
                 $this->title = $report->data['meta']['title'] ?? '';
+                // Muat skema detail dan nilai dari laporan jika tersedia
+                if (!empty($report->data['detail_schema'])) {
+                    $this->detailSchema = $report->data['detail_schema'];
+                }
+                if (!empty($report->data['detail_values'])) {
+                    $this->detailValues = $report->data['detail_values'];
+                }
                 // Jika laporan memiliki konfigurasi simple table tersimpan (simple_config)
                 if (!empty($report->data['simple_config']['columns'])) {
                     $this->columns = $report->data['simple_config']['columns'];
                 }
                 // Gunakan data tersimpan jika ada
                 if (!empty($report->data)) {
-                    $this->rows    = $report->data['rows']    ?? [];
+                    $this->rows = $report->data['rows'] ?? [];
+                }
+                // Sinkronisasi judul & tanggal dari detail values jika tersedia
+                if (isset($this->detailValues['title'])) {
+                    $this->title = $this->detailValues['title'];
+                }
+                if (isset($this->detailValues['tanggal_raw'])) {
+                    $this->date = $this->detailValues['tanggal_raw'];
+                }
+                // Pastikan setiap field dalam detailSchema memiliki nilai default jika belum ada
+                if (!empty($this->detailSchema)) {
+                    foreach ($this->detailSchema as $field) {
+                        $key = $field['key'];
+                        if (!array_key_exists($key, $this->detailValues)) {
+                            if ($key === 'title') {
+                                $this->detailValues[$key] = $this->title;
+                            } elseif ($key === 'tanggal_raw') {
+                                $this->detailValues[$key] = $this->date;
+                            } else {
+                                $this->detailValues[$key] = '';
+                            }
+                        }
+                    }
                 }
             }
         }

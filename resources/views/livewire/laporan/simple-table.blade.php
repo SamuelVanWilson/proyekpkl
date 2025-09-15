@@ -163,6 +163,11 @@
         </button>
     </div>
 
+    {{-- Indikator menyimpan laporan --}}
+    <div class="mt-2 text-sm text-gray-500" wire:loading.delay wire:target="save">
+        Menyimpan…
+    </div>
+
     {{-- Hapus baris/kolom terpilih --}}
     <div class="mt-3 flex flex-col sm:flex-row gap-2">
         <button type="button"

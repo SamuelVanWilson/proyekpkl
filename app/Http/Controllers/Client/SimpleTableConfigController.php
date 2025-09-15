@@ -16,8 +16,8 @@ class SimpleTableConfigController extends Controller
 
         $data = $dailyReport->data ?? [];
         $schema = $data['detail_schema'] ?? [
-            ['key'=>'title','label'=>'Judul Laporan','type'=>'text','readonly'=>true],
-            ['key'=>'tanggal_raw','label'=>'Tanggal Laporan','type'=>'date','readonly'=>true],
+            ['key' => 'title',       'label' => 'Judul Laporan',   'type' => 'text', 'readonly' => true],
+            ['key' => 'tanggal_raw', 'label' => 'Tanggal Laporan', 'type' => 'date', 'readonly' => true],
         ];
 
         return view('client.laporan.simple-config', [
@@ -31,30 +31,41 @@ class SimpleTableConfigController extends Controller
         abort_unless($dailyReport->user_id === Auth::id(), 403);
 
         $fields = $request->input('fields', []);
-        // Keep only text/number/date, reject others
-        $allowed = ['text','number','date'];
+        $allowed = ['text', 'number', 'date'];
         $normalized = [];
+        // Proses setiap field dari input. Hanya gunakan label & type, key akan dibuat otomatis dari label
         foreach ($fields as $f) {
-            $type = in_array($f['type'] ?? 'text', $allowed) ? $f['type'] : 'text';
-            $key  = preg_replace('/[^a-z0-9_]+/','_', strtolower($f['key'] ?? ''));
-            $label= trim($f['label'] ?? '');
-            if ($key && $label) {
-                $normalized[] = ['key'=>$key,'label'=>$label,'type'=>$type,'readonly'=>false];
+            $label = trim($f['label'] ?? '');
+            if ($label === '') {
+                continue;
             }
+            $type = in_array($f['type'] ?? 'text', $allowed) ? $f['type'] : 'text';
+            // Generate slug for key from label
+            $key = \Illuminate\Support\Str::slug($label, '_');
+            // Hindari key yang sama dengan title atau tanggal_raw
+            if (in_array($key, ['title', 'tanggal_raw'])) {
+                // Tambahkan suffix untuk mencegah konflik
+                $key .= '_field';
+            }
+            $normalized[] = [
+                'key'      => $key,
+                'label'    => $label,
+                'type'     => $type,
+                'readonly' => false,
+            ];
         }
-
-        // Always prepend default mandatory fields
+        // Selalu prepend field default (Judul & Tanggal) dengan readonly
         $schema = array_merge([
-            ['key'=>'title','label'=>'Judul Laporan','type'=>'text','readonly'=>true],
-            ['key'=>'tanggal_raw','label'=>'Tanggal Laporan','type'=>'date','readonly'=>true],
+            ['key' => 'title',       'label' => 'Judul Laporan',   'type' => 'text', 'readonly' => true],
+            ['key' => 'tanggal_raw', 'label' => 'Tanggal Laporan', 'type' => 'date', 'readonly' => true],
         ], $normalized);
-
+        // Simpan ke data laporan
         $data = $dailyReport->data ?? [];
         $data['detail_schema'] = $schema;
         $dailyReport->data = $data;
         $dailyReport->save();
 
-        return redirect()->route('client.laporan.simple.config.edit', $dailyReport->id)
-            ->with('success','Konfigurasi tersimpan dan hanya berlaku untuk laporan ini.');
+        return redirect()->route('client.laporan.edit', $dailyReport)
+            ->with('success', 'Konfigurasi tersimpan dan hanya berlaku untuk laporan ini.');
     }
 }
