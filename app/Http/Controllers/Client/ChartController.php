@@ -38,30 +38,35 @@ class ChartController extends Controller
             ->first();
         $numericFields = [];
         if ($config && !empty($config->columns['rekap'])) {
-            $selectedFields = [];
-            foreach ($config->columns['rekap'] as $col) {
-                $type = $col['type'] ?? 'text';
-                // Gunakan hanya kolom yang ditandai digunakan untuk grafik jika ada setidaknya satu yang diaktifkan
-                if (!empty($col['used_for_chart'])) {
-                    if (in_array($type, ['number', 'rupiah', 'dollar', 'kg', 'g'])) {
-                        $selectedFields[$col['name']] = $col['label'] ?? $col['name'];
-                    }
+            $rekapCols = $config->columns['rekap'];
+            // Periksa apakah konfigurasi mendefinisikan kunci used_for_chart pada salah satu kolom.
+            $hasChartSetting = false;
+            foreach ($rekapCols as $col) {
+                if (array_key_exists('used_for_chart', $col)) {
+                    $hasChartSetting = true;
+                    break;
                 }
             }
-            // Jika ada field terpilih melalui used_for_chart, pakai itu
-            if (!empty($selectedFields)) {
-                $numericFields = $selectedFields;
-            } else {
-                // Kalau tidak, fallback ke semua numeric type
-                foreach ($config->columns['rekap'] as $col) {
-                    $type = $col['type'] ?? 'text';
-                    if (in_array($type, ['number', 'rupiah', 'dollar', 'kg', 'g'])) {
+            foreach ($rekapCols as $col) {
+                $type = $col['type'] ?? 'text';
+                // Tentukan apakah kolom bertipe numerik sesuai jenis yang kita dukung
+                $isNumericType = in_array($type, ['number', 'rupiah', 'dollar', 'kg', 'g']);
+                if (!$isNumericType) {
+                    continue;
+                }
+                if ($hasChartSetting) {
+                    // Jika konfigurasi memiliki properti used_for_chart, hanya kolom yang ditandai benar-benar true
+                    // yang disertakan. Nilai '1', true, atau truthy lainnya akan dianggap aktif.
+                    if (!empty($col['used_for_chart'])) {
                         $numericFields[$col['name']] = $col['label'] ?? $col['name'];
                     }
+                } else {
+                    // Konfigurasi lama tanpa properti used_for_chart: sertakan semua kolom numerik.
+                    $numericFields[$col['name']] = $col['label'] ?? $col['name'];
                 }
             }
         }
-        // Jika masih kosong, fallback ke kolom bawaan dari tabel lama
+        // Jika masih kosong setelah membaca konfigurasi, coba gunakan kolom bawaan dari skema lama
         if (empty($numericFields)) {
             if (Schema::hasColumn('daily_reports', 'total_uang')) {
                 $numericFields['total_uang'] = 'Total Uang';

@@ -101,6 +101,23 @@
                             </td>
                         </tr>
                     @endforeach
+                    @php
+                        // Jika tidak ada kolom bernama 'tanggal' pada konfigurasi rekap tetapi model laporan memiliki kolom tanggal,
+                        // tampilkan tanggal laporan sebagai fallback. Ini memastikan informasi tanggal tetap muncul di PDF.
+                        $existsTanggalField = false;
+                        foreach($configRekap as $f) {
+                            if (($f['name'] ?? null) === 'tanggal') {
+                                $existsTanggalField = true;
+                                break;
+                            }
+                        }
+                    @endphp
+                    @if(!$existsTanggalField && !empty($report->tanggal))
+                        <tr>
+                            <td>Tanggal</td>
+                            <td>{{ \Carbon\Carbon::parse($report->tanggal)->isoFormat('D MMMM Y') }}</td>
+                        </tr>
+                    @endif
                 </table>
             @endif
             <h3>Data Laporan</h3>
@@ -158,6 +175,23 @@
                             </td>
                         </tr>
                     @endforeach
+                    @php
+                        // Cek apakah kolom bernama 'tanggal' ada di konfigurasi rekap. Jika tidak ada tetapi entitas
+                        // laporan memiliki kolom tanggal, tampilkan tanggal laporan sebagai baris tambahan.
+                        $existsTanggalField = false;
+                        foreach($configRekap as $f) {
+                            if (($f['name'] ?? null) === 'tanggal') {
+                                $existsTanggalField = true;
+                                break;
+                            }
+                        }
+                    @endphp
+                    @if(!$existsTanggalField && !empty($report->tanggal))
+                        <tr>
+                            <td>Tanggal</td>
+                            <td>{{ \Carbon\Carbon::parse($report->tanggal)->isoFormat('D MMMM Y') }}</td>
+                        </tr>
+                    @endif
                 </table>
             @endif
         @elseif(!empty($report->data))

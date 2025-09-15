@@ -161,12 +161,25 @@ class Harian extends Component
                 // Ambil judul dari meta
                 $meta = $existing->data['meta'] ?? [];
                 $this->reportTitle = $meta['title'] ?? '';
-                // Pastikan tanggal laporan mengikuti rekap['tanggal'] jika ada
+                // Sinkronkan tanggal antara kolom rekap dan properti laporan:
+                //  - Jika kolom rekap sudah memiliki nilai tanggal, pastikan properti $existing->tanggal
+                //    diperbarui agar konsisten dengan input pengguna.
+                //  - Jika kolom rekap belum memiliki nilai tanggal tetapi entitas laporan memiliki nilai
+                //    tanggal, gunakan nilai tersebut sebagai default untuk kolom rekap. Hal ini mencegah
+                //    field tanggal menjadi kosong ketika laporan dibuka kembali dari histori.
                 if (isset($this->rekap['tanggal']) && !empty($this->rekap['tanggal'])) {
                     try {
                         $existing->tanggal = \Carbon\Carbon::parse($this->rekap['tanggal'])->toDateString();
                     } catch (\Exception $e) {
                         $existing->tanggal = $this->rekap['tanggal'];
+                    }
+                } else {
+                    if (!empty($existing->tanggal)) {
+                        try {
+                            $this->rekap['tanggal'] = \Carbon\Carbon::parse($existing->tanggal)->toDateString();
+                        } catch (\Exception $e) {
+                            $this->rekap['tanggal'] = $existing->tanggal;
+                        }
                     }
                 }
                 // Hitung ulang rumus rekap
