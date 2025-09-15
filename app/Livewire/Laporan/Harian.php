@@ -219,11 +219,53 @@ class Harian extends Component
     public function updateCell($rowIndex, $column, $value)
     {
         if (isset($this->rincian[$rowIndex]) && isset($this->rincian[$rowIndex][$column])) {
-            // Sanitasi: hanya izinkan tag sederhana untuk styling teks
-            $cleanValue = strip_tags($value, '<b><i><u><s><span>');
+            // Sanitasi isi sel: normalisasi HTML agar ukuran dan jenis font tersimpan
+            $cleanValue = $this->normalizeHtml($value);
             $this->rincian[$rowIndex][$column] = $cleanValue;
             $this->hitungUlang();
         }
+    }
+
+    /**
+     * Normalisasi HTML dari sel rincian. Menghapus tag berbahaya serta konversi
+     * tag <font> menjadi <span style="font-family:...;font-size:..."> agar jenis
+     * dan ukuran font tidak hilang saat disimpan. Izinkan hanya tag inline aman.
+     *
+     * @param string $html
+     * @return string
+     */
+    private function normalizeHtml(string $html): string
+    {
+        // Hapus script tags untuk menghindari XSS
+        $html = preg_replace('#<script.*?</script>#is', '', $html);
+        // Hapus anchor tags, pertahankan teks di dalamnya
+        $html = preg_replace('#<a[^>]*>(.*?)</a>#is', '$1', $html);
+        // Konversi tag <font> ke <span> dengan style
+        $html = preg_replace_callback('#<font([^>]*)>#i', function ($matches) {
+            $attrs = $matches[1];
+            $face = null;
+            $size = null;
+            if (preg_match('/face="?([^"\s]+)"?/i', $attrs, $faceMatch)) {
+                $face = $faceMatch[1];
+            }
+            if (preg_match('/size="?([1-7])"?/i', $attrs, $sizeMatch)) {
+                $size = $sizeMatch[1];
+            }
+            // Map ukuran execCommand ke pt
+            $sizeMap = [1 => '8pt', 2 => '10pt', 3 => '12pt', 4 => '14pt', 5 => '18pt', 6 => '24pt', 7 => '36pt'];
+            $style = '';
+            if ($face) {
+                $style .= 'font-family:' . $face . ';';
+            }
+            if ($size && isset($sizeMap[$size])) {
+                $style .= 'font-size:' . $sizeMap[$size] . ';';
+            }
+            return '<span style="' . $style . '">';
+        }, $html);
+        // Tutup tag font jadi span
+        $html = preg_replace('#</font>#i', '</span>', $html);
+        // Izinkan hanya tag inline sederhana
+        return strip_tags($html, '<b><strong><i><em><u><s><span><div><p><br>');
     }
 
     /**
@@ -378,6 +420,10 @@ class Harian extends Component
                 } catch (\Exception $e) {
                     $this->report->tanggal = $this->rekap['tanggal'];
                 }
+            }
+            // Pastikan user_id selalu di-set ketika menyimpan laporan baru
+            if (empty($this->report->user_id)) {
+                $this->report->user_id = Auth::id();
             }
             // Simpan struktur data laporan
             $this->report->data = $dataToStore;

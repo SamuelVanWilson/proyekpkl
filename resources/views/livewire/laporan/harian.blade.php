@@ -222,12 +222,24 @@
                         <span class="text-base font-bold">−</span><span>Baris</span>
                     </button>
                 </div>
-                {{-- Link konfigurasi tabel --}}
-                <div class="flex justify-between items-center rounded-lg overflow-hidden bg-gray-200 text-gray-700 text-sm font-medium">
-                    <a href="{{ route('client.laporan.form-builder') }}" class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1">
-                        <span>Konfigurasi</span>
-                    </a>
-                </div>
+        {{-- Hapus baris terpilih: hanya aktif jika ada baris dipilih --}}
+        <button type="button"
+                wire:click="hapusBarisTerpilih"
+                @class([
+                    'px-3 py-2 rounded-lg text-sm font-medium flex items-center justify-center',
+                    'bg-red-600 text-white hover:bg-red-700' => $selectedRowIndex !== null,
+                    'bg-red-300 text-white cursor-not-allowed' => $selectedRowIndex === null,
+                ])
+                @if($selectedRowIndex === null) disabled @endif>
+            Hapus Baris Terpilih
+        </button>
+
+        {{-- Link konfigurasi tabel --}}
+        <div class="flex justify-between items-center rounded-lg overflow-hidden bg-gray-200 text-gray-700 text-sm font-medium">
+            <a href="{{ route('client.laporan.form-builder') }}" class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1">
+                <span>Konfigurasi</span>
+            </a>
+        </div>
                 {{-- Simpan laporan --}}
                 <button type="button" wire:click="simpanLaporan" wire:loading.attr="disabled" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">
                     <span wire:loading.remove wire:target="simpanLaporan">Simpan</span>
