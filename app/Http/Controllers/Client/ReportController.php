@@ -92,8 +92,14 @@ class ReportController extends Controller
     {
         $this->authorize('update', $dailyReport);
         if (!empty($dailyReport->data)) {
+            // Jika laporan memiliki rincian & rekap maka ini laporan advanced
+            if (isset($dailyReport->data['rincian']) && isset($dailyReport->data['rekap'])) {
+                return view('client.laporan.advanced', ['reportId' => $dailyReport->id]);
+            }
+            // Selain itu, anggap sebagai laporan biasa
             return view('client.laporan.biasa', ['reportId' => $dailyReport->id]);
         }
+        // Default: redirect dengan pesan jika data kosong
         return redirect()->route('client.laporan.histori')->with('message', 'Edit laporan advanced belum tersedia.');
     }
 
@@ -246,6 +252,8 @@ class ReportController extends Controller
             'rekap.*.formula'    => 'nullable|string',
             'rekap.*.default_value' => 'nullable|string',
             'rekap.*.readonly'   => 'sometimes|boolean',
+            // Kolom tambahan: menandai apakah field rekap digunakan sebagai data grafik
+            'rekap.*.used_for_chart' => 'sometimes|boolean',
         ]);
         $processedColumns = [];
         // Proses rincian
@@ -270,6 +278,8 @@ class ReportController extends Controller
                     'formula'      => $col['formula'] ?? null,
                     'default_value'=> $col['default_value'] ?? null,
                     'readonly'     => !empty($col['readonly']),
+                    // Simpan flag "used_for_chart" agar grafik hanya mengambil kolom yang dipilih
+                    'used_for_chart'=> !empty($col['used_for_chart']),
                 ];
             }
         } else {
@@ -286,7 +296,7 @@ class ReportController extends Controller
         } else {
             // Setelah menyimpan konfigurasi sebagai pengguna biasa/premium, arahkan ke halaman laporan sesuai status langganan.
             // Gunakan nama rute yang benar tanpa prefix "client." karena rute yang didefinisikan di web.php adalah lapiran.harian dan lapiran.advanced.
-            $targetRoute = Auth::user()->hasActiveSubscription() ? 'laporan.advanced' : 'laporan.harian';
+            $targetRoute = Auth::user()->hasActiveSubscription() ? 'client.laporan.advanced' : 'client.laporan.harian';
             return redirect()->route($targetRoute)->with('success', 'Struktur laporan Anda berhasil diperbarui!');
         }
     }

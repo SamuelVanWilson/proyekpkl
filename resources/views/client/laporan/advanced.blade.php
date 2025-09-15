@@ -15,6 +15,11 @@
             halaman ini.
         --}}
 
-        @livewire('laporan.harian')
+        {{-- Gunakan parameter reportId jika sedang mengedit laporan yang ada --}}
+        @isset($reportId)
+            @livewire('laporan.harian', ['reportId' => $reportId])
+        @else
+            @livewire('laporan.harian')
+        @endisset
     </div>
 @endsection

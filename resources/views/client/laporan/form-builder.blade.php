@@ -102,11 +102,16 @@
                                 </div>
                             </div>
                             {{-- Baris 3: Aksi --}}
-                            <div class="flex justify-between items-center pt-1">
-                                <div class="flex items-center">
+                            <div class="flex justify-between items-center pt-1 flex-wrap gap-y-2">
+                                <div class="flex items-center mr-4">
                                     <input type="hidden" :name="`rekap[${index}][readonly]`" value="0">
                                     <input type="checkbox" :name="`rekap[${index}][readonly]`" value="1" :id="`readonly_${index}`" x-model="col.readonly" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
                                     <label :for="`readonly_${index}`" class="ml-2 block text-sm text-gray-700">Read Only</label>
+                                </div>
+                                <div class="flex items-center mr-4">
+                                    <input type="hidden" :name="`rekap[${index}][used_for_chart]`" value="0">
+                                    <input type="checkbox" :name="`rekap[${index}][used_for_chart]`" value="1" :id="`used_for_chart_${index}`" x-model="col.used_for_chart" class="h-4 w-4 text-green-600 border-gray-300 rounded focus:ring-green-500">
+                                    <label :for="`used_for_chart_${index}`" class="ml-2 block text-sm text-gray-700">Dipakai sebagai data grafik</label>
                                 </div>
                                 <button type="button" @click="rekap.splice(index, 1)" class="px-3 py-2 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md">Hapus</button>
                             </div>
@@ -117,7 +122,8 @@
             </div>
 
             <div class="mt-6 flex flex-col sm:flex-row justify-end gap-3">
-                <a href="{{ route('client.laporan.harian') }}" class="w-full sm:w-auto text-center px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
+                {{-- Tombol batal kini kembali ke halaman sebelumnya menggunakan history.back() agar lebih fleksibel --}}
+                <a href="#" onclick="event.preventDefault(); history.back();" class="w-full sm:w-auto text-center px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50">
                     Batal
                 </a>
                 <button type="submit" class="w-full sm:w-auto px-6 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">

@@ -38,14 +38,30 @@ class ChartController extends Controller
             ->first();
         $numericFields = [];
         if ($config && !empty($config->columns['rekap'])) {
+            $selectedFields = [];
             foreach ($config->columns['rekap'] as $col) {
                 $type = $col['type'] ?? 'text';
-                if (in_array($type, ['number', 'rupiah', 'dollar', 'kg', 'g'])) {
-                    $numericFields[$col['name']] = $col['label'] ?? $col['name'];
+                // Gunakan hanya kolom yang ditandai digunakan untuk grafik jika ada setidaknya satu yang diaktifkan
+                if (!empty($col['used_for_chart'])) {
+                    if (in_array($type, ['number', 'rupiah', 'dollar', 'kg', 'g'])) {
+                        $selectedFields[$col['name']] = $col['label'] ?? $col['name'];
+                    }
+                }
+            }
+            // Jika ada field terpilih melalui used_for_chart, pakai itu
+            if (!empty($selectedFields)) {
+                $numericFields = $selectedFields;
+            } else {
+                // Kalau tidak, fallback ke semua numeric type
+                foreach ($config->columns['rekap'] as $col) {
+                    $type = $col['type'] ?? 'text';
+                    if (in_array($type, ['number', 'rupiah', 'dollar', 'kg', 'g'])) {
+                        $numericFields[$col['name']] = $col['label'] ?? $col['name'];
+                    }
                 }
             }
         }
-        // Jika tidak ada numericFields, fallback ke kolom bawaan
+        // Jika masih kosong, fallback ke kolom bawaan dari tabel lama
         if (empty($numericFields)) {
             if (Schema::hasColumn('daily_reports', 'total_uang')) {
                 $numericFields['total_uang'] = 'Total Uang';

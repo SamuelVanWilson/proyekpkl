@@ -27,6 +27,13 @@ class Harian extends Component
     public $report;
 
     /**
+     * ID laporan yang sedang diedit (advanced). Null ketika membuat laporan baru.
+     *
+     * @var int|null
+     */
+    public $reportId = null;
+
+    /**
      * Data rincian sebagai array baris. Setiap baris adalah array kolom.
      *
      * @var array<int, array<string, mixed>>
@@ -96,16 +103,83 @@ class Harian extends Component
     /**
      * Lifecycle hook Livewire: load konfigurasi dan laporan saat komponen di-mount.
      */
-    public function mount()
+    /**
+     * Lifecycle hook Livewire: load konfigurasi dan laporan saat komponen di-mount.
+     *
+     * Jika $reportId diberikan maka muat laporan existing. Jika tidak, buat laporan baru.
+     *
+     * @param  int|null  $reportId
+     * @return void
+     */
+    public function mount($reportId = null)
     {
         $this->loadConfig();
-        // Selalu mulai dengan laporan baru yang kosong untuk halaman advanced.
-        // Hal ini menghindari terbukanya laporan sebelumnya ketika user ingin membuat laporan baru.
+        // Simpan reportId untuk referensi selanjutnya
+        $this->reportId = $reportId;
+        // Jika ada reportId, coba muat laporan existing untuk user ini
+        if ($this->reportId) {
+            $existing = DailyReport::where('id', $this->reportId)
+                ->where('user_id', Auth::id())
+                ->first();
+            if ($existing) {
+                $this->report = $existing;
+                // Ambil data rincian jika tersedia, gunakan konfigurasi saat ini
+                $this->rincian = [];
+                $savedRincian = $existing->data['rincian'] ?? [];
+                // Pastikan setiap baris memiliki kolom sesuai konfigurasi (isi string kosong jika tidak ada)
+                foreach ($savedRincian as $row) {
+                    $newRow = [];
+                    foreach ($this->configRincian as $col) {
+                        $newRow[$col['name']] = $row[$col['name']] ?? '';
+                    }
+                    $this->rincian[] = $newRow;
+                }
+                // Jika tidak ada baris sama sekali, inisialisasi 10 baris kosong
+                if (empty($this->rincian)) {
+                    for ($i = 0; $i < 10; $i++) {
+                        $newRow = [];
+                        foreach ($this->configRincian as $col) {
+                            $newRow[$col['name']] = '';
+                        }
+                        $this->rincian[] = $newRow;
+                    }
+                }
+                // Ambil data rekap jika ada, atau default
+                $this->rekap = [];
+                $savedRekap = $existing->data['rekap'] ?? [];
+                foreach ($this->configRekap as $field) {
+                    if (array_key_exists($field['name'], $savedRekap)) {
+                        $this->rekap[$field['name']] = $savedRekap[$field['name']];
+                    } else {
+                        if (isset($field['default_value']) && $field['default_value'] !== '') {
+                            $this->rekap[$field['name']] = $field['default_value'];
+                        } else {
+                            $this->rekap[$field['name']] = ($field['type'] === 'date') ? now()->format('Y-m-d') : '';
+                        }
+                    }
+                }
+                // Ambil judul dari meta
+                $meta = $existing->data['meta'] ?? [];
+                $this->reportTitle = $meta['title'] ?? '';
+                // Pastikan tanggal laporan mengikuti rekap['tanggal'] jika ada
+                if (isset($this->rekap['tanggal']) && !empty($this->rekap['tanggal'])) {
+                    try {
+                        $existing->tanggal = \Carbon\Carbon::parse($this->rekap['tanggal'])->toDateString();
+                    } catch (\Exception $e) {
+                        $existing->tanggal = $this->rekap['tanggal'];
+                    }
+                }
+                // Hitung ulang rumus rekap
+                $this->hitungUlang();
+                return;
+            }
+        }
+        // Jika tidak ada laporan existing atau ID tidak ditemukan, buat laporan baru
         $this->report = new DailyReport([
             'user_id' => Auth::id(),
             'tanggal' => now()->toDateString(),
         ]);
-        // Inisialisasi rincian dengan baris default
+        // Inisialisasi rincian dengan 10 baris kosong
         $this->rincian = [];
         for ($i = 0; $i < 10; $i++) {
             $newRow = [];
@@ -114,7 +188,7 @@ class Harian extends Component
             }
             $this->rincian[] = $newRow;
         }
-        // Inisialisasi rekap
+        // Inisialisasi rekap default
         $this->rekap = [];
         foreach ($this->configRekap as $field) {
             if (isset($field['default_value']) && $field['default_value'] !== '') {
@@ -123,10 +197,9 @@ class Harian extends Component
                 $this->rekap[$field['name']] = ($field['type'] === 'date') ? now()->format('Y-m-d') : '';
             }
         }
+        // Set judul default
+        $this->reportTitle = '';
         $this->hitungUlang();
-        // Ambil judul dari meta jika ada
-        $meta = $this->report->data['meta'] ?? [];
-        $this->reportTitle = $meta['title'] ?? '';
     }
 
     /**
@@ -401,6 +474,14 @@ class Harian extends Component
      */
     public function simpanLaporan()
     {
+        // Validasi judul laporan dan tanggal wajib diisi
+        $this->validate([
+            'reportTitle'    => 'required|string|max:255',
+            'rekap.tanggal' => 'required|date',
+        ], [
+            'reportTitle.required'    => 'Judul Laporan tidak boleh kosong.',
+            'rekap.tanggal.required'  => 'Tanggal Laporan tidak boleh kosong.',
+        ]);
         // Persiapkan data yang akan disimpan. Selalu sertakan meta title.
         $cleanRincian = array_values(array_filter($this->rincian, fn($row) => collect($row)->filter()->isNotEmpty()));
         $meta = $this->report->data['meta'] ?? [];
@@ -503,8 +584,10 @@ class Harian extends Component
                 $this->rekap[$field['name']] = ($field['type'] === 'date') ? now()->format('Y-m-d') : '';
             }
         }
-        // Reset meta
-        $this->title = '';
+        // Reset judul laporan
+        $this->reportTitle = '';
+        // Kosongkan ID laporan karena membuat laporan baru
+        $this->reportId = null;
         // Hapus local storage via event
         $this->dispatch('laporanDisimpan');
     }

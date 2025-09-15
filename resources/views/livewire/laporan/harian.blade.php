@@ -165,10 +165,16 @@
                     <div>
                         <label class="text-sm font-medium text-gray-600">Judul Laporan</label>
                         <input type="text" wire:model.lazy="reportTitle" class="input-modern" placeholder="Masukkan judul laporan">
+                        @error('reportTitle')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-600">Tanggal Laporan</label>
                         <input type="date" wire:model.lazy="rekap.tanggal" class="input-modern">
+                        @error('rekap.tanggal')
+                            <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
+                        @enderror
                     </div>
                     {{-- Kolom rekap lainnya --}}
                     @foreach($configRekap as $field)
