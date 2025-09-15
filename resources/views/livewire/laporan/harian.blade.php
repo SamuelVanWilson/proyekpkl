@@ -52,7 +52,7 @@
             {{-- Toolbar format teks (copy dari halaman laporan biasa) --}}
             <div x-data="{ formatOpen: false, alignOpen: false }" class="flex flex-wrap items-center gap-2 mb-4">
                 {{-- Format dropdown --}}
-                <div class="relative inline-block text-left z-[100]">
+                <div class="relative inline-block text-left">
                     <button type="button" @click="formatOpen = !formatOpen" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium flex items-center gap-1">
                         <ion-icon name="create-outline" class="text-lg"></ion-icon>
                         <span>Format</span>
@@ -89,7 +89,7 @@
                     </div>
                 </div>
                 {{-- Align dropdown --}}
-                <div class="relative inline-block text-left z-[100]">
+                <div class="relative inline-block text-left">
                     <button type="button" @click="alignOpen = !alignOpen" class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium flex items-center gap-1">
                         <ion-icon name="text-outline" class="text-lg"></ion-icon>
                         <span>Align</span>

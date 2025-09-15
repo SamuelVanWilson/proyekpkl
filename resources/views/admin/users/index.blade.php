@@ -51,9 +51,20 @@
                                 {{-- Status & Aksi (Dengan penyesuaian untuk mobile) --}}
                                 <div class="flex items-center justify-between mt-4 md:mt-0">
                                     <div class="md:w-40 md:px-6">
-                                        <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $user->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
-                                            {{ $user->is_active ? 'Aktif' : 'Nonaktif' }}
-                                        </span>
+                                        <div class="flex flex-col items-start space-y-1">
+                                            <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium {{ $user->is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                                {{ $user->is_active ? 'Aktif' : 'Nonaktif' }}
+                                            </span>
+                                            @if($user->hasActiveSubscription())
+                                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-blue-100 text-blue-800">
+                                                    Premium - {{ ucfirst(str_replace('_', ' ', $user->subscription_plan ?? '')) }}
+                                                </span>
+                                            @else
+                                                <span class="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-800">
+                                                    Gratis
+                                                </span>
+                                            @endif
+                                        </div>
                                     </div>
 
                                     <div class="md:w-20 md:px-6 text-right">

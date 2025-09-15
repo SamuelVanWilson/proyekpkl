@@ -20,20 +20,35 @@
         <div class="mt-4 bg-white shadow-sm overflow-hidden rounded-xl">
             <ul role="list" class="divide-y divide-gray-200">
                 @forelse($user->dailyReports as $report)
+                @php
+                    // Ambil meta & rekap dari struktur data laporan
+                    $meta  = $report->data['meta'] ?? [];
+                    $rekap = $report->data['rekap'] ?? [];
+                    // Judul laporan: gunakan judul meta jika ada, jika tidak gunakan lokasi atau fallback
+                    $title = $meta['title'] ?? ($report->lokasi ?? 'Tanpa Judul');
+                    // Tanggal laporan: ambil dari rekap jika ada, fallback ke kolom tanggal di tabel
+                    $date  = $rekap['tanggal'] ?? $report->tanggal;
+                    try {
+                        $formattedDate = \Carbon\Carbon::parse($date)->isoFormat('D MMM Y');
+                    } catch (Exception $e) {
+                        $formattedDate = $date;
+                    }
+                    // Jenis laporan: tentukan berdasarkan keberadaan struktur data
+                    if (!empty($report->data['rincian']) || !empty($report->data['rekap'])) {
+                        $type = 'Advanced';
+                    } elseif (!empty($report->data['rows'])) {
+                        $type = 'Biasa';
+                    } else {
+                        $type = 'Lama';
+                    }
+                @endphp
                 <li class="p-4">
-                    <div class="flex justify-between items-center">
-                        <p class="font-medium text-gray-800 truncate">
-                            {{-- Mengambil data dari kolom JSON --}}
-                            {{ $report->data['lokasi'] ?? 'Tanpa Lokasi' }}
-                        </p>
-                        <span class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($report->created_at)->isoFormat('D MMM Y') }}</span>
-                    </div>
-                    <div class="flex justify-between text-sm text-gray-500 mt-1">
-                        <span>Pemilik: {{ $report->data['pemilik_sawah'] ?? '-' }}</span>
-                        <span class="font-semibold text-green-600">
-                            {{-- Mengambil data dari kolom JSON --}}
-                            Rp {{ number_format($report->data['total_uang'] ?? 0, 0, ',', '.') }}
-                        </span>
+                    <div class="flex justify-between items-start">
+                        <div class="pr-4 flex-1">
+                            <p class="font-semibold text-gray-800 truncate">{{ $title }}</p>
+                            <p class="text-sm text-gray-500 mt-1">Tanggal: {{ $formattedDate }} | Jenis: {{ $type }}</p>
+                        </div>
+                        <span class="text-xs text-gray-500 ml-4">{{ $report->created_at->isoFormat('D MMM Y') }}</span>
                     </div>
                 </li>
                 @empty
