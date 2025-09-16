@@ -214,8 +214,36 @@
             @endphp
             @if($detailPosition === 'top')
                 <h3>Informasi Laporan</h3>
+                @php
+                    $detailSchema = $report->data['detail_schema'] ?? [];
+                    $detailValues = $report->data['detail_values'] ?? [];
+                @endphp
                 <table class="rekap-table">
-                    <tr><td>Tanggal</td><td>{{ \Carbon\Carbon::parse($report->tanggal)->isoFormat('D MMMM Y') }}</td></tr>
+                    @if(!empty($detailSchema))
+                        @foreach($detailSchema as $field)
+                            @php
+                                $key = $field['key'] ?? '';
+                                $val = $detailValues[$key] ?? '';
+                                $type = $field['type'] ?? 'text';
+                                $formatted = $val;
+                                if($type === 'date' && !empty($val)) {
+                                    try {
+                                        $formatted = \Carbon\Carbon::parse($val)->isoFormat('D MMMM Y');
+                                    } catch(Exception $e) {
+                                        $formatted = $val;
+                                    }
+                                } elseif($type === 'number' && $val !== '') {
+                                    $formatted = number_format((float)$val, 0, ',', '.');
+                                }
+                            @endphp
+                            <tr>
+                                <td>{{ $field['label'] }}</td>
+                                <td>{{ $formatted }}</td>
+                            </tr>
+                        @endforeach
+                    @else
+                        <tr><td>Tanggal</td><td>{{ \Carbon\Carbon::parse($report->tanggal)->isoFormat('D MMMM Y') }}</td></tr>
+                    @endif
                 </table>
             @endif
             <h3>Data Laporan</h3>
@@ -244,8 +272,36 @@
             </table>
             @if($detailPosition === 'bottom')
                 <h3>Informasi Laporan</h3>
+                @php
+                    $detailSchema = $report->data['detail_schema'] ?? [];
+                    $detailValues = $report->data['detail_values'] ?? [];
+                @endphp
                 <table class="rekap-table">
-                    <tr><td>Tanggal</td><td>{{ \Carbon\Carbon::parse($report->tanggal)->isoFormat('D MMMM Y') }}</td></tr>
+                    @if(!empty($detailSchema))
+                        @foreach($detailSchema as $field)
+                            @php
+                                $key = $field['key'] ?? '';
+                                $val = $detailValues[$key] ?? '';
+                                $type = $field['type'] ?? 'text';
+                                $formatted = $val;
+                                if($type === 'date' && !empty($val)) {
+                                    try {
+                                        $formatted = \Carbon\Carbon::parse($val)->isoFormat('D MMMM Y');
+                                    } catch(Exception $e) {
+                                        $formatted = $val;
+                                    }
+                                } elseif($type === 'number' && $val !== '') {
+                                    $formatted = number_format((float)$val, 0, ',', '.');
+                                }
+                            @endphp
+                            <tr>
+                                <td>{{ $field['label'] }}</td>
+                                <td>{{ $formatted }}</td>
+                            </tr>
+                        @endforeach
+                    @else
+                        <tr><td>Tanggal</td><td>{{ \Carbon\Carbon::parse($report->tanggal)->isoFormat('D MMMM Y') }}</td></tr>
+                    @endif
                 </table>
             @endif
         @else

@@ -66,41 +66,45 @@
         </div>
     </div>
 
-    {{-- Input Judul Laporan --}}
-    <div class="mb-4">
-        <label for="title" class="block text-sm font-medium text-gray-700">Judul Laporan</label>
-        <input type="text" id="title" wire:model="title" placeholder="Masukkan judul laporan" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500">
-        @error('title')
-            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-        @enderror
-    </div>
+    {{-- Kelompok Detail Laporan (Judul, Tanggal, dan kolom tambahan) --}}
+    <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200 mb-4">
+        <h2 class="text-lg font-semibold text-gray-700 mb-3">Detail Laporan</h2>
+        {{-- Input Judul Laporan --}}
+        <div class="mb-4">
+            <label for="title" class="block text-sm font-medium text-gray-700">Judul Laporan</label>
+            <input type="text" id="title" wire:model="title" placeholder="Masukkan judul laporan" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:ring-green-500 focus:border-green-500">
+            @error('title')
+                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+            @enderror
+        </div>
 
-    {{-- Input Tanggal --}}
-    <div class="mb-4">
-        <label for="date" class="block text-sm font-medium text-gray-700">Tanggal Laporan</label>
-        <input type="date" id="date" wire:model="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
-        @error('date')
-            <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
-        @enderror
-    </div>
+        {{-- Input Tanggal --}}
+        <div class="mb-4">
+            <label for="date" class="block text-sm font-medium text-gray-700">Tanggal Laporan</label>
+            <input type="date" id="date" wire:model="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm">
+            @error('date')
+                <p class="text-sm text-red-600 mt-1">{{ $message }}</p>
+            @enderror
+        </div>
 
-    {{-- Tambahan field detail laporan dari schema konfigurasi. 
-         Hanya ditampilkan di sini (bukan konfigurasi). 
-         Input akan disesuaikan dengan tipe (text/number/date). */}
-    @foreach ($detailSchema as $field)
-        @if($field['key'] !== 'title' && $field['key'] !== 'tanggal_raw')
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700">{{ $field['label'] }}</label>
-                @if($field['type'] === 'number')
-                    <input type="number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" wire:model.defer="detailValues.{{ $field['key'] }}">
-                @elseif($field['type'] === 'date')
-                    <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" wire:model.defer="detailValues.{{ $field['key'] }}">
-                @else
-                    <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" wire:model.defer="detailValues.{{ $field['key'] }}">
-                @endif
-            </div>
-        @endif
-    @endforeach
+        {{-- Tambahan field detail laporan dari schema konfigurasi. 
+             Hanya ditampilkan di sini (bukan konfigurasi). 
+             Input akan disesuaikan dengan tipe (text/number/date). */}
+        @foreach ($detailSchema as $field)
+            @if($field['key'] !== 'title' && $field['key'] !== 'tanggal_raw')
+                <div class="mb-4">
+                    <label class="block text-sm font-medium text-gray-700">{{ $field['label'] }}</label>
+                    @if($field['type'] === 'number')
+                        <input type="number" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" wire:model.defer="detailValues.{{ $field['key'] }}">
+                    @elseif($field['type'] === 'date')
+                        <input type="date" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" wire:model.defer="detailValues.{{ $field['key'] }}">
+                    @else
+                        <input type="text" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm" wire:model.defer="detailValues.{{ $field['key'] }}">
+                    @endif
+                </div>
+            @endif
+        @endforeach
+    </div>
 
     {{-- Tabel Data Dinamis --}}
     <div class="overflow-x-auto overflow-y-auto max-h-96">
@@ -155,18 +159,17 @@
         <button type="button" wire:click="addColumn" class="flex items-center justify-center px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-medium" @if(count($columns) >= 26) disabled @endif>
             + Kolom
         </button>
-        <button type="button" wire:click="save" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">
-            Simpan
+        <button type="button" wire:click="save" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full flex items-center justify-center" wire:loading.attr="disabled">
+            {{-- Tampilkan 'Menyimpan…' saat proses simpan berlangsung, seperti di laporan advanced --}}
+            <span wire:loading.remove wire:target="save">Simpan</span>
+            <span wire:loading wire:target="save">Menyimpan…</span>
         </button>
         <button type="button" wire:click="preview" class="px-4 py-2 rounded-lg text-sm font-medium w-full {{ $reportId ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-300 text-gray-500 cursor-not-allowed' }}" @if(!$reportId) disabled @endif>
             Preview
         </button>
     </div>
 
-    {{-- Indikator menyimpan laporan --}}
-    <div class="mt-2 text-sm text-gray-500" wire:loading.delay wire:target="save">
-        Menyimpan…
-    </div>
+    {{-- Indikator menyimpan laporan dihapus karena sudah diintegrasikan ke tombol --}}
 
     {{-- Hapus baris/kolom terpilih --}}
     <div class="mt-3 flex flex-col sm:flex-row gap-2">

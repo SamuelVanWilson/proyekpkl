@@ -31,6 +31,8 @@ class SimpleTableConfigController extends Controller
         abort_unless($dailyReport->user_id === Auth::id(), 403);
 
         $fields = $request->input('fields', []);
+        // Re-index fields to ensure sequential indexes (0..n) regardless of gaps
+        $fields = array_values($fields);
         $allowed = ['text', 'number', 'date'];
         $normalized = [];
         // Proses setiap field dari input. Hanya gunakan label & type, key akan dibuat otomatis dari label
@@ -47,8 +49,15 @@ class SimpleTableConfigController extends Controller
                 // Tambahkan suffix untuk mencegah konflik
                 $key .= '_field';
             }
+            // Pastikan setiap key unik dalam normalized
+            $uniqueKey = $key;
+            $counter = 2;
+            while (collect($normalized)->pluck('key')->contains($uniqueKey)) {
+                $uniqueKey = $key . '_' . $counter;
+                $counter++;
+            }
             $normalized[] = [
-                'key'      => $key,
+                'key'      => $uniqueKey,
                 'label'    => $label,
                 'type'     => $type,
                 'readonly' => false,
