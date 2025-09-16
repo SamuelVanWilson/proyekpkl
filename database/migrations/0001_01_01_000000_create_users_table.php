@@ -19,10 +19,10 @@ return new class extends Migration
             $table->string('password'); // KEMBALIKAN KOLOM PASSWORD
 
             // Kolom kustom yang kita butuhkan
-            $table->string('alamat');
-            $table->string('tanggal_lahir');
-            $table->string('pekerjaan');
-            $table->string('nomor_telepon');
+            $table->string('alamat')->nullable();
+            $table->string('tanggal_lahir')->nullable();
+            $table->string('pekerjaan')->nullable();
+            $table->string('nomor_telepon')->nullable();
 
             $table->enum('role', ['admin', 'user'])->default('user');
             $table->boolean('is_active')->default(true);
@@ -34,12 +34,6 @@ return new class extends Migration
 
             $table->rememberToken();
             $table->timestamps();
-        });
-
-        Schema::create('password_reset_tokens', function (Blueprint $table) {
-            $table->string('email')->primary();
-            $table->string('token');
-            $table->timestamp('created_at')->nullable();
         });
 
         Schema::create('sessions', function (Blueprint $table) {
@@ -58,7 +52,6 @@ return new class extends Migration
     public function down(): void
     {
         Schema::dropIfExists('users');
-        Schema::dropIfExists('password_reset_tokens');
         Schema::dropIfExists('sessions');
     }
 };

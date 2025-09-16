@@ -8,6 +8,7 @@ use App\Http\Controllers\Client\ProfileController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController as AdminUserController;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Http\Request;
 
 // Gerbang utama, sudah benar.
 // Route::get('/', function () {
@@ -31,15 +32,19 @@ Route::middleware('guest')->group(function () {
     Route::get('/register/step3', [AuthController::class, 'showRegisterStep3'])->name('register.step3.show');
     Route::post('/register/step3', [AuthController::class, 'postRegisterStep3'])->name('register.step3.post');
 
-    // Rute sederhana untuk halaman lupa password. Ini bukan implementasi reset password Laravel
-    // secara penuh, namun setidaknya menghindari error rute tidak ditemukan. Anda bisa
-    // menyesuaikan implementasi sesuai kebutuhan (misal, menambahkan fitur kirim email).
-    Route::get('/forgot-password', function () {
-        return view('auth.forgot-password');
-    })->name('password.request');
 
     Route::get('/register/consent', [AuthController::class, 'showRegisterConsent'])->name('register.consent.show');
     Route::post('/register/consent', [AuthController::class, 'postRegisterConsent'])->name('register.consent.post');
+
+    // Forgot password routes
+    Route::get('/forgot-password', [AuthController::class, 'showLinkRequestForm'])->name('password.request');
+    Route::post('/forgot-password', [AuthController::class, 'sendResetLinkEmail'])->name('password.email');
+    Route::get('/reset-password/{token}', [AuthController::class, 'showResetForm'])->name('password.reset');
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])->name('password.update');
+
+    // Google OAuth routes
+    Route::get('/auth/google', [AuthController::class, 'redirectToGoogle'])->name('auth.google');
+    Route::get('/auth/google/callback', [AuthController::class, 'handleGoogleCallback'])->name('auth.google.callback');
 });
 
 /*
@@ -54,10 +59,23 @@ Route::get('/email/verify', function () {
 })->middleware('auth')->name('verification.notice');
 
 // Rute yang diakses dari link di email
-Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
-    $request->fulfill();
-    return redirect()->route('client.dashboard'); // Arahkan ke dashboard setelah verifikasi
-})->middleware(['auth', 'signed'])->name('verification.verify');
+// Atur agar pengguna tidak perlu login terlebih dahulu. Ketika link diklik,
+// verifikasi email dilakukan secara manual kemudian pengguna langsung login
+// ke aplikasi. Middleware 'signed' tetap digunakan untuk memastikan URL valid.
+Route::get('/email/verify/{id}/{hash}', function ($id, $hash) {
+    $user = \App\Models\User::findOrFail($id);
+    // Pastikan hash cocok dengan alamat email
+    if (! hash_equals((string) $hash, sha1($user->getEmailForVerification()))) {
+        abort(403);
+    }
+    // Tandai email sebagai terverifikasi jika belum
+    if (! $user->hasVerifiedEmail()) {
+        $user->markEmailAsVerified();
+    }
+    // Login pengguna tanpa perlu memasukkan credential lagi
+    \Illuminate\Support\Facades\Auth::login($user, true);
+    return redirect()->route('client.dashboard');
+})->middleware(['signed'])->name('verification.verify');
 
 // Rute untuk mengirim ulang link verifikasi
 Route::post('/email/verification-notification', function (Request $request) {

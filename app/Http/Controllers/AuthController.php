@@ -12,6 +12,11 @@ use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Password;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Mail;
+use Laravel\Socialite\Facades\Socialite;
+use Illuminate\Support\Facades\URL;
 
 
 class AuthController extends Controller
@@ -210,15 +215,28 @@ class AuthController extends Controller
         // Bersihkan session wizard
         Session::forget('register');
 
-        // Auto login
+        // Kirim email verifikasi
+        event(new Registered($user));
+
+        // Auto login agar pengguna dapat melihat halaman verifikasi
         Auth::login($user);
 
-        return redirect()->route('client.dashboard')->with('success', 'Registrasi berhasil. Selamat datang!');
+        return redirect()->route('verification.notice')->with('success', 'Registrasi berhasil. Silakan verifikasi email Anda.');
     }
 
     public function showLoginForm()
     {
         return view('auth.login');
+    }
+
+    /**
+     * Display the form to request a password reset link.
+     *
+     * @return \Illuminate\Contracts\View\View
+     */
+    public function showLinkRequestForm()
+    {
+        return view('auth.forgot-password');
     }
 
     public function login(Request $request)
@@ -253,5 +271,132 @@ class AuthController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/'); // Lebih baik arahkan ke halaman utama setelah logout
+    }
+
+    /**
+     * Handle a forgot password request by sending a reset link to the user's email.
+     *
+     * This method uses Laravel's built‑in password broker to generate a token and
+     * send a password reset email. If the email does not exist in the database,
+     * the response will still indicate success to avoid disclosing user existence.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function sendResetLinkEmail(Request $request)
+    {
+        $request->validate([
+            'email' => 'required|email',
+        ]);
+
+        // Attempt to send the reset link using the default password broker
+        $status = Password::sendResetLink(
+            ['email' => $request->input('email')]
+        );
+
+        return $status == Password::RESET_LINK_SENT
+            ? back()->with(['status' => __($status)])
+            : back()->withErrors(['email' => __($status)]);
+    }
+
+    /**
+     * Display the password reset form for the given token.
+     *
+     * @param string $token
+     * @return \Illuminate\Contracts\View\View
+     */
+    public function showResetForm(string $token)
+    {
+        return view('auth.reset-password', ['token' => $token]);
+    }
+
+    /**
+     * Handle the password reset request.
+     *
+     * Validates the incoming request, attempts to reset the user's password using the
+     * built‑in password broker, and logs the user in upon success. The token is
+     * automatically invalidated after use. If the token is invalid or expired,
+     * an error will be shown.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function resetPassword(Request $request)
+    {
+        $request->validate([
+            'token' => 'required',
+            'email' => 'required|email',
+            'password' => 'required|string|min:8|confirmed',
+        ]);
+
+        $status = Password::reset(
+            $request->only('email', 'password', 'password_confirmation', 'token'),
+            function ($user, $password) use ($request) {
+                $user->forceFill([
+                    'password' => Hash::make($password),
+                ]);
+                $user->save();
+
+                // Immediately log the user in after password reset
+                Auth::login($user);
+            }
+        );
+
+        return $status == Password::PASSWORD_RESET
+            ? redirect()->route('client.dashboard')->with('success', __($status))
+            : back()->withErrors(['email' => [__($status)]]);
+    }
+
+    /**
+     * Redirect the user to the Google authentication page.
+     *
+     * This method uses Laravel Socialite to initiate the OAuth flow with Google.
+     * The user will be redirected to Google's consent screen. Upon approval,
+     * Google will redirect back to the application via the callback route.
+     *
+     * @return \Symfony\Component\HttpFoundation\RedirectResponse
+     */
+    public function redirectToGoogle()
+    {
+        return Socialite::driver('google')->stateless()->redirect();
+    }
+
+    /**
+     * Obtain the user information from Google and log the user in.
+     *
+     * If the user does not exist, a new account will be created with the
+     * information retrieved from Google. The email will be considered verified
+     * and the user will be marked as active. After creating or retrieving the
+     * user, the user is logged in and redirected to their dashboard.
+     *
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function handleGoogleCallback()
+    {
+        try {
+            $googleUser = Socialite::driver('google')->stateless()->user();
+        } catch (\Exception $e) {
+            return redirect()->route('login')->with('error', 'Terjadi kesalahan saat mengautentikasi dengan Google.');
+        }
+
+        $user = User::where('email', $googleUser->getEmail())->first();
+
+        if (!$user) {
+            // Buat akun baru berdasarkan data dari Google
+            $user = User::create([
+                'name' => $googleUser->getName() ?? $googleUser->getNickname() ?? 'Pengguna',
+                'email' => $googleUser->getEmail(),
+                'password' => Hash::make(Str::random(16)),
+                'role' => 'user',
+                'is_active' => true,
+                // Tandai email sebagai terverifikasi
+                'email_verified_at' => now(),
+            ]);
+        }
+
+        // Login pengguna
+        Auth::login($user, true);
+
+        return redirect()->route('client.dashboard');
     }
 }

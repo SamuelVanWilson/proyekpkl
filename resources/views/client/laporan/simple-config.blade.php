@@ -79,17 +79,7 @@
         const addFieldBtn = document.getElementById('addField');
         if (addFieldBtn) {
             addFieldBtn.addEventListener('click', function(){
-                // Tentukan index berikutnya berdasarkan nama input saat ini
-                const inputs = wrap.querySelectorAll('input[name^="fields"]');
-                let maxIndex = -1;
-                inputs.forEach(function(inp){
-                    const m = inp.name.match(/fields\[(\d+)\]/);
-                    if (m) {
-                        const idxVal = parseInt(m[1]);
-                        if (idxVal > maxIndex) maxIndex = idxVal;
-                    }
-                });
-                const idx = maxIndex + 1;
+                const idx = wrap.querySelectorAll('.grid').length;
                 const el  = document.createElement('div');
                 el.className = 'grid grid-cols-1 sm:grid-cols-3 gap-3 items-center p-3 bg-gray-50 rounded-lg border';
                 el.innerHTML = `

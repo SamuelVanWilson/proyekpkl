@@ -30,18 +30,5 @@
             </button>
         </form>
     </div>
-
-    <div class="flex items-center justify-center space-x-4">
-        <a href="{{ route('client.profil.index') }}" class="text-sm font-medium text-gray-600 hover:underline">
-            Ke Halaman Profil
-        </a>
-        <span class="text-gray-300">|</span>
-        <form action="{{ route('logout') }}" method="POST">
-            @csrf
-            <button type="submit" class="text-sm font-medium text-gray-600 hover:underline">
-                Logout
-            </button>
-        </form>
-    </div>
 </div>
 @endsection
