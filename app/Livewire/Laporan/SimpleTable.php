@@ -81,6 +81,27 @@ class SimpleTable extends Component
     public $selectedRowIndex = null;
 
     /**
+     * Menyimpan keadaan tabel sebelum penghapusan baris/kolom untuk fitur undo.
+     *
+     * @var array|null
+     */
+    public $lastRowsState = null;
+
+    /**
+     * Menyimpan keadaan kolom sebelum penghapusan kolom untuk fitur undo.
+     *
+     * @var array|null
+     */
+    public $lastColumnsState = null;
+
+    /**
+     * Menandai apakah aksi penghapusan dapat di-undo.
+     *
+     * @var bool
+     */
+    public $undoAvailable = false;
+
+    /**
      * Inisialisasi komponen. Jika reportId diberikan, muat data laporan.
      *
      * @param int|null $reportId
@@ -198,6 +219,10 @@ class SimpleTable extends Component
     public function removeLastRow()
     {
         if (!empty($this->rows)) {
+            // Simpan keadaan sebelumnya untuk undo
+            $this->lastRowsState    = $this->rows;
+            $this->lastColumnsState = $this->columns;
+            $this->undoAvailable    = true;
             array_pop($this->rows);
             $this->dispatch('tableUpdated');
         }
@@ -211,6 +236,10 @@ class SimpleTable extends Component
      */
     public function removeRow($index)
     {
+        // Simpan keadaan sebelumnya untuk undo
+        $this->lastRowsState    = $this->rows;
+        $this->lastColumnsState = $this->columns;
+        $this->undoAvailable    = true;
         unset($this->rows[$index]);
         $this->rows = array_values($this->rows);
         $this->dispatch('tableUpdated');
@@ -283,7 +312,7 @@ class SimpleTable extends Component
     {
         // Buang <script> dan <a> agar tidak tersimpan link
         $html = preg_replace('#<script.*?</script>#is', '', $html);
-        $html = preg_replace('#<a[^>]*>(.*?)</a>#i', '$1', $html);
+        $html = preg_replace('#<a[^>]*>(.*?)</a>#is', '$1', $html);
         // Konversi tag <font> menjadi <span style="...">
         $html = preg_replace_callback('#<font([^>]*)>#i', function ($m) {
             $attrs = $m[1];
@@ -306,8 +335,79 @@ class SimpleTable extends Component
             return '<span style="' . $style . '">';
         }, $html);
         $html = str_ireplace('</font>', '</span>', $html);
-        // Izinkan tag inline aman
-        return strip_tags($html, '<b><strong><i><em><u><s><span><div><p><br>');
+
+        // Gunakan DOMDocument untuk mempertahankan atribut style aman dan tag inline tertentu
+        libxml_use_internal_errors(true);
+        $doc = new \DOMDocument('1.0', 'UTF-8');
+        $doc->loadHTML('<?xml encoding="UTF-8"?><div>' . $html . '</div>', LIBXML_HTML_NOIMPLIED | LIBXML_HTML_NODEFDTD);
+        $allowedTags = ['b','strong','i','em','u','s','span','div','p','br'];
+        $allowedStyles = ['font-family','font-size','text-align','font-weight','font-style','text-decoration'];
+        $this->sanitizeDom($doc->documentElement, $allowedTags, $allowedStyles);
+        $innerHtml = '';
+        foreach ($doc->documentElement->childNodes as $child) {
+            $innerHtml .= $doc->saveHTML($child);
+        }
+        libxml_clear_errors();
+        return $innerHtml;
+    }
+
+    /**
+     * Rekursif sanitasi DOM: menghapus tag tak diizinkan dan membersihkan atribut.
+     * (Duplikat dari Harian.php untuk menjaga kemandirian.)
+     *
+     * @param \DOMNode $node
+     * @param array<int,string> $allowedTags
+     * @param array<int,string> $allowedStyles
+     * @return void
+     */
+    private function sanitizeDom(\DOMNode $node, array $allowedTags, array $allowedStyles): void
+    {
+        if ($node->nodeType === XML_ELEMENT_NODE) {
+            $el = $node;
+            $tagName = strtolower($el->nodeName);
+            if (!in_array($tagName, $allowedTags)) {
+                $fragment = $el->ownerDocument->createDocumentFragment();
+                while ($el->firstChild) {
+                    $fragment->appendChild($el->firstChild);
+                }
+                $el->parentNode->replaceChild($fragment, $el);
+                return;
+            }
+            // Bersihkan atribut style
+            if ($el->hasAttribute('style')) {
+                $style = $el->getAttribute('style');
+                $newStyles = [];
+                foreach (explode(';', $style) as $part) {
+                    $part = trim($part);
+                    if ($part === '' || strpos($part, ':') === false) continue;
+                    list($prop, $val) = array_map('trim', explode(':', $part, 2));
+                    $propLower = strtolower($prop);
+                    if (in_array($propLower, $allowedStyles)) {
+                        $newStyles[] = $propLower . ':' . $val;
+                    }
+                }
+                if (!empty($newStyles)) {
+                    $el->setAttribute('style', implode('; ', $newStyles));
+                } else {
+                    $el->removeAttribute('style');
+                }
+            }
+            // Hapus atribut selain style
+            if ($el->hasAttributes()) {
+                $remove = [];
+                foreach (iterator_to_array($el->attributes) as $attr) {
+                    if (strtolower($attr->nodeName) !== 'style') {
+                        $remove[] = $attr->nodeName;
+                    }
+                }
+                foreach ($remove as $attrName) {
+                    $el->removeAttribute($attrName);
+                }
+            }
+        }
+        for ($child = $node->firstChild; $child; $child = $child->nextSibling) {
+            $this->sanitizeDom($child, $allowedTags, $allowedStyles);
+        }
     }
 
     /**
@@ -471,6 +571,10 @@ class SimpleTable extends Component
     public function deleteSelectedColumn()
     {
         if ($this->selectedColumnIndex !== null && isset($this->columns[$this->selectedColumnIndex])) {
+            // Simpan keadaan sebelumnya untuk undo
+            $this->lastRowsState    = $this->rows;
+            $this->lastColumnsState = $this->columns;
+            $this->undoAvailable    = true;
             // Kosongkan isi kolom yang dipilih (label tetap)
             $colKey = $this->columns[$this->selectedColumnIndex];
             foreach ($this->rows as $r => $row) {
@@ -484,6 +588,28 @@ class SimpleTable extends Component
                 }
             }
             // Reset pilihan kolom
+            $this->selectedColumnIndex = null;
+            $this->dispatch('tableUpdated');
+        }
+    }
+
+    /**
+     * Kembalikan keadaan tabel sebelum penghapusan baris/kolom.
+     * Memulihkan baris dan kolom dari state cadangan dan menonaktifkan fitur undo.
+     *
+     * @return void
+     */
+    public function undoDelete()
+    {
+        if ($this->undoAvailable && is_array($this->lastRowsState)) {
+            $this->rows = $this->lastRowsState;
+            if (is_array($this->lastColumnsState)) {
+                $this->columns = $this->lastColumnsState;
+            }
+            $this->undoAvailable    = false;
+            $this->lastRowsState    = null;
+            $this->lastColumnsState = null;
+            $this->selectedRowIndex    = null;
             $this->selectedColumnIndex = null;
             $this->dispatch('tableUpdated');
         }

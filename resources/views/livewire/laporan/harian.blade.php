@@ -31,8 +31,12 @@
             }
             // Awasi perubahan pada data $rincian dari Livewire
             $watch('$wire.rincian', (newData) => {
-                console.log('Data changed, saving to local storage...');
-                localStorage.setItem(this.storageKey, JSON.stringify(newData));
+                // Gunakan debounce dan deep clone agar perubahan reaktif tidak menghapus teks secara tidak sengaja
+                clearTimeout(this._saveTimeout);
+                this._saveTimeout = setTimeout(() => {
+                    const clone = JSON.parse(JSON.stringify(newData));
+                    localStorage.setItem(this.storageKey, JSON.stringify(clone));
+                }, 300);
             });
             // Dengar event dari server untuk membersihkan local storage
             window.addEventListener('laporanDisimpan', () => {
@@ -59,15 +63,15 @@
                         <ion-icon name="chevron-down-outline" class="text-xs"></ion-icon>
                     </button>
                     <div x-show="formatOpen" @click.away="formatOpen = false" class="absolute z-20 mt-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg py-1">
-                        <a href="#" onclick="document.execCommand('bold', false, ''); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tebal</a>
-                        <a href="#" onclick="document.execCommand('italic', false, ''); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Miring</a>
-                        <a href="#" onclick="document.execCommand('underline', false, ''); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Garis Bawah</a>
-                        <a href="#" onclick="document.execCommand('strikeThrough', false, ''); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Coret</a>
+                        <a href="#" onclick="applyCommand('bold'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tebal</a>
+                        <a href="#" onclick="applyCommand('italic'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Miring</a>
+                        <a href="#" onclick="applyCommand('underline'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Garis Bawah</a>
+                        <a href="#" onclick="applyCommand('strikeThrough'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Coret</a>
                         <div class="border-t border-gray-200 my-1"></div>
                         {{-- Font family selector inside dropdown --}}
                         <div class="px-3 py-2">
                             <label class="block text-xs mb-1">Font</label>
-                            <select onchange="document.execCommand('fontName', false, this.value); formatOpen=false;" class="w-full bg-gray-100 border border-gray-200 rounded-md text-sm py-1 px-2">
+                            <select onchange="applyCommand('fontName', this.value); formatOpen=false;" class="w-full bg-gray-100 border border-gray-200 rounded-md text-sm py-1 px-2">
                                 <option value="Arial">Arial</option>
                                 <option value="Times New Roman">Times New Roman</option>
                                 <option value="Courier New">Courier New</option>
@@ -76,7 +80,7 @@
                         </div>
                         <div class="px-3 py-2">
                             <label class="block text-xs mb-1">Ukuran</label>
-                            <select onchange="document.execCommand('fontSize', false, this.value); formatOpen=false;" class="w-full bg-gray-100 border border-gray-200 rounded-md text-sm py-1 px-2">
+                            <select onchange="applyCommand('fontSize', this.value); formatOpen=false;" class="w-full bg-gray-100 border border-gray-200 rounded-md text-sm py-1 px-2">
                                 <option value="1">8pt</option>
                                 <option value="2">10pt</option>
                                 <option value="3" selected>12pt</option>
@@ -87,6 +91,42 @@
                             </select>
                         </div>
                     </div>
+
+@once
+    <script>
+        /**
+         * Gunakan pemilihan teks normal untuk format teks. Kami tidak lagi
+         * membungkus seluruh isi sel secara otomatis; pengguna harus menyeleksi teks
+         * yang ingin diformat. Fungsi ini hanya memanggil execCommand dengan parameter
+         * yang diberikan dan memicu event input untuk Livewire.
+         */
+        window.activeEditableElement = null;
+        document.addEventListener('focusin', function (e) {
+            if (e.target && e.target.isContentEditable) {
+                window.activeEditableElement = e.target;
+            }
+        });
+        function applyCommand(cmd, value = null) {
+            const el = window.activeEditableElement;
+            if (!el) return;
+            el.focus();
+            try {
+                document.execCommand(cmd, false, value);
+            } catch (e) {
+                // ignore unsupported commands
+            }
+            // Beri tahu Livewire bahwa konten berubah
+            try {
+                const event = new Event('input', { bubbles: true });
+                el.dispatchEvent(event);
+            } catch (e) {
+                const evt = document.createEvent('Event');
+                evt.initEvent('input', true, true);
+                el.dispatchEvent(evt);
+            }
+        }
+    </script>
+@endonce
                 </div>
                 {{-- Align dropdown --}}
                 <div class="relative inline-block text-left">
@@ -96,10 +136,10 @@
                         <ion-icon name="chevron-down-outline" class="text-xs"></ion-icon>
                     </button>
                     <div x-show="alignOpen" @click.away="alignOpen = false" class="absolute z-20 mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg py-1">
-                        <a href="#" onclick="document.execCommand('justifyLeft', false, ''); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kiri</a>
-                        <a href="#" onclick="document.execCommand('justifyCenter', false, ''); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tengah</a>
-                        <a href="#" onclick="document.execCommand('justifyRight', false, ''); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kanan</a>
-                        <a href="#" onclick="document.execCommand('justifyFull', false, ''); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Justify</a>
+                        <a href="#" onclick="applyCommand('justifyLeft'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kiri</a>
+                        <a href="#" onclick="applyCommand('justifyCenter'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tengah</a>
+                        <a href="#" onclick="applyCommand('justifyRight'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kanan</a>
+                        <a href="#" onclick="applyCommand('justifyFull'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Justify</a>
                     </div>
                 </div>
             </div>
@@ -240,6 +280,18 @@
                 ])
                 @if($selectedRowIndex === null) disabled @endif>
             Hapus Baris Terpilih
+        </button>
+
+        {{-- Undo penghapusan baris terakhir atau terpilih --}}
+        <button type="button"
+                wire:click="undoDelete"
+                @class([
+                    'px-3 py-2 rounded-lg text-sm font-medium flex items-center justify-center',
+                    'bg-yellow-600 text-white hover:bg-yellow-700' => $undoAvailable,
+                    'bg-yellow-300 text-white cursor-not-allowed' => !$undoAvailable,
+                ])
+                @if(!$undoAvailable) disabled @endif>
+            Undo Hapus
         </button>
 
         {{-- Link konfigurasi tabel --}}

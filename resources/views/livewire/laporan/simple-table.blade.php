@@ -21,15 +21,15 @@
                 <ion-icon name="chevron-down-outline" class="text-xs"></ion-icon>
             </button>
             <div x-show="formatOpen" @click.away="formatOpen = false" class="absolute z-20 mt-1 w-40 bg-white border border-gray-200 rounded-md shadow-lg py-1">
-                <a href="#" onclick="document.execCommand('bold', false, ''); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tebal</a>
-                <a href="#" onclick="document.execCommand('italic', false, ''); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Miring</a>
-                <a href="#" onclick="document.execCommand('underline', false, ''); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Garis Bawah</a>
-                <a href="#" onclick="document.execCommand('strikeThrough', false, ''); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Coret</a>
+                <a href="#" onclick="applyCommand('bold'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tebal</a>
+                <a href="#" onclick="applyCommand('italic'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Miring</a>
+                <a href="#" onclick="applyCommand('underline'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Garis Bawah</a>
+                <a href="#" onclick="applyCommand('strikeThrough'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Coret</a>
                 <div class="border-t border-gray-200 my-1"></div>
                 {{-- Font family selector inside dropdown --}}
                 <div class="px-3 py-2">
                     <label class="block text-xs mb-1">Font</label>
-                    <select onchange="document.execCommand('fontName', false, this.value); formatOpen=false;" class="w-full bg-gray-100 border border-gray-200 rounded-md text-sm py-1 px-2">
+                    <select onchange="applyCommand('fontName', this.value); formatOpen=false;" class="w-full bg-gray-100 border border-gray-200 rounded-md text-sm py-1 px-2">
                         <option value="Arial">Arial</option>
                         <option value="Times New Roman">Times New Roman</option>
                         <option value="Courier New">Courier New</option>
@@ -38,7 +38,7 @@
                 </div>
                 <div class="px-3 py-2">
                     <label class="block text-xs mb-1">Ukuran</label>
-                    <select onchange="document.execCommand('fontSize', false, this.value); formatOpen=false;" class="w-full bg-gray-100 border border-gray-200 rounded-md text-sm py-1 px-2">
+                    <select onchange="applyCommand('fontSize', this.value); formatOpen=false;" class="w-full bg-gray-100 border border-gray-200 rounded-md text-sm py-1 px-2">
                         <option value="1">8pt</option>
                         <option value="2">10pt</option>
                         <option value="3" selected>12pt</option>
@@ -58,10 +58,10 @@
                 <ion-icon name="chevron-down-outline" class="text-xs"></ion-icon>
             </button>
             <div x-show="alignOpen" @click.away="alignOpen = false" class="absolute z-20 mt-1 w-32 bg-white border border-gray-200 rounded-md shadow-lg py-1">
-                <a href="#" onclick="document.execCommand('justifyLeft', false, ''); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kiri</a>
-                <a href="#" onclick="document.execCommand('justifyCenter', false, ''); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tengah</a>
-                <a href="#" onclick="document.execCommand('justifyRight', false, ''); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kanan</a>
-                <a href="#" onclick="document.execCommand('justifyFull', false, ''); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Justify</a>
+                <a href="#" onclick="applyCommand('justifyLeft'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kiri</a>
+                <a href="#" onclick="applyCommand('justifyCenter'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tengah</a>
+                <a href="#" onclick="applyCommand('justifyRight'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kanan</a>
+                <a href="#" onclick="applyCommand('justifyFull'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Justify</a>
             </div>
         </div>
     </div>
@@ -185,6 +185,18 @@
             class="px-3 py-2 rounded-lg text-sm font-medium border border-red-500 text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">
             Hapus Kolom Terpilih
         </button>
+
+        {{-- Undo penghapusan baris atau kolom --}}
+        <button type="button"
+            wire:click="undoDelete"
+            @class([
+                'px-3 py-2 rounded-lg text-sm font-medium border text-white',
+                'bg-yellow-600 border-yellow-600 hover:bg-yellow-700' => $undoAvailable,
+                'bg-yellow-300 border-yellow-300 cursor-not-allowed' => !$undoAvailable,
+            ])
+            @if(!$undoAvailable) disabled @endif>
+            Undo Hapus
+        </button>
     </div>
 
     {{-- Link ke konfigurasi tabel untuk laporan ini --}}
@@ -198,6 +210,42 @@
     @endif
 
     {{-- Bagian konfigurasi detail laporan dihapus dari halaman ini. Konfigurasi dilakukan di halaman terpisah. --}}
+
+@once
+    <script>
+        /**
+         * Kembalikan perilaku pemformatan teks ke penggunaan seleksi normal.
+         * Pengguna harus menyeleksi teks yang ingin diformat. Fungsi ini
+         * menjalankan execCommand dan memicu event input agar Livewire
+         * menangkap perubahan konten.
+         */
+        window.activeEditableElement = null;
+        document.addEventListener('focusin', function (e) {
+            if (e.target && e.target.isContentEditable) {
+                window.activeEditableElement = e.target;
+            }
+        });
+        function applyCommand(cmd, value = null) {
+            const el = window.activeEditableElement;
+            if (!el) return;
+            el.focus();
+            try {
+                document.execCommand(cmd, false, value);
+            } catch (e) {
+                // abaikan jika browser tidak mendukung perintah
+            }
+            // Notifikasi ke Livewire bahwa isi sel berubah
+            try {
+                const event = new Event('input', { bubbles: true });
+                el.dispatchEvent(event);
+            } catch (e) {
+                const evt = document.createEvent('Event');
+                evt.initEvent('input', true, true);
+                el.dispatchEvent(evt);
+            }
+        }
+    </script>
+@endonce
 
     {{-- Skrip untuk menyimpan draft ke localStorage dan memuatnya kembali saat halaman dimuat --}}
     <script>
