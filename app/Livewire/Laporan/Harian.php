@@ -398,6 +398,11 @@ class Harian extends Component
         foreach ($this->configRekap as $field) {
             if (!empty($field['formula'])) {
                 $formula = $field['formula'];
+                // Normalisasi nama fungsi ke huruf besar agar regex peka huruf besar/kecil
+                // Ini memungkinkan pengguna menulis "pairpalc", "sum", atau "subt" dengan huruf bebas.
+                $formula = preg_replace('/\bpairpalc\b/i', 'PAIRPALC', $formula);
+                $formula = preg_replace('/\bsum\b/i', 'SUM', $formula);
+                $formula = preg_replace('/\bsubt\b/i', 'SUBT', $formula);
 
                 // Tahap 1: FUNGSI BARU PAIRPALC(kolom1 * kolom2)
                 preg_match_all('/PAIRPALC\(([^ "\)]+)\s*([*+\/-])\s*([^"\)]+)\)/', $formula, $pairpMatches, PREG_SET_ORDER);

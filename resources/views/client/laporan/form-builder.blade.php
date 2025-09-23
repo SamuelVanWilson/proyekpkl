@@ -9,7 +9,8 @@
 
 @section('content')
 {{-- PERBAIKAN: Inisialisasi Alpine.js dengan data dari controller --}}
-<div class=" p-4 sm:p-6" x-data='{ rincian: @json($columns["rincian"] ?? []), rekap: @json($columns["rekap"] ?? []) }'>
+{{-- Inisialisasi Alpine dengan rincian dan rekap. Tambahkan x-init untuk memastikan setiap entri rekap memiliki properti used_for_chart default false. --}}
+<div class=" p-4 sm:p-6" x-data='{ rincian: @json($columns["rincian"] ?? []), rekap: @json($columns["rekap"] ?? []) }' x-init="rekap = rekap.map(col => { if (col.used_for_chart === undefined) { col.used_for_chart = false; } return col; })">
     <div class="max-w-4xl mx-auto mb-[200px]">
         <div class="mb-6">
             <h1 class="text-2xl font-bold text-gray-800">Atur Kolom Laporan</h1>
@@ -58,7 +59,7 @@
             <div class="bg-white p-4 sm:p-6 rounded-xl shadow-sm border border-gray-200">
                 <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-4 gap-2">
                     <h2 class="text-lg font-semibold text-gray-700">Kolom Formulir Rekapitulasi</h2>
-                    <button type="button" @click="rekap.push({ name: '', label: '', type: 'text', formula: '', readonly: false, default_value: '' })" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
+                    <button type="button" @click="rekap.push({ name: '', label: '', type: 'text', formula: '', readonly: false, default_value: '', used_for_chart: false })" class="w-full sm:w-auto px-4 py-2 text-sm font-medium text-white bg-green-600 rounded-lg hover:bg-green-700">
                         Tambah Kolom Rekap
                     </button>
                 </div>

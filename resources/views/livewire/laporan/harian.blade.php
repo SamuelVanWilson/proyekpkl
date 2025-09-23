@@ -164,14 +164,16 @@
                 <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="text-sm font-medium text-gray-600">Judul Laporan</label>
-                        <input type="text" wire:model.lazy="reportTitle" class="input-modern" placeholder="Masukkan judul laporan">
+                        {{-- Gunakan wire:model.defer agar judul selalu tersinkron sebelum simpan/preview tanpa perlu blur --}}
+                        <input type="text" wire:model.defer="reportTitle" class="input-modern" placeholder="Masukkan judul laporan">
                         @error('reportTitle')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
                     </div>
                     <div>
                         <label class="text-sm font-medium text-gray-600">Tanggal Laporan</label>
-                        <input type="date" wire:model.lazy="rekap.tanggal" class="input-modern">
+                        {{-- Gunakan wire:model.defer agar tanggal tersinkron sebelum simpan/preview tanpa perlu blur --}}
+                        <input type="date" wire:model.defer="rekap.tanggal" class="input-modern">
                         @error('rekap.tanggal')
                             <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                         @enderror
