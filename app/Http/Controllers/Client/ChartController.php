@@ -39,10 +39,11 @@ class ChartController extends Controller
         $numericFields = [];
         if ($config && !empty($config->columns['rekap'])) {
             $rekapCols = $config->columns['rekap'];
-            // Periksa apakah konfigurasi mendefinisikan kunci used_for_chart pada salah satu kolom.
+            // Periksa apakah setidaknya satu kolom memiliki nilai used_for_chart yang aktif (truthy).
             $hasChartSetting = false;
             foreach ($rekapCols as $col) {
-                if (array_key_exists('used_for_chart', $col)) {
+                // Hanya jika nilai used_for_chart bernilai truthy kita anggap sebagai konfigurasi chart.
+                if (!empty($col['used_for_chart'])) {
                     $hasChartSetting = true;
                     break;
                 }
@@ -55,13 +56,13 @@ class ChartController extends Controller
                     continue;
                 }
                 if ($hasChartSetting) {
-                    // Jika konfigurasi memiliki properti used_for_chart, hanya kolom yang ditandai benar-benar true
-                    // yang disertakan. Nilai '1', true, atau truthy lainnya akan dianggap aktif.
+                    // Jika ada setidaknya satu kolom bertanda used_for_chart, maka hanya kolom yang ditandai
+                    // benar‑benar aktif (truthy) yang disertakan. Nilai '1', true, atau truthy lainnya akan dianggap aktif.
                     if (!empty($col['used_for_chart'])) {
                         $numericFields[$col['name']] = $col['label'] ?? $col['name'];
                     }
                 } else {
-                    // Konfigurasi lama tanpa properti used_for_chart: sertakan semua kolom numerik.
+                    // Konfigurasi lama tanpa properti used_for_chart atau semua bernilai false: sertakan semua kolom numerik.
                     $numericFields[$col['name']] = $col['label'] ?? $col['name'];
                 }
             }

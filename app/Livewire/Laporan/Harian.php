@@ -90,6 +90,14 @@ class Harian extends Component
     public $reportTitle = '';
 
     /**
+     * Menandakan apakah komponen menggunakan template default (dummy) karena belum ada konfigurasi.
+     * Ketika true, tampilan akan menampilkan pesan agar pengguna melakukan konfigurasi terlebih dahulu.
+     *
+     * @var bool
+     */
+    public $isUsingDefaultTemplate = false;
+
+    /**
      * Listener Livewire untuk memuat data dari localStorage.
      *
      * @var array<string, string>
@@ -284,6 +292,8 @@ class Harian extends Component
         if ($config && !empty($config->columns)) {
             $this->configRincian = $config->columns['rincian'] ?? [];
             $this->configRekap   = $config->columns['rekap']   ?? [];
+            // Ada konfigurasi tersimpan, tandai bahwa kita tidak lagi menggunakan template default
+            $this->isUsingDefaultTemplate = false;
         } else {
             // Konfigurasi default jika tidak ada
             $this->configRincian = [
@@ -294,6 +304,8 @@ class Harian extends Component
                 ['name' => 'lokasi',  'label' => 'Lokasi',  'type' => 'text', 'formula' => null, 'readonly' => false],
                 ['name' => 'total_bruto', 'label' => 'Total Bruto', 'type' => 'number', 'formula' => 'SUM(total)', 'readonly' => true],
             ];
+            // Tandai bahwa kita sedang menggunakan template default (dummy)
+            $this->isUsingDefaultTemplate = true;
         }
     }
 

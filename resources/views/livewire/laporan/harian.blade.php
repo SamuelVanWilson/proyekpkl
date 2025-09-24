@@ -71,6 +71,21 @@ green-700 px-4 py-3 rounded-lg" role="alert">
                     </div>
                 @endif
 
+                {{-- Informasi Template Default (Dummy) --}}
+                @if ($isUsingDefaultTemplate)
+                    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 px-4 py-3 rounded-lg" role="alert">
+                        <strong class="font-bold">Perhatian:</strong>
+                        <span class="block sm:inline"> Anda saat ini menggunakan template contoh (dummy). Silakan lakukan konfigurasi terlebih dahulu agar laporan Advanced Anda bisa digunakan.</span>
+                        @if (Route::has('client.laporan.form-builder'))
+                        <div class="mt-2">
+                            <a href="{{ route('client.laporan.form-builder') }}" class="underline text-yellow-800 hover:text-yellow-900">
+                                Konfigurasi Tabel
+                            </a>
+                        </div>
+                        @endif
+                    </div>
+                @endif
+
                 {{-- Toolbar format teks (copy dari halaman laporan biasa) --}}
                 <div x-data="{ formatOpen: false, alignOpen: false }" 
 class="flex flex-wrap items-center gap-2 mb-4">
