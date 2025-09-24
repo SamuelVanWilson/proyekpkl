@@ -117,19 +117,28 @@
             }
         }
         document.addEventListener('DOMContentLoaded', () => {
-            // Re-enter fullscreen on page load if previously enabled
+            // Jika mode fullscreen sebelumnya aktif, daftarkan handler untuk masuk fullscreen
             const shouldFullscreen = localStorage.getItem('fullscreen-enabled') === 'true';
             if (shouldFullscreen && !document.fullscreenElement) {
-                const elem = document.documentElement;
-                try {
-                    if (elem.requestFullscreen) {
-                        elem.requestFullscreen().catch(() => {});
-                    } else if (elem.webkitRequestFullscreen) {
-                        elem.webkitRequestFullscreen();
+                const attemptReenterFullscreen = () => {
+                    if (!document.fullscreenElement) {
+                        const elem = document.documentElement;
+                        try {
+                            if (elem.requestFullscreen) {
+                                elem.requestFullscreen().catch(() => {});
+                            } else if (elem.webkitRequestFullscreen) {
+                                elem.webkitRequestFullscreen();
+                            }
+                        } catch (e) {
+                            console.warn(e);
+                        }
                     }
-                } catch (e) {
-                    console.warn(e);
-                }
+                    document.removeEventListener('click', attemptReenterFullscreen);
+                    document.removeEventListener('keydown', attemptReenterFullscreen);
+                };
+                // Gunakan interaksi pertama pengguna (klik atau tekan tombol) sebagai gesture
+                document.addEventListener('click', attemptReenterFullscreen);
+                document.addEventListener('keydown', attemptReenterFullscreen);
             }
         });
         // Logika PWA

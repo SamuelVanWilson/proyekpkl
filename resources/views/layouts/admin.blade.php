@@ -19,7 +19,6 @@
     <style>
         body { font-family: 'Inter', sans-serif; }
         [x-cloak] { display: none !important; }
-        /* Tambahkan ini di file CSS utama Anda (e.g., app.css) */
         @layer components {
             .input-modern {
                 @apply mt-1 block w-full px-3 py-2 bg-white border border-gray-300 rounded-md text-sm shadow-sm placeholder-gray-400
@@ -92,5 +91,30 @@
 <div id="loading-overlay" class="fixed inset-0 bg-white bg-opacity-75 z-[9999] hidden items-center justify-center">
     <div class="spinner"></div>
 </div>
+    <script>
+    // Persist fullscreen mode across admin pages: if previously enabled, request fullscreen on first user interaction.
+    document.addEventListener('DOMContentLoaded', () => {
+        if (localStorage.getItem('fullscreen-enabled') === 'true' && !document.fullscreenElement) {
+            const attemptReenterFullscreen = () => {
+                if (!document.fullscreenElement) {
+                    const elem = document.documentElement;
+                    try {
+                        if (elem.requestFullscreen) {
+                            elem.requestFullscreen().catch(() => {});
+                        } else if (elem.webkitRequestFullscreen) {
+                            elem.webkitRequestFullscreen();
+                        }
+                    } catch (e) {
+                        console.warn(e);
+                    }
+                }
+                document.removeEventListener('click', attemptReenterFullscreen);
+                document.removeEventListener('keydown', attemptReenterFullscreen);
+            };
+            document.addEventListener('click', attemptReenterFullscreen);
+            document.addEventListener('keydown', attemptReenterFullscreen);
+        }
+    });
+    </script>
 </body>
 </html>
