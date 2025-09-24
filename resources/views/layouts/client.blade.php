@@ -15,6 +15,10 @@
         body { font-family: 'SF Pro Display', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom); }
         main { padding-bottom: 5rem; }
+        /* Custom fullscreen styling: hide navigation and reset margins when app-fullscreen class is applied */
+        html.app-fullscreen nav { display: none !important; }
+        html.app-fullscreen main { margin: 0 !important; padding-bottom: 0 !important; }
+        html.app-fullscreen .safe-area-bottom { padding-bottom: 0 !important; }
     </style>
     @vite('resources/css/app.css')
     @livewireStyles
@@ -89,56 +93,20 @@
          * explicitly disables fullscreen again.
          */
         function toggleFullscreen() {
-            const elem = document.documentElement;
-            if (!document.fullscreenElement) {
-                // Save preference and request fullscreen
-                try {
-                    localStorage.setItem('fullscreen-enabled', 'true');
-                    if (elem.requestFullscreen) {
-                        elem.requestFullscreen().catch(() => {});
-                    } else if (elem.webkitRequestFullscreen) {
-                        elem.webkitRequestFullscreen();
-                    }
-                } catch (e) {
-                    console.warn(e);
-                }
+            const html = document.documentElement;
+            // Toggle CSS-based fullscreen: add or remove app-fullscreen class and update localStorage.
+            if (!html.classList.contains('app-fullscreen')) {
+                html.classList.add('app-fullscreen');
+                localStorage.setItem('fullscreen-enabled', 'true');
             } else {
-                // Remove preference and exit fullscreen
-                try {
-                    localStorage.removeItem('fullscreen-enabled');
-                    if (document.exitFullscreen) {
-                        document.exitFullscreen().catch(() => {});
-                    } else if (document.webkitExitFullscreen) {
-                        document.webkitExitFullscreen();
-                    }
-                } catch (e) {
-                    console.warn(e);
-                }
+                html.classList.remove('app-fullscreen');
+                localStorage.removeItem('fullscreen-enabled');
             }
         }
         document.addEventListener('DOMContentLoaded', () => {
-            // Jika mode fullscreen sebelumnya aktif, daftarkan handler untuk masuk fullscreen
-            const shouldFullscreen = localStorage.getItem('fullscreen-enabled') === 'true';
-            if (shouldFullscreen && !document.fullscreenElement) {
-                const attemptReenterFullscreen = () => {
-                    if (!document.fullscreenElement) {
-                        const elem = document.documentElement;
-                        try {
-                            if (elem.requestFullscreen) {
-                                elem.requestFullscreen().catch(() => {});
-                            } else if (elem.webkitRequestFullscreen) {
-                                elem.webkitRequestFullscreen();
-                            }
-                        } catch (e) {
-                            console.warn(e);
-                        }
-                    }
-                    document.removeEventListener('click', attemptReenterFullscreen);
-                    document.removeEventListener('keydown', attemptReenterFullscreen);
-                };
-                // Gunakan interaksi pertama pengguna (klik atau tekan tombol) sebagai gesture
-                document.addEventListener('click', attemptReenterFullscreen);
-                document.addEventListener('keydown', attemptReenterFullscreen);
+            // Saat halaman dimuat, terapkan kelas app-fullscreen jika preferensi disimpan
+            if (localStorage.getItem('fullscreen-enabled') === 'true') {
+                document.documentElement.classList.add('app-fullscreen');
             }
         });
         // Logika PWA

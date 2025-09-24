@@ -25,6 +25,9 @@
                     focus:outline-none focus:border-green-500 focus:ring-1 focus:ring-green-500;
             }
         }
+        /* Custom fullscreen styling for admin: hide nav and reset margins */
+        html.app-fullscreen nav { display: none !important; }
+        html.app-fullscreen main { margin: 0 !important; padding-bottom: 0 !important; }
     </style>
 </head>
 <body class="h-full">
@@ -92,27 +95,10 @@
     <div class="spinner"></div>
 </div>
     <script>
-    // Persist fullscreen mode across admin pages: if previously enabled, request fullscreen on first user interaction.
+    // Terapkan CSS fullscreen berbasis class untuk admin layout
     document.addEventListener('DOMContentLoaded', () => {
-        if (localStorage.getItem('fullscreen-enabled') === 'true' && !document.fullscreenElement) {
-            const attemptReenterFullscreen = () => {
-                if (!document.fullscreenElement) {
-                    const elem = document.documentElement;
-                    try {
-                        if (elem.requestFullscreen) {
-                            elem.requestFullscreen().catch(() => {});
-                        } else if (elem.webkitRequestFullscreen) {
-                            elem.webkitRequestFullscreen();
-                        }
-                    } catch (e) {
-                        console.warn(e);
-                    }
-                }
-                document.removeEventListener('click', attemptReenterFullscreen);
-                document.removeEventListener('keydown', attemptReenterFullscreen);
-            };
-            document.addEventListener('click', attemptReenterFullscreen);
-            document.addEventListener('keydown', attemptReenterFullscreen);
+        if (localStorage.getItem('fullscreen-enabled') === 'true') {
+            document.documentElement.classList.add('app-fullscreen');
         }
     });
     </script>
