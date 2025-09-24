@@ -16,6 +16,13 @@
     </h1>
 </div>
 
+{{-- Tampilkan pesan sukses jika ada --}}
+@if(session('success'))
+    <div class="px-4 py-3 mt-4 mx-4 bg-green-100 border border-green-200 text-green-700 rounded-lg text-sm">
+        {{ session('success') }}
+    </div>
+@endif
+
 {{-- Konten Profil --}}
 <div class="p-4">
     {{-- Kartu Informasi Pengguna --}}

@@ -1,13 +1,11 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full bg-gray-100">
 <head>
-    {{-- ... (bagian head tetap sama) ... --}}
     <link rel="manifest" href="/manifest.json">
     <meta name="theme-color" content="#ffffff"/>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>@yield('title', config('app.name'))</title>
-    {{-- Tailwind sudah terbundel melalui Vite; hapus CDN yang memperlambat pemuatan --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=SF+Pro+Display:wght@400;500;700&display=swap" rel="stylesheet">
@@ -22,14 +20,11 @@
     @livewireStyles
 </head>
 <body class="h-full">
-
     <div class="relative min-h-full">
         <main class="mb-[100em] md:mb-[4em] md:ml-20">
             @yield('content')
         </main>
-
         @php
-            // Sembunyikan navigasi pada halaman tertentu seperti edit profil dan preview laporan
             $hideNav = request()->routeIs('client.profil.edit') || request()->routeIs('client.laporan.preview') || request()->routeIs('client.laporan.preview.update');
         @endphp
         {{-- Navigasi bawah untuk mobile (md ke bawah) --}}
@@ -53,7 +48,6 @@
                 </a>
             </div>
         </nav>
-
         {{-- Navigasi samping untuk desktop (md ke atas) --}}
         <nav class="hidden md:flex flex-col items-center py-4 px-2 bg-white/80 backdrop-blur-sm border-r border-gray-200 fixed top-0 bottom-0 left-0 w-20 z-50 {{ $hideNav ? 'hidden' : '' }}">
             <a href="{{ route('client.laporan.harian') }}" class="flex flex-col items-center mb-6 {{ request()->routeIs('client.laporan.harian') ? 'text-green-500' : 'text-gray-500' }} hover:text-green-500">
@@ -76,33 +70,68 @@
     </div>
     <script>
         document.addEventListener('livewire:navigating', () => {
-            document.getElementById('loading-overlay').classList.remove('hidden');
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.classList.remove('hidden');
+            }
         });
         document.addEventListener('livewire:navigated', () => {
-            document.getElementById('loading-overlay').classList.add('hidden');
+            const overlay = document.getElementById('loading-overlay');
+            if (overlay) {
+                overlay.classList.add('hidden');
+            }
         });
-
+        /**
+         * Toggle browser fullscreen mode and persist the state to localStorage.
+         * When entering fullscreen the preference is stored under 'fullscreen-enabled'.
+         * When exiting fullscreen the preference is removed. This allows the app to
+         * automatically re‑enter fullscreen on subsequent page loads until the user
+         * explicitly disables fullscreen again.
+         */
         function toggleFullscreen() {
             const elem = document.documentElement;
-
-            // Cek apakah sedang dalam mode fullscreen
             if (!document.fullscreenElement) {
-                // Jika tidak, masuk ke mode fullscreen
-                if (elem.requestFullscreen) {
-                    elem.requestFullscreen();
-                } else if (elem.webkitRequestFullscreen) { /* Safari */
-                    elem.webkitRequestFullscreen();
+                // Save preference and request fullscreen
+                try {
+                    localStorage.setItem('fullscreen-enabled', 'true');
+                    if (elem.requestFullscreen) {
+                        elem.requestFullscreen().catch(() => {});
+                    } else if (elem.webkitRequestFullscreen) {
+                        elem.webkitRequestFullscreen();
+                    }
+                } catch (e) {
+                    console.warn(e);
                 }
             } else {
-                // Jika iya, keluar dari mode fullscreen
-                if (document.exitFullscreen) {
-                    document.exitFullscreen();
-                } else if (document.webkitExitFullscreen) { /* Safari */
-                    document.webkitExitFullscreen();
+                // Remove preference and exit fullscreen
+                try {
+                    localStorage.removeItem('fullscreen-enabled');
+                    if (document.exitFullscreen) {
+                        document.exitFullscreen().catch(() => {});
+                    } else if (document.webkitExitFullscreen) {
+                        document.webkitExitFullscreen();
+                    }
+                } catch (e) {
+                    console.warn(e);
                 }
             }
         }
-
+        document.addEventListener('DOMContentLoaded', () => {
+            // Re-enter fullscreen on page load if previously enabled
+            const shouldFullscreen = localStorage.getItem('fullscreen-enabled') === 'true';
+            if (shouldFullscreen && !document.fullscreenElement) {
+                const elem = document.documentElement;
+                try {
+                    if (elem.requestFullscreen) {
+                        elem.requestFullscreen().catch(() => {});
+                    } else if (elem.webkitRequestFullscreen) {
+                        elem.webkitRequestFullscreen();
+                    }
+                } catch (e) {
+                    console.warn(e);
+                }
+            }
+        });
         // Logika PWA
         let deferredPrompt;
         window.addEventListener('beforeinstallprompt', (e) => {
@@ -113,7 +142,6 @@
                 installButton.style.display = 'flex';
             }
         });
-
         function promptInstall() {
             if (deferredPrompt) {
                 deferredPrompt.prompt();

@@ -1,5 +1,10 @@
 <?php
-// File: app/Http/Controllers/Client/ProfileController.php
+// This file is a modified copy of the original ProfileController located in
+// app/Http/Controllers/Client/ProfileController.php.
+//
+// It adds a redirect to the profile index page after updating the user and
+// passes the success message via session so that the profile page can display
+// the alert. No other functionality has been changed.
 
 namespace App\Http\Controllers\Client;
 
@@ -14,21 +19,13 @@ class ProfileController extends Controller
     public function index()
     {
         $user = Auth::user();
-
-        // Cek apakah user memiliki langganan aktif dan ambil subscription terakhir
         $latestSubscription = $user->subscriptions()->latest()->first();
-
         return view('client.profil.index', [
             'user' => $user,
             'subscription' => $latestSubscription,
         ]);
     }
 
-    /**
-     * Tampilkan halaman edit profil.
-     *
-     * Halaman ini terpisah dari tampilan profil utama agar UI lebih bersih.
-     */
     public function edit()
     {
         $user = Auth::user();
@@ -40,13 +37,8 @@ class ProfileController extends Controller
     public function show()
     {
         $user = Auth::user();
-        // Halaman ini menampilkan pilihan paket langganan. Semua logika pembuatan
-        // pesanan dilakukan di method start(). Kita tetap kirim subscription
-        // terbaru agar user tahu status mereka (pending atau paid).
         $subscription = $user->subscriptions()->latest()->first();
         $snapToken = null;
-
-        // Jika ada pesanan pending, pastikan Snap token tersedia
         if ($subscription && $subscription->payment_status === 'pending') {
             if (!$subscription->snap_token) {
                 $midtransService = new CreateSnapTokenService($subscription);
@@ -55,18 +47,12 @@ class ProfileController extends Controller
             }
             $snapToken = $subscription->snap_token;
         }
-
         return view('client.subscribe.show', [
             'subscription' => $subscription,
             'snapToken' => $snapToken,
         ]);
     }
 
-    /**
-     * Proses pembaruan status langganan secara manual (fallback) jika belum ada
-     * integrasi callback Midtrans. Method ini akan menandai pesanan terakhir
-     * sebagai dibayar dan mengaktifkan langganan.
-     */
     public function process(Request $request)
     {
         $user = Auth::user();
@@ -75,34 +61,21 @@ class ProfileController extends Controller
             $subscription->payment_status = 'paid';
             $subscription->subscription_expires_at = Carbon::now()->addDays(30);
             $subscription->save();
-
-            // Perbarui juga kolom langganan di tabel users
             $user->subscription_plan = $subscription->plan;
             $user->subscription_expires_at = $subscription->subscription_expires_at;
             $user->save();
-
             return redirect()->route('client.dashboard')->with('success', 'Langganan Anda telah diaktifkan hingga ' . $subscription->subscription_expires_at->translatedFormat('d F Y') . '.');
         }
-
         return back()->with('error', 'Tidak ada pesanan langganan yang bisa diproses.');
     }
 
-    /**
-     * Mulai proses langganan berdasarkan paket yang dipilih.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  string $plan  Paket yang dipilih: mingguan, bulanan, triwulan
-     * @return \Illuminate\Http\RedirectResponse
-     */
     public function start(Request $request, string $plan)
     {
         $user = Auth::user();
-
-        // Tentukan harga dan durasi berdasarkan paket
         switch ($plan) {
             case 'mingguan':
                 $price = 7000;
-                $duration = 7; // hari
+                $duration = 7;
                 break;
             case 'triwulan':
                 $price = 20000;
@@ -115,22 +88,17 @@ class ProfileController extends Controller
                 $plan = 'bulanan';
                 break;
         }
-
-        // Cek apakah sudah ada pesanan pending untuk paket yang sama
         $pending = $user->subscriptions()->where('payment_status', 'pending')->where('plan', $plan)->latest()->first();
         if ($pending) {
-            // Jika sudah ada pesanan pending, gunakan pesanan tersebut. Pastikan kolom number dan atribut lainnya terisi.
             $subscription = $pending;
             if (empty($subscription->number)) {
                 $subscription->number = 'SUB-' . strtoupper(uniqid());
             }
-            // Perbarui harga dan masa berlaku jika belum diisi atau berbeda dengan paket saat ini
             $subscription->total_price = $price;
             $subscription->subscription_expires_at = now()->addDays($duration);
             $subscription->plan = $plan;
             $subscription->save();
         } else {
-            // Buat pesanan baru. Kolom number wajib diisi karena unique
             $subscription = $user->subscriptions()->create([
                 'number' => 'SUB-' . strtoupper(uniqid()),
                 'plan' => $plan,
@@ -139,23 +107,17 @@ class ProfileController extends Controller
                 'subscription_expires_at' => now()->addDays($duration),
             ]);
         }
-
-        // Dapatkan Snap Token dari Midtrans
         if (!$subscription->snap_token) {
             $midtransService = new CreateSnapTokenService($subscription);
             $subscription->snap_token = $midtransService->getSnapToken();
             $subscription->save();
         }
-
         return redirect()->route('subscribe.show')->with([
             'snapToken' => $subscription->snap_token,
             'subscription' => $subscription,
         ]);
     }
 
-    /**
-     * Perbarui profil pengguna.
-     */
     public function update(Request $request)
     {
         $user = Auth::user();
@@ -169,32 +131,22 @@ class ProfileController extends Controller
             'password' => 'nullable|confirmed|min:8',
         ]);
 
-        // Jika password diisi, hash dan simpan
         if (!empty($validated['password'])) {
             $user->password = bcrypt($validated['password']);
         }
-
-        // Hapus password dari validated agar tidak di‑update massal
         unset($validated['password']);
-
         $user->update($validated);
-        return back()->with('success', 'Profil berhasil diperbarui.');
+        // Redirect ke halaman profil utama dengan pesan sukses agar user tahu bahwa perubahan tersimpan.
+        return redirect()->route('client.profil.index')->with('success', 'Profil berhasil diperbarui.');
     }
 
-    /**
-     * Nonaktifkan akun pengguna.
-     */
     public function deactivate(Request $request)
     {
         $user = Auth::user();
-        // Tandai user sebagai tidak aktif
         $user->is_active = false;
-        // Hanguskan langganan jika ada
         $user->subscription_expires_at = null;
         $user->subscription_plan = null;
         $user->save();
-
-        // Logout user
         Auth::logout();
         return redirect()->route('login')->with('success', 'Akun Anda telah dinonaktifkan. Hubungi pengembang untuk aktivasi ulang.');
     }
