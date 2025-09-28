@@ -149,7 +149,7 @@ lg">
                         <th
                             class="py-2 px-3 border-b bg-gray-100 text-center 
 cursor-pointer select-none"
-                            wire:click="selectRow(null)"
+                             wire:click="selectRow(null)"
                             @class(['bg-green-100 text-green-800' => 
 $selectedRowIndex === null])
                         >
@@ -178,19 +178,14 @@ $rowIndex])>
 $selectedRowIndex === $rowIndex])
                             >{{ $rowIndex + 1 }}</td>
                             @foreach ($columns as $colIndex => $col)
-                                <td class="py-1 px-1 border-b border-r {{ 
-$selectedColumnIndex === $colIndex ? 'bg-green-50' : '' }}">
-                                    <div
-                                        contenteditable="true"
-                                        class="min-w-[100px] outline-none p-1"
-                                        wire:ignore
-                                        x-on:blur="$wire.updateCell({{ 
- $rowIndex }}, '{{ $col }}', $event.target.innerHTML)"
-                                        wire:key="cell-{{ $rowIndex }}-{{ $col 
- }}"
-                                        >{!! $rows[$rowIndex][$col] ?? '' 
-!!}</div>
-                                </td>
+                            <td class="py-1 px-1 border-b border-r {{ $selectedColumnIndex === $colIndex ? 'bg-green-50' : '' }}">
+                                <div
+                                    contenteditable="true"
+                                    class="min-w-[100px] outline-none p-1"
+                                    wire:input.debounce.1000ms="updateCell({{ $rowIndex }}, '{{ $col }}', $event.target.innerHTML)"
+                                    wire:key="cell-{{ $rowIndex }}-{{ $col }}"
+                                    >{!! $rows[$rowIndex][$col] ?? '' !!}</div>
+                            </td>
                             @endforeach
                         </tr>
                     @endforeach
@@ -234,17 +229,13 @@ text-white' : 'bg-green-300 text-gray-500 cursor-not-allowed' }}"
             <button type="button"
                 wire:click="deleteSelectedRow"
                 @if(is_null($selectedRowIndex)) disabled @endif
-                class="px-3 py-2 rounded-lg text-sm font-medium border border-
-red-500 text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-
-allowed">
+                class="px-3 py-2 rounded-lg text-sm font-medium border border-red-500 text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">
                 Hapus Baris Terpilih
             </button>
             <button type="button"
                 wire:click="deleteSelectedColumn"
                 @if(is_null($selectedColumnIndex)) disabled @endif
-                class="px-3 py-2 rounded-lg text-sm font-medium border border-
-red-500 text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-
-allowed">
+                class="px-3 py-2 rounded-lg text-sm font-medium border border-red-500 text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">
                 Hapus Kolom Terpilih
             </button>
 

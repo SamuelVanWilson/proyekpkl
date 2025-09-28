@@ -211,11 +211,6 @@ class SimpleTable extends Component
         $this->dispatch('tableUpdated');
     }
 
-    /**
-     * Hapus baris terakhir.
-     *
-     * @return void
-     */
     public function removeLastRow()
     {
         if (!empty($this->rows)) {
@@ -518,12 +513,6 @@ class SimpleTable extends Component
         return redirect()->route('client.laporan.preview', $this->reportId);
     }
 
-    /**
-     * Pilih baris untuk dihapus. Menetapkan selectedRowIndex.
-     *
-     * @param int $index
-     * @return void
-     */
     public function selectRow($index)
     {
         // Toggle: jika klik baris yang sama -> batalkan pilihan

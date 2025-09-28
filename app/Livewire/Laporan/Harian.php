@@ -526,15 +526,21 @@ class Harian extends Component
     public function hapusBarisTerpilih()
     {
         if ($this->selectedRowIndex !== null && isset($this->rincian[$this->selectedRowIndex])) {
-            // Simpan keadaan sebelum baris dihapus untuk undo
+            // Simpan state untuk undo
             $this->lastRincianState = $this->rincian;
-            $this->undoAvailable   = true;
+            $this->undoAvailable = true;
+
             unset($this->rincian[$this->selectedRowIndex]);
+
+            // Reindex supaya $index sinkron dengan UI (wire:key pakai index)
             $this->rincian = array_values($this->rincian);
+
+            // Reset seleksi & hitung ulang
             $this->selectedRowIndex = null;
             $this->hitungUlang();
         }
     }
+
 
     /**
      * Trigger Livewire update setiap perubahan input.
