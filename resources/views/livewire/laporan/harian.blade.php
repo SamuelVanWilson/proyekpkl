@@ -234,41 +234,31 @@ $col['name'] }}</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($rincian as $index => $row)
-                                    <tr wire:key="rincian-{{ $index }}" 
-class="{{ $selectedRowIndex === $index ? 'bg-green-100' : '' }}">
-                                        <th wire:click="selectRow({{ $index }})"
-  class="sticky left-0 z-10 w-12 bg-gray-50 hover:bg-gray-200 transition-colors 
-cursor-pointer">
-                                            {{ $index + 1 }}
-                                        </th>
-                                        @foreach($configRincian as $col)
-                                            <td>
-                                                {{-- Gunakan contenteditable 
-agar toolbar format teks berfungsi. --}}
-                                                <div
-                                                    contenteditable="true"
-                                                    class="w-full h-full px-2 
-py-1 text-sm outline-none min-w-[150px]"
-                                                    wire:ignore
-                                                    x-on:blur="$wire.updateCell({{ 
- $index }}, '{{ $col['name'] }}', $event.target.innerHTML)"
-                                                    wire:key="cell-{{ $index 
- }}-{{ $col['name'] }}"
-                                                >{!! $row[$col['name']] ?? '' 
-!!}</div>
-                                            </td>
-                                        @endforeach
-                                    </tr>
-                                @empty
-                                    <tr>
-                                        <td colspan="{{ count($configRincian) + 
-1 }}" class="text-center text-gray-500 py-6">
-                                            Tabel rincian kosong.
+                            @forelse($rincian as $index => $row)
+                                <tr wire:key="rincian-{{ $index }}" class="{{ $selectedRowIndex === $index ? 'bg-green-100' : '' }}">
+                                    <th wire:click="selectRow({{ $index }})" class="sticky left-0 z-10 w-12 bg-gray-50 hover:bg-gray-200 transition-colors cursor-pointer">
+                                        {{ $index + 1 }}
+                                    </th>
+                                    @foreach($configRincian as $col)
+                                        <td>
+                                            {{-- Gunakan contenteditable agar toolbar format teks berfungsi. --}}
+                                            <div
+                                                contenteditable="true"
+                                                class="w-full h-full px-2 py-1 text-sm outline-none min-w-[150px]"
+                                                wire:input.debounce.500ms="updateCell({{ $index }}, '{{ $col['name'] }}', $event.target.innerHTML)"
+                                                wire:key="cell-{{ $index }}-{{ $col['name'] }}"
+                                            >{!! $row[$col['name']] ?? '' !!}</div>
                                         </td>
-                                    </tr>
-                                @endforelse
-                            </tbody>
+                                    @endforeach
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="{{ count($configRincian) + 1 }}" class="text-center text-gray-500 py-6">
+                                        Tabel rincian kosong.
+                                    </td>
+                                </tr>
+                            @endforelse
+                        </tbody>
                         </table>
                     </div>
                 </div>
@@ -357,37 +347,28 @@ wire:model.blur="rekap.{{ $field['name'] }}" class="input-modern">
 
                 {{-- Tombol aksi (Tambah/Hapus baris, Konfigurasi, Simpan, 
 Preview) --}}
-                <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 
-gap-2">
-                    {{-- Grup baris: plus dan minus baris --}}
-                    <div class="flex justify-between items-center rounded-lg 
-overflow-hidden bg-gray-200 text-gray-700 text-sm font-medium">
-                        <button type="button" wire:click="tambahBarisRincian" 
-class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center 
-gap-1">
-                            <span class="text-base font-
-bold">+</span><span>Baris</span>
-                        </button>
-                        <span class="h-full w-px bg-gray-300"></span>
-                        <button type="button" wire:click="removeLastRow" @if(count($rincian) <= 1) disabled @endif class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
-                            <span class="text-base font-
-bold">−</span><span>Baris</span>
-                        </button>
-                    </div>
-            {{-- Hapus baris terpilih: hanya aktif jika ada baris dipilih --}}
-            <button type="button"
-                    wire:click="hapusBarisTerpilih"
-                    @class([
-                        'px-3 py-2 rounded-lg text-sm font-medium flex items-
-center justify-center',
-                        'bg-red-600 text-white hover:bg-red-700' => 
-$selectedRowIndex !== null,
-                        'bg-red-300 text-white cursor-not-allowed' => 
-$selectedRowIndex === null,
-                    ])
-                    @if($selectedRowIndex === null) disabled @endif>
-                Hapus Baris Terpilih
-            </button>
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
+                {{-- Grup baris: plus dan minus baris --}}
+                <div class="flex justify-between items-center rounded-lg overflow-hidden bg-gray-200 text-gray-700 text-sm font-medium">
+                    <button type="button" wire:click="tambahBarisRincian" class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1">
+                        <span class="text-base font-bold">+</span><span>Baris</span>
+                    </button>
+                    <span class="h-full w-px bg-gray-300"></span>
+                    <button type="button" wire:click="removeLastRow" @if(count($rincian) <= 1) disabled @endif class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
+                        <span class="text-base font-bold">−</span><span>Baris</span>
+                    </button>
+                </div>
+        {{-- Hapus baris terpilih: hanya aktif jika ada baris dipilih --}}
+        <button type="button"
+                wire:click="hapusBarisTerpilih"
+                @class([
+                    'px-3 py-2 rounded-lg text-sm font-medium flex items-center justify-center',
+                    'bg-red-600 text-white hover:bg-red-700' => $selectedRowIndex !== null,
+                    'bg-red-300 text-white cursor-not-allowed' => $selectedRowIndex === null,
+                ])
+                @if($selectedRowIndex === null) disabled @endif>
+            Hapus Baris Terpilih
+        </button>
 
             {{-- Undo penghapusan baris terakhir atau terpilih --}}
             <button type="button"

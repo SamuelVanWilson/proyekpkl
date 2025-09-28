@@ -526,16 +526,12 @@ class Harian extends Component
     public function hapusBarisTerpilih()
     {
         if ($this->selectedRowIndex !== null && isset($this->rincian[$this->selectedRowIndex])) {
-            // Simpan state untuk undo
-            $this->lastRincianState = $this->rincian;
+            $this->lastRincianState = $this->rincian; // untuk undo
             $this->undoAvailable = true;
 
             unset($this->rincian[$this->selectedRowIndex]);
+            $this->rincian = array_values($this->rincian); // reindex biar wire:key sinkron
 
-            // Reindex supaya $index sinkron dengan UI (wire:key pakai index)
-            $this->rincian = array_values($this->rincian);
-
-            // Reset seleksi & hitung ulang
             $this->selectedRowIndex = null;
             $this->hitungUlang();
         }
