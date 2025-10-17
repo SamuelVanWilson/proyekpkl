@@ -31,10 +31,8 @@ green-100 th { background-color: #dcfce7; }
         {{-- OPTIMASI: Menambahkan indikator saat koneksi offline --}}
         <div wire:key="harian-table-root" x-data="{
             get storageKey() {
-                
                 return 'laporan_rincian_{{ $report->tanggal }}';
-            }
-            ,
+            },
             // Persist the fitTable state using localStorage so that it remains
             // active even after Livewire re-renders occur (e.g. when typing in a cell).
             formatOpen: false,
@@ -284,7 +282,7 @@ shadow-lg py-1">
                     <div class="overflow-y-auto max-h-96" x-ref="container"
                         :class="fitTable ? 'overflow-x-hidden' : 'overflow-x-auto'">
                         <table
-                            class="min-w-full bg-white border border-gray-200 rounded-lg spreadsheet min-w-full"
+                            class="min-w-full bg-white border border-gray-200 rounded-lg spreadsheet"
                             x-ref="table"
                             :style="fitTable ? 'transform: scaleX(' + scaleX + '); transform-origin: left;' : ''"
                         >
