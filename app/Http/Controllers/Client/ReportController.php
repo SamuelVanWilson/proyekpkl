@@ -61,10 +61,18 @@ class ReportController extends Controller
     public function histori()
     {
         $user = Auth::user();
+        // Tentukan laporan biasa terbaru yang diizinkan untuk user non‑langganan.
+        $unlockedSimpleIds = [];
+        if (!$user->hasActiveSubscription()) {
+            $unlockedSimpleIds = $this->getUnlockedSimpleReportIds($user);
+        }
         $reports = DailyReport::where('user_id', $user->id)
                               ->orderBy('tanggal', 'desc')
                               ->paginate(15);
-        return view('client.laporan.histori', compact('reports'));
+        return view('client.laporan.histori', [
+            'reports' => $reports,
+            'unlockedSimpleIds' => $unlockedSimpleIds,
+        ]);
     }
 
     /**
@@ -76,6 +84,22 @@ class ReportController extends Controller
     public function previewPdf(DailyReport $dailyReport)
     {
         $this->authorize('view', $dailyReport);
+
+        // Batasi akses: jika laporan advanced dan langganan tidak aktif, alihkan pengguna.
+        if (!Auth::user()->hasActiveSubscription() && !empty($dailyReport->data) && isset($dailyReport->data['rincian']) && isset($dailyReport->data['rekap'])) {
+            return redirect()->route('client.laporan.harian')
+                ->with('error', 'Masa langganan Anda telah berakhir. Silakan perpanjang untuk mengakses laporan advanced.');
+        }
+        // Batasi akses laporan biasa untuk user non‑langganan jika laporan ini bukan salah satu dari dua laporan biasa terbaru.
+        $user = Auth::user();
+        $isSimple = empty($dailyReport->data) || !(isset($dailyReport->data['rincian']) && isset($dailyReport->data['rekap']));
+        if ($isSimple && !$user->hasActiveSubscription()) {
+            $unlockedSimpleIds = $this->getUnlockedSimpleReportIds($user);
+            if (!in_array($dailyReport->id, $unlockedSimpleIds)) {
+                return redirect()->route('client.laporan.harian')
+                    ->with('error', 'Anda hanya dapat mengakses 2 laporan biasa terbaru. Silakan hapus laporan lama atau berlangganan untuk akses penuh.');
+            }
+        }
         $data = [
             'report' => $dailyReport,
         ];
@@ -91,6 +115,26 @@ class ReportController extends Controller
     public function edit(DailyReport $dailyReport)
     {
         $this->authorize('update', $dailyReport);
+
+        // Jika laporan merupakan laporan advanced dan langganan pengguna sudah tidak aktif,
+        // blok akses dan arahkan kembali ke halaman laporan biasa dengan pesan.
+        // Laporan advanced ditandai dengan adanya struktur 'rincian' dan 'rekap' pada field data.
+        if (!Auth::user()->hasActiveSubscription() && !empty($dailyReport->data) && isset($dailyReport->data['rincian']) && isset($dailyReport->data['rekap'])) {
+            return redirect()->route('client.laporan.harian')
+                ->with('error', 'Masa langganan Anda telah berakhir. Silakan perpanjang untuk mengakses laporan advanced.');
+        }
+        // Tambahan logika: jika laporan biasa tetapi user non‑langganan memiliki lebih dari dua laporan biasa,
+        // izinkan edit hanya dua laporan biasa terbaru; laporan lain dikunci.
+        $user = Auth::user();
+        // Laporan dianggap sederhana jika tidak memiliki struktur 'rincian' dan 'rekap' atau data kosong
+        $isSimple = empty($dailyReport->data) || !(isset($dailyReport->data['rincian']) && isset($dailyReport->data['rekap']));
+        if ($isSimple && !$user->hasActiveSubscription()) {
+            $unlockedSimpleIds = $this->getUnlockedSimpleReportIds($user);
+            if (!in_array($dailyReport->id, $unlockedSimpleIds)) {
+                return redirect()->route('client.laporan.harian')
+                    ->with('error', 'Anda hanya dapat mengakses 2 laporan biasa terbaru. Silakan hapus laporan lama atau berlangganan untuk akses penuh.');
+            }
+        }
         if (!empty($dailyReport->data)) {
             // Jika laporan memiliki rincian & rekap maka ini laporan advanced
             if (isset($dailyReport->data['rincian']) && isset($dailyReport->data['rekap'])) {
@@ -125,6 +169,22 @@ class ReportController extends Controller
     public function downloadPdf(DailyReport $dailyReport)
     {
         $this->authorize('view', $dailyReport);
+
+        // Batasi akses: jika laporan advanced dan langganan tidak aktif, alihkan pengguna.
+        if (!Auth::user()->hasActiveSubscription() && !empty($dailyReport->data) && isset($dailyReport->data['rincian']) && isset($dailyReport->data['rekap'])) {
+            return redirect()->route('client.laporan.harian')
+                ->with('error', 'Masa langganan Anda telah berakhir. Silakan perpanjang untuk mengakses laporan advanced.');
+        }
+        // Batasi akses laporan biasa untuk user non‑langganan jika laporan ini bukan salah satu dari dua laporan biasa terbaru.
+        $user = Auth::user();
+        $isSimple = empty($dailyReport->data) || !(isset($dailyReport->data['rincian']) && isset($dailyReport->data['rekap']));
+        if ($isSimple && !$user->hasActiveSubscription()) {
+            $unlockedSimpleIds = $this->getUnlockedSimpleReportIds($user);
+            if (!in_array($dailyReport->id, $unlockedSimpleIds)) {
+                return redirect()->route('client.laporan.harian')
+                    ->with('error', 'Anda hanya dapat mengakses 2 laporan biasa terbaru. Silakan hapus laporan lama atau berlangganan untuk akses penuh.');
+            }
+        }
         $user = Auth::user();
         // Pastikan judul laporan terisi sebelum export
         $reportTitle = $dailyReport->data['meta']['title'] ?? null;
@@ -170,6 +230,22 @@ class ReportController extends Controller
     public function preview(DailyReport $dailyReport)
     {
         $this->authorize('view', $dailyReport);
+
+        // Batasi akses: jika laporan advanced dan langganan tidak aktif, alihkan pengguna.
+        if (!Auth::user()->hasActiveSubscription() && !empty($dailyReport->data) && isset($dailyReport->data['rincian']) && isset($dailyReport->data['rekap'])) {
+            return redirect()->route('client.laporan.harian')
+                ->with('error', 'Masa langganan Anda telah berakhir. Silakan perpanjang untuk mengakses laporan advanced.');
+        }
+        // Batasi akses laporan biasa untuk user non‑langganan jika laporan ini bukan salah satu dari dua laporan biasa terbaru.
+        $user = Auth::user();
+        $isSimple = empty($dailyReport->data) || !(isset($dailyReport->data['rincian']) && isset($dailyReport->data['rekap']));
+        if ($isSimple && !$user->hasActiveSubscription()) {
+            $unlockedSimpleIds = $this->getUnlockedSimpleReportIds($user);
+            if (!in_array($dailyReport->id, $unlockedSimpleIds)) {
+                return redirect()->route('client.laporan.harian')
+                    ->with('error', 'Anda hanya dapat mengakses 2 laporan biasa terbaru. Silakan hapus laporan lama atau berlangganan untuk akses penuh.');
+            }
+        }
         return view('client.laporan.preview', ['report' => $dailyReport]);
     }
 
@@ -183,6 +259,22 @@ class ReportController extends Controller
     public function updatePreview(Request $request, DailyReport $dailyReport)
     {
         $this->authorize('update', $dailyReport);
+
+        // Batasi akses: jika laporan advanced dan langganan tidak aktif, alihkan pengguna.
+        if (!Auth::user()->hasActiveSubscription() && !empty($dailyReport->data) && isset($dailyReport->data['rincian']) && isset($dailyReport->data['rekap'])) {
+            return redirect()->route('client.laporan.harian')
+                ->with('error', 'Masa langganan Anda telah berakhir. Silakan perpanjang untuk mengakses laporan advanced.');
+        }
+        // Batasi akses laporan biasa untuk user non‑langganan jika laporan ini bukan salah satu dari dua laporan biasa terbaru.
+        $user = Auth::user();
+        $isSimple = empty($dailyReport->data) || !(isset($dailyReport->data['rincian']) && isset($dailyReport->data['rekap']));
+        if ($isSimple && !$user->hasActiveSubscription()) {
+            $unlockedSimpleIds = $this->getUnlockedSimpleReportIds($user);
+            if (!in_array($dailyReport->id, $unlockedSimpleIds)) {
+                return redirect()->route('client.laporan.harian')
+                    ->with('error', 'Anda hanya dapat mengakses 2 laporan biasa terbaru. Silakan hapus laporan lama atau berlangganan untuk akses penuh.');
+            }
+        }
         // Validasi masukan meta. Judul boleh kosong, logo harus berformat JPG/JPEG/PNG agar pengguna mendapat notifikasi
         $validated = $request->validate([
             'title'      => 'nullable|string|max:255',
@@ -334,5 +426,32 @@ class ReportController extends Controller
             return view('admin.users.form-builder', compact('user', 'config', 'columns'));
         }
         return view('client.laporan.form-builder', compact('columns'));
+    }
+
+    /**
+     * Dapatkan ID laporan sederhana (biasa) yang masih dapat diakses oleh pengguna non-langganan.
+     * Pengguna non-langganan hanya diperbolehkan mengakses dua laporan biasa terbaru.
+     * Jika pengguna masih berlangganan, maka semua laporan biasa dianggap terbuka.
+     *
+     * @param  \App\Models\User  $user
+     * @return array<int>
+     */
+    private function getUnlockedSimpleReportIds(User $user): array
+    {
+        // Jika pengguna memiliki langganan aktif, tidak ada pembatasan: semua laporan sederhana terbuka.
+        if ($user->hasActiveSubscription()) {
+            return [];
+        }
+        // Ambil semua laporan pengguna, urutkan berdasarkan tanggal terbaru ke terlama, lalu filter hanya laporan sederhana.
+        $simpleReports = DailyReport::where('user_id', $user->id)
+            ->orderBy('tanggal', 'desc')
+            ->get()
+            ->filter(function ($rep) {
+                $data = $rep->data ?? [];
+                // Laporan dianggap sederhana jika tidak memiliki key 'rincian' dan 'rekap'.
+                return !(isset($data['rincian']) && isset($data['rekap']));
+            })
+            ->take(2);
+        return $simpleReports->pluck('id')->toArray();
     }
 }

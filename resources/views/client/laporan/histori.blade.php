@@ -47,11 +47,33 @@
             </div>
             {{-- Tombol Aksi: hanya Edit dan Hapus. Preview & unduh kini tersedia dari halaman laporan. --}}
             <div class="mt-4 flex flex-col sm:flex-row sm:space-x-2 space-y-2 sm:space-y-0">
-                {{-- Tombol edit hanya untuk laporan biasa (data != null) --}}
+                {{-- Tombol edit: hanya tampil jika laporan memiliki data. Untuk laporan advanced, sembunyikan jika langganan tidak aktif. --}}
                 @if(!empty($report->data))
-                    <a href="{{ route('client.laporan.edit', $report) }}" class="flex-1 text-center bg-gray-200 text-gray-800 py-2 rounded-lg text-sm font-medium hover:bg-gray-300">
-                        Edit
-                    </a>
+                    @php
+                        $isAdvanced = isset($report->data['rincian']) && isset($report->data['rekap']);
+                        $isSimple = !$isAdvanced;
+                        $user = auth()->user();
+                        // Tentukan apakah laporan sederhana ini terkunci karena user non‑langganan telah melewati batas 2 laporan.
+                        $isLockedSimple = false;
+                        if ($isSimple && !$user->hasActiveSubscription()) {
+                            $isLockedSimple = !in_array($report->id, $unlockedSimpleIds ?? []);
+                        }
+                    @endphp
+                    @if($isAdvanced && !$user->hasActiveSubscription())
+                        {{-- Laporan advanced tidak dapat diedit tanpa langganan aktif --}}
+                        <span class="flex-1 text-center bg-gray-100 text-gray-400 py-2 rounded-lg text-sm font-medium cursor-not-allowed">
+                            Edit
+                        </span>
+                    @elseif($isLockedSimple)
+                        {{-- Laporan biasa lama terkunci --}}
+                        <span class="flex-1 text-center bg-gray-100 text-gray-400 py-2 rounded-lg text-sm font-medium cursor-not-allowed">
+                            Terkunci
+                        </span>
+                    @else
+                        <a href="{{ route('client.laporan.edit', $report) }}" class="flex-1 text-center bg-gray-200 text-gray-800 py-2 rounded-lg text-sm font-medium hover:bg-gray-300">
+                            Edit
+                        </a>
+                    @endif
                 @endif
                 {{-- Tombol hapus --}}
                 <form method="POST" action="{{ route('client.laporan.destroy', $report) }}" class="flex-1" onsubmit="return confirm('Hapus laporan ini?');">

@@ -34,7 +34,15 @@
         {{-- Navigasi bawah untuk mobile (md ke bawah) --}}
         <nav class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-white/80 backdrop-blur-sm border-t border-gray-200 safe-area-bottom z-50 {{ $hideNav ? 'hidden' : '' }}">
             <div class="flex justify-around items-center h-full max-w-md mx-auto">
-                <a href="{{ route('client.laporan.harian') }}" class="flex flex-col items-center justify-center text-center w-full {{ request()->routeIs('client.laporan.harian') ? 'text-green-500' : 'text-gray-500' }} hover:text-green-500">
+                @php
+                    // Tentukan rute laporan berdasarkan status langganan pengguna.
+                    $laporanRoute = auth()->check() && auth()->user()->hasActiveSubscription()
+                        ? route('client.laporan.advanced')
+                        : route('client.laporan.harian');
+                    // Tentukan apakah salah satu halaman laporan sedang aktif.
+                    $isLaporanActive = request()->routeIs('client.laporan.harian') || request()->routeIs('client.laporan.advanced');
+                @endphp
+                <a href="{{ $laporanRoute }}" class="flex flex-col items-center justify-center text-center w-full {{ $isLaporanActive ? 'text-green-500' : 'text-gray-500' }} hover:text-green-500">
                     <ion-icon name="document-text-outline" class="text-2xl"></ion-icon>
                     <span class="text-xs font-medium">Laporan</span>
                 </a>
@@ -54,7 +62,14 @@
         </nav>
         {{-- Navigasi samping untuk desktop (md ke atas) --}}
         <nav class="hidden md:flex flex-col items-center py-4 px-2 bg-white/80 backdrop-blur-sm border-r border-gray-200 fixed top-0 bottom-0 left-0 w-20 z-50 {{ $hideNav ? 'hidden' : '' }}">
-            <a href="{{ route('client.laporan.harian') }}" class="flex flex-col items-center mb-6 {{ request()->routeIs('client.laporan.harian') ? 'text-green-500' : 'text-gray-500' }} hover:text-green-500">
+            @php
+                // Tentukan rute dan status aktif untuk tab laporan di desktop.
+                $laporanRoute = auth()->check() && auth()->user()->hasActiveSubscription()
+                    ? route('client.laporan.advanced')
+                    : route('client.laporan.harian');
+                $isLaporanActive = request()->routeIs('client.laporan.harian') || request()->routeIs('client.laporan.advanced');
+            @endphp
+            <a href="{{ $laporanRoute }}" class="flex flex-col items-center mb-6 {{ $isLaporanActive ? 'text-green-500' : 'text-gray-500' }} hover:text-green-500">
                 <ion-icon name="document-text-outline" class="text-2xl mb-1"></ion-icon>
                 <span class="text-xs font-medium">Laporan</span>
             </a>

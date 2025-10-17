@@ -425,11 +425,20 @@ class SimpleTable extends Component
             $this->detailValues['tanggal_raw'] = $this->date;
         }
         $user = Auth::user();
-        // Batasi jumlah laporan untuk pengguna non‑premium (max 2)
+        // Batasi jumlah laporan sederhana untuk pengguna non‑premium (maks 2).
+        // Hitung hanya laporan "biasa" (tanpa rincian & rekap) sebagai batasan, bukan total semua laporan.
         if (!$user->hasActiveSubscription()) {
-            $countReports = DailyReport::where('user_id', $user->id)->count();
-            if (!$this->reportId && $countReports >= 2) {
-                session()->flash('error', 'Pengguna tanpa langganan hanya dapat memiliki 2 laporan. Silakan hapus laporan lama atau berlangganan untuk menambah laporan.');
+            // Ambil semua laporan pengguna lalu filter hanya laporan yang bukan advanced (tidak memiliki key rincian & rekap).
+            $simpleReportCount = DailyReport::where('user_id', $user->id)
+                ->get()
+                ->filter(function ($rep) {
+                    $data = $rep->data ?? [];
+                    return !(isset($data['rincian']) && isset($data['rekap']));
+                })
+                ->count();
+            // Jika membuat laporan baru (tidak sedang edit) dan jumlah laporan sederhana sudah >= 2, tolak pembuatan.
+            if (!$this->reportId && $simpleReportCount >= 2) {
+                session()->flash('error', 'Pengguna tanpa langganan hanya dapat memiliki 2 laporan biasa. Silakan hapus laporan lama atau berlangganan untuk menambah laporan.');
                 return null;
             }
         }

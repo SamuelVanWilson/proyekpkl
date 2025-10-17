@@ -122,11 +122,18 @@ class CreateLaporan extends Component
         $this->validate();
 
         $user = Auth::user();
-        // Batas laporan untuk pengguna tanpa langganan
+        // Batas laporan untuk pengguna tanpa langganan.
+        // Hitung hanya laporan sederhana (tanpa rincian & rekap) karena laporan advanced tidak ikut kuota.
         if (!$user->hasActiveSubscription()) {
-            $reportCount = DailyReport::where('user_id', $user->id)->count();
-            if ($reportCount >= 2) {
-                session()->flash('error', 'Pengguna tanpa langganan hanya dapat memiliki 2 laporan. Silakan hapus laporan lama atau berlangganan untuk membuat laporan baru.');
+            $simpleReportCount = DailyReport::where('user_id', $user->id)
+                ->get()
+                ->filter(function ($rep) {
+                    $data = $rep->data ?? [];
+                    return !(isset($data['rincian']) && isset($data['rekap']));
+                })
+                ->count();
+            if ($simpleReportCount >= 2) {
+                session()->flash('error', 'Pengguna tanpa langganan hanya dapat memiliki 2 laporan biasa. Silakan hapus laporan biasa lama atau berlangganan untuk membuat laporan baru.');
                 return redirect()->route('client.laporan.histori');
             }
         }
