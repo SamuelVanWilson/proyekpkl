@@ -92,21 +92,45 @@
          * automatically re‑enter fullscreen on subsequent page loads until the user
          * explicitly disables fullscreen again.
          */
+        /**
+         * Toggle browser fullscreen mode. When entering fullscreen, the
+         * document element requests fullscreen and we add the app-fullscreen
+         * CSS class. When exiting fullscreen we remove the class. The
+         * preference is persisted to localStorage so the app re-enters
+         * fullscreen on subsequent loads.
+         */
         function toggleFullscreen() {
             const html = document.documentElement;
-            // Toggle CSS-based fullscreen: add or remove app-fullscreen class and update localStorage.
-            if (!html.classList.contains('app-fullscreen')) {
+            // If no element is currently in fullscreen, request it.
+            if (!document.fullscreenElement) {
+                // Request fullscreen on the root element.
+                const request = html.requestFullscreen || html.webkitRequestFullscreen || html.msRequestFullscreen;
+                if (request) {
+                    request.call(html).catch(() => {});
+                }
                 html.classList.add('app-fullscreen');
                 localStorage.setItem('fullscreen-enabled', 'true');
             } else {
+                // Exit fullscreen if currently enabled.
+                const exit = document.exitFullscreen || document.webkitExitFullscreen || document.msExitFullscreen;
+                if (exit) {
+                    exit.call(document).catch(() => {});
+                }
                 html.classList.remove('app-fullscreen');
                 localStorage.removeItem('fullscreen-enabled');
             }
         }
         document.addEventListener('DOMContentLoaded', () => {
-            // Saat halaman dimuat, terapkan kelas app-fullscreen jika preferensi disimpan
+            // Re‑enter fullscreen automatically if preference was saved.
             if (localStorage.getItem('fullscreen-enabled') === 'true') {
-                document.documentElement.classList.add('app-fullscreen');
+                const html = document.documentElement;
+                if (!document.fullscreenElement) {
+                    const request = html.requestFullscreen || html.webkitRequestFullscreen || html.msRequestFullscreen;
+                    if (request) {
+                        request.call(html).catch(() => {});
+                    }
+                }
+                html.classList.add('app-fullscreen');
             }
         });
         // Logika PWA

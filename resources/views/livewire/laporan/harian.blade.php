@@ -29,38 +29,59 @@ green-100 th { background-color: #dcfce7; }
         </style>
 
         {{-- OPTIMASI: Menambahkan indikator saat koneksi offline --}}
-        <div x-data="{
+        <div wire:key="harian-table-root" x-data="{
             get storageKey() {
-                // Membuat key unik untuk setiap laporan per hari
+                
                 return 'laporan_rincian_{{ $report->tanggal }}';
+            }
+            ,
+            // Persist the fitTable state using localStorage so that it remains
+            // active even after Livewire re-renders occur (e.g. when typing in a cell).
+            formatOpen: false,
+            alignOpen: false,
+            // Persist the fitTable toggle across Livewire re-renders by storing
+            // the value in localStorage. This prevents the table from resetting to
+            // scrollable mode when typing in a cell or after saving.
+            fitTable: JSON.parse(localStorage.getItem('fit_table_simple') || 'false'),
+            scaleX: 1,
+            toggleFit() {
+                this.fitTable = !this.fitTable;
+                // Persist the new state so Alpine reinitialization can restore it
+                localStorage.setItem('fit_table_simple', JSON.stringify(this.fitTable));
+                this.recalcScale();
             },
-            init() {
-                // Saat komponen pertama kali dimuat
-                console.log('Alpine init, loading from:', this.storageKey);
-                const savedData = localStorage.getItem(this.storageKey);
-                if (savedData) {
-                    // Jika ada data, kirim ke Livewire untuk dimuat
-                    $dispatch('loadDataFromLocalStorage', { data: 
-JSON.parse(savedData) });
-                }
-                // Awasi perubahan pada data $rincian dari Livewire
-                $watch('$wire.rincian', (newData) => {
-                    // Gunakan debounce dan deep clone agar perubahan reaktif 
-tidak menghapus teks secara tidak sengaja
-                    clearTimeout(this._saveTimeout);
-                    this._saveTimeout = setTimeout(() => {
-                        const clone = JSON.parse(JSON.stringify(newData));
-                        localStorage.setItem(this.storageKey, 
-JSON.stringify(clone));
-                    }, 300);
-                });
-                // Dengar event dari server untuk membersihkan local storage
-                window.addEventListener('laporanDisimpan', () => {
-                    console.log('Laporan disimpan, clearing local storage...');
-                    localStorage.removeItem(this.storageKey);
+            recalcScale() {
+                // When Fit Table is active, calculate a horizontal scale for the table.
+                // We compute the ratio of container width to table scroll width and
+                // apply it directly without clamping so that the entire table always
+                // fits inside the container. The scale only affects the width (via
+                // transform: scaleX) and does not reduce font size, preserving
+                // readability while eliminating horizontal scrolling.
+                this.$nextTick(() => {
+                    if (!this.fitTable) {
+                        this.scaleX = 1;
+                        return;
+                    }
+                    const container = this.$refs.container;
+                    const table     = this.$refs.table;
+                    if (container && table) {
+                        const cw = container.clientWidth;
+                        const tw = table.scrollWidth;
+                        if (tw > 0) {
+                            const ratio = cw / tw;
+                            // Use the exact ratio when it is less than 1. This
+                            // squeezes the table horizontally but keeps text size
+                            // unchanged.
+                            this.scaleX = ratio < 1 ? ratio : 1;
+                        } else {
+                            this.scaleX = 1;
+                        }
+                    }
                 });
             }
-        }" class="flex flex-col gap-6 mb-[20em]" >
+        }"
+        x-init="recalcScale()"
+        x-on:resize.window="recalcScale()" class="flex flex-col gap-6 mb-[20em]" >
 
                 {{-- Pesan Sukses --}}
                 @if (session('success'))
@@ -210,18 +231,63 @@ shadow-lg py-1">
   flex flex-col h-full">
 
                     {{-- Toolbar Aksi --}}
-                    <div class="p-3 border-b border-gray-200 flex flex-wrap 
-items-center gap-2">
-                        <h2 class="text-lg font-semibold text-gray-800 mr-
-auto">Tabel Rincian</h2>
-                        <a href="{{ route('client.laporan.form-builder') }}" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
-                            Konfigurasi
-                        </a>
+                    <div class="p-3 border-b border-gray-200 flex flex-wrap items-center gap-2">
+                        <h2 class="text-lg font-semibold text-gray-800">Tabel Rincian</h2>
+                        <div class="flex flex-wrap items-center gap-2 ml-auto">
+                            {{-- Tambah Baris --}}
+                            <button type="button" wire:click="tambahBarisRincian" class="flex items-center gap-1 px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm">
+                                <ion-icon name="add-outline" class="text-lg"></ion-icon>
+                                <span>+ Baris</span>
+                            </button>
+                            {{-- Hapus Baris Terpilih --}}
+                            <button type="button"
+                                wire:click="hapusBarisTerpilih"
+                                @class([
+                                    'flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm border',
+                                    'border-red-500 text-red-700 hover:bg-red-50' => !is_null($selectedRowIndex),
+                                    'border-red-300 text-red-300 cursor-not-allowed' => is_null($selectedRowIndex),
+                                ])
+                                @if(is_null($selectedRowIndex)) disabled @endif>
+                                <ion-icon name="trash-outline" class="text-lg"></ion-icon>
+                                <span>Hapus</span>
+                            </button>
+                            {{-- Undo Hapus Baris --}}
+                            <button type="button" wire:click="undoDelete" class="flex items-center gap-1 px-3 py-1.5 border border-yellow-500 text-yellow-600 hover:bg-yellow-50 rounded-lg text-sm">
+                                <ion-icon name="return-up-back-outline" class="text-lg"></ion-icon>
+                                <span>Undo</span>
+                            </button>
+                            {{-- Toggle Fit Table --}}
+                            <button type="button" @click="toggleFit()" class="flex items-center justify-center px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-medium">
+                                <template x-if="fitTable">
+                                    <ion-icon name="contract-outline" class="text-lg mr-1"></ion-icon>
+                                </template>
+                                <template x-if="!fitTable">
+                                    <ion-icon name="expand-outline" class="text-lg mr-1"></ion-icon>
+                                </template>
+                                <span x-text="fitTable ? 'Fit OFF' : 'Fit ON'"></span>
+                            </button>
+                            {{-- Toggle Fullscreen --}}
+                            <button type="button" @click="toggleFullscreen()" class="flex items-center gap-1 px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm">
+                                <ion-icon name="scan-outline" class="text-lg"></ion-icon>
+                                <span>Fullscreen</span>
+                            </button>
+                        </div>
+                        {{-- Link konfigurasi dipindah ke bawah tabel --}}
                     </div>
 
-                    {{-- Kontainer Spreadsheet (Mengisi sisa ruang) --}}
-                    <div class="flex-grow overflow-auto">
-                        <table class="spreadsheet min-w-full">
+                     {{-- Kontainer Spreadsheet (Mengisi sisa ruang) --}}
+                     <!-- Pastikan perilaku Fit Table sama dengan halaman laporan biasa:
+                          - Selalu gunakan overflow-y-auto untuk scroll vertikal.
+                          - Toggle overflow-x-hidden saat fitTable aktif untuk mencegah scroll horizontal dan gunakan scaleX.
+                          - Toggle overflow-x-auto saat fitTable nonaktif agar dapat digeser secara horizontal.
+                      -->
+                    <div class="overflow-y-auto max-h-96" x-ref="container"
+                        :class="fitTable ? 'overflow-x-hidden' : 'overflow-x-auto'">
+                        <table
+                            class="min-w-full bg-white border border-gray-200 rounded-lg spreadsheet min-w-full"
+                            x-ref="table"
+                            :style="fitTable ? 'transform: scaleX(' + scaleX + '); transform-origin: left;' : ''"
+                        >
                             <thead class="sticky top-0 z-20 bg-gray-50">
                                 <tr>
                                     <th class="sticky left-0 z-30 bg-gray-100 
@@ -244,8 +310,10 @@ $col['name'] }}</th>
                                             {{-- Gunakan contenteditable agar toolbar format teks berfungsi. --}}
                                             <div
                                                 contenteditable="true"
-                                                class="w-full h-full px-2 py-1 text-sm outline-none min-w-[150px]"
-                                                wire:input.debounce.500ms="updateCell({{ $index }}, '{{ $col['name'] }}', $event.target.innerHTML)"
+                                                class="w-full h-full outline-none px-2 py-1 text-sm"
+                                                :class="fitTable ? 'min-w-[80px]' : 'min-w-[150px]'"
+                                                {{-- Trigger cell update on blur instead of every keystroke to prevent cursor jump/lag --}}
+                                                wire:blur="updateCell({{ $index }}, '{{ $col['name'] }}', $event.target.innerHTML)"
                                                 wire:key="cell-{{ $index }}-{{ $col['name'] }}"
                                             >{!! $row[$col['name']] ?? '' !!}</div>
                                         </td>
@@ -262,6 +330,13 @@ $col['name'] }}</th>
                         </table>
                     </div>
                 </div>
+
+                    {{-- Area Konfigurasi di bawah tabel --}}
+                    <div class="p-3 border-t border-gray-200">
+                        <a href="{{ route('client.laporan.form-builder') }}" class="px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors">
+                            Konfigurasi
+                        </a>
+                    </div>
 
                 {{-- KARTU DETAIL LAPORAN --}}
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-
@@ -345,64 +420,16 @@ wire:model.blur="rekap.{{ $field['name'] }}" class="input-modern">
                     </div>
                 </div>
 
-                {{-- Tombol aksi (Tambah/Hapus baris, Konfigurasi, Simpan, 
-Preview) --}}
-            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-                {{-- Grup baris: plus dan minus baris --}}
-                <div class="flex justify-between items-center rounded-lg overflow-hidden bg-gray-200 text-gray-700 text-sm font-medium">
-                    <button type="button" wire:click="tambahBarisRincian" class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1">
-                        <span class="text-base font-bold">+</span><span>Baris</span>
-                    </button>
-                    <span class="h-full w-px bg-gray-300"></span>
-                    <button type="button" wire:click="removeLastRow" @if(count($rincian) <= 1) disabled @endif class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1 disabled:opacity-50 disabled:cursor-not-allowed">
-                        <span class="text-base font-bold">−</span><span>Baris</span>
-                    </button>
-                </div>
-        {{-- Hapus baris terpilih: hanya aktif jika ada baris dipilih --}}
-        <button type="button"
-                wire:click="hapusBarisTerpilih"
-                @class([
-                    'px-3 py-2 rounded-lg text-sm font-medium flex items-center justify-center',
-                    'bg-red-600 text-white hover:bg-red-700' => $selectedRowIndex !== null,
-                    'bg-red-300 text-white cursor-not-allowed' => $selectedRowIndex === null,
-                ])
-                @if($selectedRowIndex === null) disabled @endif>
-            Hapus Baris Terpilih
-        </button>
-
-            {{-- Undo penghapusan baris terakhir atau terpilih --}}
-            <button type="button"
-                    wire:click="undoDelete"
-                    @class([
-                        'px-3 py-2 rounded-lg text-sm font-medium flex items-
-center justify-center',
-                        'bg-yellow-600 text-white hover:bg-yellow-700' => 
-$undoAvailable,
-                        'bg-yellow-300 text-white cursor-not-allowed' => 
-!$undoAvailable,
-                    ])
-                    @if(!$undoAvailable) disabled @endif>
-                Undo Hapus
-            </button>
-
-            {{-- Link konfigurasi tabel --}}
-            <div class="flex justify-between items-center rounded-lg overflow-hidden bg-gray-200 text-gray-700 text-sm font-medium">
-                <a href="{{ route('client.laporan.form-builder') }}" class="flex-1 px-3 py-2 hover:bg-gray-300 flex items-center justify-center gap-1">
-                    <span>Konfigurasi</span>
-                </a>
+                {{-- Tombol simpan dan preview (ditempatkan di bawah tabel rinci dan rekap) --}}
+            <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <button type="button" wire:click="simpanLaporan" wire:loading.attr="disabled" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">
+                    <span wire:loading.remove wire:target="simpanLaporan">Simpan</span>
+                    <span wire:loading wire:target="simpanLaporan">Menyimpan...</span>
+                </button>
+                <button type="button" wire:click="preview" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">
+                    Preview
+                </button>
             </div>
-                    {{-- Simpan laporan --}}
-                    <button type="button" wire:click="simpanLaporan" wire:loading.attr="disabled" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">
-                        <span wire:loading.remove 
-wire:target="simpanLaporan">Simpan</span>
-                        <span wire:loading 
-wire:target="simpanLaporan">Menyimpan...</span>
-                    </button>
-                    {{-- Preview laporan --}}
-                    <button type="button" wire:click="preview" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full">
-                        Preview
-                    </button>
-                </div>
 
         </div>
     </div>

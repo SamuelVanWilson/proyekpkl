@@ -1,4 +1,52 @@
-<div>
+<div
+    wire:key="simple-table-root"
+    x-data="{
+        formatOpen: false,
+        alignOpen: false,
+        // Persist the fitTable toggle across Livewire re-renders by storing
+        // the value in localStorage. This prevents the table from resetting to
+        // scrollable mode when typing in a cell or after saving.
+        fitTable: JSON.parse(localStorage.getItem('fit_table_simple') || 'false'),
+        scaleX: 1,
+        toggleFit() {
+            this.fitTable = !this.fitTable;
+            // Persist the new state so Alpine reinitialization can restore it
+            localStorage.setItem('fit_table_simple', JSON.stringify(this.fitTable));
+            this.recalcScale();
+        },
+        recalcScale() {
+            // When Fit Table is active, calculate a horizontal scale for the table.
+            // We compute the ratio of container width to table scroll width and
+            // apply it directly without clamping so that the entire table always
+            // fits inside the container. The scale only affects the width (via
+            // transform: scaleX) and does not reduce font size, preserving
+            // readability while eliminating horizontal scrolling.
+            this.$nextTick(() => {
+                if (!this.fitTable) {
+                    this.scaleX = 1;
+                    return;
+                }
+                const container = this.$refs.container;
+                const table     = this.$refs.table;
+                if (container && table) {
+                    const cw = container.clientWidth;
+                    const tw = table.scrollWidth;
+                    if (tw > 0) {
+                        const ratio = cw / tw;
+                        // Use the exact ratio when it is less than 1. This
+                        // squeezes the table horizontally but keeps text size
+                        // unchanged.
+                        this.scaleX = ratio < 1 ? ratio : 1;
+                    } else {
+                        this.scaleX = 1;
+                    }
+                }
+            });
+        }
+    }"
+    x-init="recalcScale()"
+    x-on:resize.window="recalcScale()"
+>
         {{-- Pesan Sukses dan Error --}}
         @if (session('success'))
             <div class="bg-green-100 text-green-800 text-sm font-medium p-3 
@@ -14,8 +62,7 @@ lg mb-4">
         @endif
 
         {{-- Toolbar format teks --}}
-        <div x-data="{ formatOpen: false, alignOpen: false }" class="flex flex-
-wrap items-center gap-2 mb-4">
+        <div class="flex flex-wrap items-center gap-2 mb-4">
             {{-- Format dropdown --}}
             <div class="relative inline-block text-left">
                 <button type="button" @click="formatOpen = !formatOpen" 
@@ -140,10 +187,76 @@ md border-gray-300 shadow-sm" wire:model.defer="detailValues.{{ $field['key']
             @endforeach
         </div>
 
+        {{-- Toolbar Aksi (Baris/Kolom, Fit Table, Fullscreen) --}}
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+            <!-- Tambah Baris -->
+            <button type="button" wire:click="addRow" class="flex items-center justify-center px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium">
+                <ion-icon name="add-outline" class="text-lg mr-1"></ion-icon>
+                <span>+ Baris</span>
+            </button>
+            <!-- Tambah Kolom -->
+            <button type="button" wire:click="addColumn" class="flex items-center justify-center px-3 py-1.5 bg-gray-100 hover:bg-gray-200 rounded-lg text-sm font-medium @if(count($columns) >= 26) opacity-50 cursor-not-allowed @endif" @if(count($columns) >= 26) disabled @endif>
+                <ion-icon name="add-outline" class="text-lg mr-1"></ion-icon>
+                <span>+ Kolom</span>
+            </button>
+            <!-- Hapus Baris Terpilih -->
+            <button type="button"
+                wire:click="deleteSelectedRow"
+                @class([
+                    'flex items-center justify-center px-3 py-1.5 rounded-lg text-sm font-medium border',
+                    'border-red-500 text-red-700 hover:bg-red-50' => !is_null($selectedRowIndex),
+                    'border-red-300 text-red-300 cursor-not-allowed' => is_null($selectedRowIndex),
+                ])
+                @if(is_null($selectedRowIndex)) disabled @endif>
+                Hapus Baris
+            </button>
+            <!-- Hapus Kolom Terpilih -->
+            <button type="button"
+                wire:click="deleteSelectedColumn"
+                @class([
+                    'flex items-center justify-center px-3 py-1.5 rounded-lg text-sm font-medium border',
+                    'border-red-500 text-red-700 hover:bg-red-50' => !is_null($selectedColumnIndex),
+                    'border-red-300 text-red-300 cursor-not-allowed' => is_null($selectedColumnIndex),
+                ])
+                @if(is_null($selectedColumnIndex)) disabled @endif>
+                Hapus Kolom
+            </button>
+            <!-- Undo Hapus -->
+            <button type="button"
+                wire:click="undoDelete"
+                @class([
+                    'flex items-center justify-center px-3 py-1.5 rounded-lg text-sm font-medium border',
+                    'border-yellow-500 text-yellow-700 hover:bg-yellow-50' => $undoAvailable,
+                    'border-yellow-300 text-yellow-300 cursor-not-allowed' => !$undoAvailable,
+                ])
+                @if(!$undoAvailable) disabled @endif>
+                Undo
+            </button>
+            <!-- Fit Table Toggle -->
+            <button type="button" @click="toggleFit()" class="flex items-center justify-center px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-medium">
+                <template x-if="fitTable">
+                    <ion-icon name="contract-outline" class="text-lg mr-1"></ion-icon>
+                </template>
+                <template x-if="!fitTable">
+                    <ion-icon name="expand-outline" class="text-lg mr-1"></ion-icon>
+                </template>
+                <span x-text="fitTable ? 'Fit OFF' : 'Fit ON'"></span>
+            </button>
+            <!-- Fullscreen Toggle -->
+            <button type="button" @click="toggleFullscreen()" class="flex items-center justify-center px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-medium">
+                <ion-icon name="scan-outline" class="text-lg mr-1"></ion-icon>
+                <span>Fullscreen</span>
+            </button>
+        </div>
+
         {{-- Tabel Data Dinamis --}}
-        <div class="overflow-x-auto overflow-y-auto max-h-96">
-            <table class="min-w-full bg-white border border-gray-200 rounded-
-lg">
+        <div class="overflow-y-auto max-h-96" x-ref="container"
+             :class="fitTable ? 'overflow-x-hidden' : 'overflow-x-auto'">
+            <table
+                class="min-w-full bg-white border border-gray-200 rounded-lg"
+                x-ref="table"
+                :style="fitTable ? 'transform: scaleX(' + scaleX + '); transform-origin: left;' : ''"
+            >
                 <thead class="bg-gray-50">
                     <tr>
                         <th
@@ -181,8 +294,9 @@ $selectedRowIndex === $rowIndex])
                             <td class="py-1 px-1 border-b border-r {{ $selectedColumnIndex === $colIndex ? 'bg-green-50' : '' }}">
                                 <div
                                     contenteditable="true"
-                                    class="min-w-[100px] outline-none p-1"
-                                    wire:input.debounce.1000ms="updateCell({{ $rowIndex }}, '{{ $col }}', $event.target.innerHTML)"
+                                    class="outline-none p-1 text-sm"
+                                    :class="fitTable ? 'min-w-[60px]' : 'min-w-[100px]'"
+                                    wire:blur="updateCell({{ $rowIndex }}, '{{ $col }}', $event.target.innerHTML)"
                                     wire:key="cell-{{ $rowIndex }}-{{ $col }}"
                                     >{!! $rows[$rowIndex][$col] ?? '' !!}</div>
                             </td>
@@ -193,65 +307,14 @@ $selectedRowIndex === $rowIndex])
             </table>
         </div>
 
-        {{-- Tombol Aksi --}}
-        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
-            <button type="button" wire:click="addRow" class="flex items-center 
-justify-center px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm font-
-medium">
-                + Baris
-            </button>
-            <button type="button" wire:click="addColumn" class="flex items-
-center justify-center px-3 py-2 bg-gray-200 hover:bg-gray-300 rounded-lg text-sm
-  font-medium" @if(count($columns) >= 26) disabled @endif>
-                + Kolom
-            </button>
-            <button type="button" wire:click="save" class="bg-green-600 
-hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full 
-flex items-center justify-center" wire:loading.attr="disabled">
-                {{-- Tampilkan 'Menyimpan…' saat proses simpan berlangsung, 
-seperti di laporan advanced --}}
+        {{-- Kontrol simpan dan preview (ditempatkan di bawah tabel) --}}
+        <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <button type="button" wire:click="save" class="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium w-full flex items-center justify-center" wire:loading.attr="disabled">
                 <span wire:loading.remove wire:target="save">Simpan</span>
                 <span wire:loading wire:target="save">Menyimpan…</span>
             </button>
-            <button type="button" wire:click="preview" class="px-4 py-2 rounded-
-lg text-sm font-medium w-full {{ $reportId ? 'bg-green-600 hover:bg-green-700 
-text-white' : 'bg-green-300 text-gray-500 cursor-not-allowed' }}" 
-@if(!$reportId) disabled @endif>
+            <button type="button" wire:click="preview" class="px-4 py-2 rounded-lg text-sm font-medium w-full {{ $reportId ? 'bg-green-600 hover:bg-green-700 text-white' : 'bg-green-300 text-gray-500 cursor-not-allowed' }}" @if(!$reportId) disabled @endif>
                 Preview
-            </button>
-        </div>
-
-        {{-- Indikator menyimpan laporan dihapus karena sudah diintegrasikan ke 
- tombol --}}
-
-        {{-- Hapus baris/kolom terpilih --}}
-        <div class="mt-3 flex flex-col sm:flex-row gap-2">
-            <button type="button"
-                wire:click="deleteSelectedRow"
-                @if(is_null($selectedRowIndex)) disabled @endif
-                class="px-3 py-2 rounded-lg text-sm font-medium border border-red-500 text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                Hapus Baris Terpilih
-            </button>
-            <button type="button"
-                wire:click="deleteSelectedColumn"
-                @if(is_null($selectedColumnIndex)) disabled @endif
-                class="px-3 py-2 rounded-lg text-sm font-medium border border-red-500 text-red-700 hover:bg-red-50 disabled:opacity-50 disabled:cursor-not-allowed">
-                Hapus Kolom Terpilih
-            </button>
-
-            {{-- Undo penghapusan baris atau kolom --}}
-            <button type="button"
-                wire:click="undoDelete"
-                @class([
-                    'px-3 py-2 rounded-lg text-sm font-medium border text-
-white',
-                    'bg-yellow-600 border-yellow-600 hover:bg-yellow-700' => 
-$undoAvailable,
-                    'bg-yellow-300 border-yellow-300 cursor-not-allowed' => 
-!$undoAvailable,
-                ])
-                @if(!$undoAvailable) disabled @endif>
-                Undo Hapus
             </button>
         </div>
 
@@ -318,47 +381,5 @@ normal.
         </script>
     @endonce
 
-        {{-- Skrip untuk menyimpan draft ke localStorage dan memuatnya kembali 
-saat halaman dimuat --}}
-        <script>
-            document.addEventListener('livewire:load', function () {
-                // Jika sedang membuat laporan baru (reportId null) dan ada 
-draft, muat dari localStorage
-                if (!@this.get('reportId')) {
-                    const draft = localStorage.getItem('simple-report-draft');
-                    if (draft) {
-                        try {
-                            const data = JSON.parse(draft);
-                            if (data.columns && data.rows) {
-                                @this.set('columns', data.columns);
-                                @this.set('rows',    data.rows);
-                                @this.set('title',   data.title ?? '');
-                                @this.set('date',    data.date ?? 
-@this.get('date'));
-                            }
-                        } catch (e) {}
-                    }
-                } else {
-                    // Jika laporan sudah disimpan, hapus draft lama
-                    localStorage.removeItem('simple-report-draft');
-                }
-                // Update draft setiap kali data tabel berubah
-                document.addEventListener('tableUpdated', function () {
-                    if (!@this.get('reportId')) {
-                        const data = {
-                            columns: @this.get('columns'),
-                            rows:    @this.get('rows'),
-                            title:   @this.get('title'),
-                            date:    @this.get('date'),
-                        };
-                        localStorage.setItem('simple-report-draft', 
-JSON.stringify(data));
-                    }
-                });
-                // Jika laporan baru saja disimpan, hapus draft
-                document.addEventListener('reportSaved', function () {
-                    localStorage.removeItem('simple-report-draft');
-                });
-            });
-        </script>
+        {{-- Fitur draft via localStorage dihapus untuk meningkatkan stabilitas --}}
     </div>

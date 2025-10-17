@@ -97,29 +97,9 @@ class Harian extends Component
      */
     public $isUsingDefaultTemplate = false;
 
-    /**
-     * Listener Livewire untuk memuat data dari localStorage.
-     *
-     * @var array<string, string>
-     */
-    protected $listeners = ['loadDataFromLocalStorage' => 'loadFromLocalStorage'];
-
-    /**
-     * Memuat data dari localStorage ketika event dipicu dari Alpine.
-     *
-     * @param array<string, mixed> $data
-     * @return void
-     */
-    public function loadFromLocalStorage($data)
-    {
-        // Hanya isi data jika $rincian di server masih kosong (laporan baru)
-        // dan jika data dari local storage tidak kosong
-        $isServerDataEmpty = collect($this->rincian)->flatten()->filter()->isEmpty();
-        if ($isServerDataEmpty && !empty($data)) {
-            $this->rincian = $data;
-            $this->hitungUlang();
-        }
-    }
+    // Draft laporan tidak lagi disimpan ke localStorage, sehingga listener
+    // dan method terkait pemuatan dari storage dihapus. Jika ada data lama di
+    // localStorage, itu akan diabaikan sepenuhnya.
 
     /**
      * Lifecycle hook Livewire: load konfigurasi dan laporan saat komponen di-mount.
