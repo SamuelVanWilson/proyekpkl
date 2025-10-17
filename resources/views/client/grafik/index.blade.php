@@ -44,6 +44,16 @@
     @if(!$labels->isEmpty())
         const labels = @json($labels);
         const datasets = @json($datasets);
+        // Ubah setiap nilai data di datasets menjadi bilangan bulat. Ini mencegah tampilan nilai desimal pada grafik.
+        Object.keys(datasets).forEach(function(key) {
+            datasets[key].data = datasets[key].data.map(function(v) {
+                const num = parseFloat(v);
+                if (isNaN(num)) {
+                    return 0;
+                }
+                return Math.round(num);
+            });
+        });
         // Daftar warna hijau yang berbeda
         const colors = [
             'rgb(5, 150, 105)',
@@ -82,12 +92,38 @@
                     maintainAspectRatio: false,
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            // Format nilai sumbu‑Y dengan pemisah ribuan (titik) sesuai kebutuhan lokal Indonesia.
+                            ticks: {
+                                callback: function(value) {
+                                    // Gunakan toLocaleString dengan locale 'id-ID' untuk pemisah ribuan titik.
+                                    try {
+                                        return value.toLocaleString('id-ID');
+                                    } catch (e) {
+                                        return value;
+                                    }
+                                }
+                            }
                         }
                     },
                     plugins: {
                         legend: {
                             display: false
+                        },
+                        // Format tooltip untuk menampilkan angka dengan pemisah ribuan.
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.dataset.label ? context.dataset.label + ': ' : '';
+                                    const value = context.parsed.y !== undefined ? context.parsed.y : context.raw;
+                                    // Pastikan value adalah angka sebelum formatting
+                                    try {
+                                        return label + value.toLocaleString('id-ID');
+                                    } catch (e) {
+                                        return label + value;
+                                    }
+                                }
+                            }
                         }
                     }
                 }

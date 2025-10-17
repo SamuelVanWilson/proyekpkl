@@ -87,7 +87,8 @@
                                             $formatted = '$ ' . number_format((float)$val, 2, '.', ',');
                                             break;
                                         case 'kg':
-                                            $formatted = number_format((float)$val, 2, '.', ',') . ' Kg';
+                                            // Untuk tipe kilogram tidak ada desimal, gunakan pemisah ribuan untuk konsistensi.
+                                            $formatted = number_format((float)$val, 0, ',', '.') . ' Kg';
                                             break;
                                         case 'g':
                                             $formatted = number_format((float)$val, 0, ',', '.') . ' g';
@@ -161,7 +162,8 @@
                                             $formatted = '$ ' . number_format((float)$val, 2, '.', ',');
                                             break;
                                         case 'kg':
-                                            $formatted = number_format((float)$val, 2, '.', ',') . ' Kg';
+                                            // Untuk tipe kilogram tidak ada desimal, gunakan pemisah ribuan untuk konsistensi.
+                                            $formatted = number_format((float)$val, 0, ',', '.') . ' Kg';
                                             break;
                                         case 'g':
                                             $formatted = number_format((float)$val, 0, ',', '.') . ' g';

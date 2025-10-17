@@ -39,11 +39,16 @@ class ChartController extends Controller
         $numericFields = [];
         if ($config && !empty($config->columns['rekap'])) {
             $rekapCols = $config->columns['rekap'];
-            // Periksa apakah setidaknya satu kolom memiliki nilai used_for_chart yang aktif (truthy).
+            // Periksa apakah setidaknya satu kolom numerik memiliki nilai used_for_chart yang aktif (truthy).
+            // Hanya kolom dengan tipe numerik yang dapat memicu mode "kustom" grafik. Jika sebuah
+            // kolom bertipe non-numerik ditandai untuk grafik, itu diabaikan untuk keperluan
+            // menentukan apakah ada konfigurasi khusus. Dengan demikian, ketika semua kolom
+            // numerik tidak ditandai, grafik akan menampilkan kolom bawaan (total_uang/total_netto).
             $hasChartSetting = false;
             foreach ($rekapCols as $col) {
-                // Hanya jika nilai used_for_chart bernilai truthy kita anggap sebagai konfigurasi chart.
-                if (!empty($col['used_for_chart'])) {
+                $typeCheck = $col['type'] ?? 'text';
+                $isNumericCheck = in_array($typeCheck, ['number', 'rupiah', 'dollar', 'kg', 'g']);
+                if ($isNumericCheck && !empty($col['used_for_chart'])) {
                     $hasChartSetting = true;
                     break;
                 }
@@ -63,7 +68,7 @@ class ChartController extends Controller
                     }
                 } else {
                     // Konfigurasi lama tanpa properti used_for_chart atau semua bernilai false: sertakan semua kolom numerik.
-                    $numericFields[$col['name']] = $col['label'] ?? $col['name'];
+                    // Kolom tidak ditandai used_for_chart tidak dimasukkan ke grafik.
                 }
             }
         }
@@ -78,18 +83,55 @@ class ChartController extends Controller
         }
         $datasets = [];
         $parseNumber = function ($value) {
+            // Fungsi ini mengekstrak nilai numerik dari berbagai format string.
+            // Ia menangani angka dengan pemisah ribuan (titik atau koma), mata uang dan satuan.
+            // Jika terdapat tanda desimal, karakter pemisah terakhir (titik atau koma) dianggap
+            // sebagai pemisah desimal. Jika tidak ada pemisah desimal, seluruh string yang
+            // terdiri dari digit akan diinterpretasikan sebagai bilangan bulat.
             if (is_null($value) || $value === '') {
                 return 0.0;
             }
-            // Hapus semua karakter kecuali angka, koma, dan titik
+            // Ambil hanya karakter digit, koma, dan titik agar mata uang/satuan terhapus.
             $cleaned = preg_replace('/[^\d,.]/', '', (string) $value);
-            // Ganti koma dengan titik
-            $cleaned = str_replace(',', '.', $cleaned);
-            // Hapus titik ribuan kecuali yang terakhir (desimal)
-            $parts = explode('.', $cleaned);
-            $decimal = array_pop($parts);
-            $cleaned = str_replace('.', '', implode('.', $parts)) . '.' . $decimal;
-            return (float) $cleaned;
+            if ($cleaned === '') {
+                return 0.0;
+            }
+            // Cari posisi terakhir dari koma dan titik
+            $lastComma = strrpos($cleaned, ',');
+            $lastDot   = strrpos($cleaned, '.');
+            $decimalPos = null;
+            // Tentukan pemisah desimal: ambil karakter pemisah (koma atau titik) yang muncul terakhir.
+            if ($lastComma !== false && $lastDot !== false) {
+                $decimalPos = ($lastComma > $lastDot) ? $lastComma : $lastDot;
+            } elseif ($lastComma !== false) {
+                // Jika hanya ada koma, anggap sebagai desimal bila hanya satu koma.
+                if (substr_count($cleaned, ',') === 1) {
+                    $decimalPos = $lastComma;
+                }
+            } elseif ($lastDot !== false) {
+                // Jika hanya ada titik, anggap sebagai desimal bila hanya satu titik.
+                if (substr_count($cleaned, '.') === 1) {
+                    $decimalPos = $lastDot;
+                }
+            }
+            if ($decimalPos === null) {
+                // Tidak ada pemisah desimal yang valid: hapus semua koma/titik dan kembalikan sebagai integer.
+                $number = str_replace([',', '.'], '', $cleaned);
+                return $number === '' ? 0.0 : (float) $number;
+            }
+            // Pisahkan bagian integer dan desimal berdasarkan posisi pemisah desimal.
+            $integerPart = substr($cleaned, 0, $decimalPos);
+            $decimalPart = substr($cleaned, $decimalPos + 1);
+            // Buang semua pemisah ribuan pada kedua bagian.
+            $integerPart = str_replace([',', '.'], '', $integerPart);
+            $decimalPart = str_replace([',', '.'], '', $decimalPart);
+            // Satukan kembali dengan titik sebagai pemisah desimal.
+            $numberStr = $integerPart . '.' . $decimalPart;
+            // Jika integerPart kosong (misalnya ",75"), beri nilai 0 sebelum desimal.
+            if ($integerPart === '') {
+                $numberStr = '0.' . $decimalPart;
+            }
+            return (float) $numberStr;
         };
         foreach ($numericFields as $fieldName => $label) {
             $datasets[$fieldName] = [

@@ -394,7 +394,7 @@ number_format((float)$value, 2, '.', ',');
                                                     break;
                                                 case 'kg':
                                                     $formattedValue = 
-number_format((float)$value, 2, '.', ',') . ' Kg';
+number_format((float)$value, 0, ',', '.') . ' Kg';
                                                     break;
                                                 case 'g':
                                                     $formattedValue = 
