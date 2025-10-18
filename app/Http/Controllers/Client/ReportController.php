@@ -67,8 +67,8 @@ class ReportController extends Controller
             $unlockedSimpleIds = $this->getUnlockedSimpleReportIds($user);
         }
         $reports = DailyReport::where('user_id', $user->id)
-                              ->orderBy('tanggal', 'desc')
-                              ->paginate(15);
+                              ->orderByDesc('updated_at')
+                              ->paginate(8);
         return view('client.laporan.histori', [
             'reports' => $reports,
             'unlockedSimpleIds' => $unlockedSimpleIds,

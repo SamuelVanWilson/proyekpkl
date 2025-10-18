@@ -15,7 +15,7 @@ class DashboardController extends Controller
         $totalClients = User::where('role', 'user')->count();
         $totalReports = DailyReport::count();
         // Ambil laporan terbaru beserta user untuk log aktivitas
-        $recentReports = DailyReport::with('user')->latest('tanggal')->take(5)->get();
+        $recentReports = DailyReport::with('user')->orderByDesc('updated_at')->take(5)->get();
         // Hitung jumlah laporan per klien (top 5) untuk insight
         $reportCounts = User::where('role', 'user')
             ->withCount('dailyReports')
@@ -25,7 +25,6 @@ class DashboardController extends Controller
         // Hitung total laporan berdasarkan jenis (Advanced/Biasa/Lama)
         $advancedCount = 0;
         $biasaCount    = 0;
-        $lamaCount     = 0;
         foreach (DailyReport::all() as $rep) {
             $data = $rep->data ?? [];
             if (!empty($data['rincian']) || !empty($data['rekap'])) {
@@ -39,7 +38,6 @@ class DashboardController extends Controller
         $reportTypeCounts = [
             'advanced' => $advancedCount,
             'biasa'    => $biasaCount,
-            'lama'     => $lamaCount,
         ];
         return view('admin.dashboard', [
             'totalClients'     => $totalClients,

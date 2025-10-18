@@ -39,10 +39,10 @@
                     @else
                         <p class="text-sm font-semibold text-gray-800">{{ $report->lokasi }}</p>
                     @endif
-                    <p class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($report->tanggal)->isoFormat('dddd, D MMMM Y') }}</p>
+                    <p class="text-xs text-gray-500">{{ \Carbon\Carbon::parse($report->tanggal)->locale('id')->isoFormat('dddd, D MMMM Y') }}</p>
                 </div>
-                <div class="text-xs text-gray-400">
-                    ID: #{{ $report->id }}
+                <div>
+                    <p class="text-xs text-gray-500">{{ $report->updated_at->diffForHumans() }}</p>
                 </div>
             </div>
             {{-- Tombol Aksi: hanya Edit dan Hapus. Preview & unduh kini tersedia dari halaman laporan. --}}

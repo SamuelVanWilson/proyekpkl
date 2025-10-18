@@ -47,7 +47,7 @@
                     $title = $meta['title'] ?? ($report->lokasi ?? 'Tanpa Judul');
                     $dateValue = $rekap['tanggal'] ?? $report->tanggal;
                     try {
-                        $formattedDate = \Carbon\Carbon::parse($dateValue)->isoFormat('D MMM Y');
+                        $formattedDate = \Carbon\Carbon::parse($dateValue)->locale('id')->isoFormat('D MMM Y');
                     } catch (Exception $e) {
                         $formattedDate = $dateValue;
                     }
@@ -64,7 +64,7 @@
                         <p class="text-sm font-medium text-green-600 truncate">
                             <a href="{{ route('admin.users.activity', $report->user) }}" class="hover:underline">{{ $report->user->name }}</a>
                         </p>
-                        <p class="text-xs text-gray-500">{{ $report->created_at->diffForHumans() }}</p>
+                        <p class="text-xs text-gray-500">{{ $report->updated_at->diffForHumans() }}</p>
                     </div>
                     <div class="mt-2 text-sm text-gray-600">
                         Laporan "<span class="font-semibold">{{ $title }}</span>" — {{ $formattedDate }} ({{ $type }})
@@ -112,10 +112,6 @@
             <li class="flex justify-between text-sm">
                 <span>Biasa</span>
                 <span class="font-semibold">{{ $reportTypeCounts['biasa'] }}</span>
-            </li>
-            <li class="flex justify-between text-sm">
-                <span>Lama</span>
-                <span class="font-semibold">{{ $reportTypeCounts['lama'] }}</span>
             </li>
         </ul>
     </div>

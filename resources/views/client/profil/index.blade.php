@@ -74,9 +74,17 @@
             <span class="text-sm text-gray-900">{{ $user->nomor_telepon }}</span>
         </div>
         @endif
-        <div class="p-4">
-            <a href="{{ route('client.profil.edit') }}" class="w-full block text-center bg-green-600 hover:bg-green-700 text-white py-2 rounded-lg text-sm font-medium">Ubah Data</a>
+        @if($user->subscription_plan)
+        <div class="p-4 flex justify-between items-center">
+            <span class="text-sm font-medium text-gray-700">Status Langganan</span>
+            @if($user->subscription_plan == null)
+                <span class="text-sm text-gray-900 bg-gray-100 px-2 inline-flex items-center rounded-full">Gratis</span>
+            @else
+                <span class="text-sm text-blue-800 bg-blue-100 px-2 inline-flex items-center rounded-full">{{ $user->subscription_plan }}</span>
+            @endif
         </div>
+        @endif
+
     </div>
 </div>
 
@@ -91,11 +99,10 @@
                 <ion-icon name="download-outline" class="text-gray-400 text-xl"></ion-icon>
             </button>
 
-            {{-- Tombol Fullscreen Toggle --}}
-            <button onclick="toggleFullscreen()" class="p-4 flex justify-between items-center w-full text-left">
-                <span class="font-medium text-green-600">Mode Fullscreen</span>
-                <ion-icon name="scan-outline" class="text-gray-400 text-xl"></ion-icon>
-            </button>
+            <a href="{{ route('client.profil.edit') }}" class="p-4 flex justify-between items-center w-full text-left">
+                <span class="font-medium text-green-600">Ubah Data</span>
+                <ion-icon name="settings-outline" class="text-gray-400 text-xl"></ion-icon>
+            </a>
 
             {{-- Tombol Logout --}}
             <form action="{{ route('logout') }}" method="POST">
