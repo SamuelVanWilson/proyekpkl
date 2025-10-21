@@ -1,27 +1,27 @@
 <div>
         {{-- (Style tidak berubah) --}}
         <style>
-            .spreadsheet-container { height: 45vh; overflow: auto; position: 
+            .spreadsheet-container { height: 45vh; overflow: auto; position:
 relative; background-color: white; border: 1px solid #e5e7eb; }
             .spreadsheet { border-collapse: collapse; position: relative; min-
 width: 100%; }
-            .spreadsheet th, .spreadsheet td { border-width: 0 0 1px 1px; 
+            .spreadsheet th, .spreadsheet td { border-width: 0 0 1px 1px;
 border-color: #e5e7eb; position: relative; padding: 0; height: 38px; background-
 color: white; }
-            .spreadsheet tr th:first-child, .spreadsheet tr td:first-child { 
+            .spreadsheet tr th:first-child, .spreadsheet tr td:first-child {
 border-left-width: 0; }
             .spreadsheet thead tr:first-child th { border-top-width: 0; }
             .spreadsheet thead th { background-color: #f9fafb; font-weight: 500;
-  font-size: 0.75rem; color: #6b7280; text-align: center; user-select: none; 
+  font-size: 0.75rem; color: #6b7280; text-align: center; user-select: none;
 position: sticky; top: 0; z-index: 20; }
             .spreadsheet tbody th { background-color: #f9fafb; font-weight: 500;
-  font-size: 0.75rem; color: #6b7280; text-align: center; user-select: none; 
-position: sticky; left: 0; width: 50px; min-width: 50px; z-index: 10; cursor: 
+  font-size: 0.75rem; color: #6b7280; text-align: center; user-select: none;
+position: sticky; left: 0; width: 50px; min-width: 50px; z-index: 10; cursor:
 pointer; }
             .spreadsheet thead th:first-child { left: 0; z-index: 30; }
-            .cell-input { width: 100%; height: 100%; border: none; padding: 5px 
+            .cell-input { width: 100%; height: 100%; border: none; padding: 5px
  8px; font-size: 0.875rem; outline: none; background-color: transparent; }
-            /* Ubah warna highlight dan fokus input ke hijau agar konsisten 
+            /* Ubah warna highlight dan fokus input ke hijau agar konsisten
 dengan tema Excel */
             .cell-input:focus { box-shadow: inset 0 0 0 2px #22c55e; }
             .spreadsheet tbody tr.bg-green-100, .spreadsheet tbody tr.bg-
@@ -85,7 +85,7 @@ green-100 th { background-color: #dcfce7; }
                 @if (session('success'))
                     <div class="bg-green-100 border border-green-400 text-
 green-700 px-4 py-3 rounded-lg" role="alert">
-                        <span class="block sm:inline">{{ session('success') 
+                        <span class="block sm:inline">{{ session('success')
 }}</span>
                     </div>
                 @endif
@@ -105,124 +105,76 @@ green-700 px-4 py-3 rounded-lg" role="alert">
                     </div>
                 @endif
 
-                {{-- Toolbar format teks (copy dari halaman laporan biasa) --}}
-                <div x-data="{ formatOpen: false, alignOpen: false }" 
-class="flex flex-wrap items-center gap-2 mb-4">
-                    {{-- Format dropdown --}}
-                    <div class="relative inline-block text-left">
-                        <button type="button" @click="formatOpen = !formatOpen" 
-class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium 
+                {{-- Toolbar format teks --}}
+        <div class="flex flex-wrap items-center gap-2 mb-4">
+            {{-- Format dropdown --}}
+            <div class="relative inline-block text-left">
+                <button type="button" @click="formatOpen = !formatOpen"
+class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium
 flex items-center gap-1">
-                            <ion-icon name="create-outline" class="text-
-lg"></ion-icon>
-                            <span>Format</span>
-                            <ion-icon name="chevron-down-outline" class="text-
-xs"></ion-icon>
-                        </button>
-                        <div x-show="formatOpen" @click.away="formatOpen = 
-false" class="absolute z-20 mt-1 w-40 bg-white border border-gray-200 rounded-md
-  shadow-lg py-1">
-                            <a href="#" onclick="applyCommand('bold'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tebal</a>
-                            <a href="#" onclick="applyCommand('italic'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Miring</a>
-                            <a href="#" onclick="applyCommand('underline'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Garis Bawah</a>
-                            <a href="#" onclick="applyCommand('strikeThrough'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Coret</a>
-                            <div class="border-t border-gray-200 my-1"></div>
-                            {{-- Font family selector inside dropdown --}}
-                            <div class="px-3 py-2">
-                                <label class="block text-xs mb-1">Font</label>
-                                <select onchange="applyCommand('fontName', 
-this.value); formatOpen=false;" class="w-full bg-gray-100 border border-gray-200
-  rounded-md text-sm py-1 px-2">
-                                    <option value="Arial">Arial</option>
-                                    <option value="Times New Roman">Times New 
-Roman</option>
-                                    <option value="Courier New">Courier 
-New</option>
-                                    <option value="Helvetica">Helvetica</option>
-                                </select>
-                            </div>
-                            <div class="px-3 py-2">
-                                <label class="block text-xs mb-1">Ukuran</label>
-                                <select onchange="applyCommand('fontSize', 
-this.value); formatOpen=false;" class="w-full bg-gray-100 border border-gray-200
-  rounded-md text-sm py-1 px-2">
-                                    <option value="1">8pt</option>
-                                    <option value="2">10pt</option>
-                                    <option value="3" selected>12pt</option>
-                                    <option value="4">14pt</option>
-                                    <option value="5">18pt</option>
-                                    <option value="6">24pt</option>
-                                    <option value="7">36pt</option>
-                                </select>
-                            </div>
-                        </div>
-
-    @once
-        <script>
-            /**
-             * Gunakan pemilihan teks normal untuk format teks. Kami menambahkan
-             * logika pemilihan seluruh isi sel jika tidak ada teks yang diseleksi,
-             * sehingga perintah seperti align dapat diterapkan ke seluruh konten
-             * tanpa perlu seleksi manual. Fungsi ini juga memicu event input
-             * untuk memastikan Livewire mengetahui bahwa isi sel telah berubah.
-             */
-            window.activeEditableElement = null;
-            document.addEventListener('focusin', function (e) {
-                if (e.target && e.target.isContentEditable) {
-                    window.activeEditableElement = e.target;
-                }
-            });
-            function applyCommand(cmd, value = null) {
-                const el = window.activeEditableElement;
-                if (!el) return;
-                el.focus();
-                // Jika tidak ada teks yang dipilih, pilih seluruh isi sel
-                const selection = window.getSelection();
-                if (selection && (selection.isCollapsed || selection.type === 'Caret')) {
-                    const range = document.createRange();
-                    range.selectNodeContents(el);
-                    selection.removeAllRanges();
-                    selection.addRange(range);
-                }
-                try {
-                    document.execCommand(cmd, false, value);
-                } catch (e) {
-                    // ignore unsupported commands
-                }
-                // Beri tahu Livewire bahwa konten berubah
-                try {
-                    const event = new Event('input', { bubbles: true });
-                    el.dispatchEvent(event);
-                } catch (e) {
-                    const evt = document.createEvent('Event');
-                    evt.initEvent('input', true, true);
-                    el.dispatchEvent(evt);
-                }
-            }
-        </script>
-    @endonce
-                    </div>
-                    {{-- Align dropdown --}}
-                    <div class="relative inline-block text-left">
-                        <button type="button" @click="alignOpen = !alignOpen" 
-class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium 
-flex items-center gap-1">
-                            <ion-icon name="text-outline" class="text-lg"></ion-
+                    <ion-icon name="create-outline" class="text-lg"></ion-icon>
+                    <span>Format</span>
+                    <ion-icon name="chevron-down-outline" class="text-xs"></ion-
 icon>
-                            <span>Align</span>
-                            <ion-icon name="chevron-down-outline" class="text-
-xs"></ion-icon>
-                        </button>
-                        <div x-show="alignOpen" @click.away="alignOpen = false" 
-class="absolute z-20 mt-1 w-32 bg-white border border-gray-200 rounded-md 
+                </button>
+                <div x-show="formatOpen" @click.away="formatOpen = false"
+class="absolute z-20 mt-1 w-40 bg-white border border-gray-200 rounded-md
 shadow-lg py-1">
-                            <a href="#" onclick="applyCommand('justifyLeft'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kiri</a>
-                            <a href="#" onclick="applyCommand('justifyCenter'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tengah</a>
-                            <a href="#" onclick="applyCommand('justifyRight'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kanan</a>
-                            <a href="#" onclick="applyCommand('justifyFull'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Justify</a>
-                        </div>
+                    <a href="#" onclick="applyCommand('bold'); formatOpen=false;
+ return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tebal</a>
+                    <a href="#" onclick="applyCommand('italic'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Miring</a>
+                    <a href="#" onclick="applyCommand('underline'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Garis Bawah</a>
+                    <a href="#" onclick="applyCommand('strikeThrough'); formatOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Coret</a>
+                    <div class="border-t border-gray-200 my-1"></div>
+                    {{-- Font family selector inside dropdown --}}
+                    <div class="px-3 py-2">
+                        <label class="block text-xs mb-1">Font</label>
+                        <select onchange="applyCommand('fontName', this.value);
+formatOpen=false;" class="w-full bg-gray-100 border border-gray-200 rounded-md
+text-sm py-1 px-2">
+                            <option value="Arial">Arial</option>
+                            <option value="Times New Roman">Times New
+Roman</option>
+                            <option value="Courier New">Courier New</option>
+                            <option value="Helvetica">Helvetica</option>
+                        </select>
+                    </div>
+                    <div class="px-3 py-2">
+                        <label class="block text-xs mb-1">Ukuran</label>
+                        <select onchange="applyCommand('fontSize', this.value);
+formatOpen=false;" class="w-full bg-gray-100 border border-gray-200 rounded-md
+text-sm py-1 px-2">
+                            <option value="1">8pt</option>
+                            <option value="2">10pt</option>
+                            <option value="3" selected>12pt</option>
+                            <option value="4">14pt</option>
+                            <option value="5">18pt</option>
+                            <option value="6">24pt</option>
+                            <option value="7">36pt</option>
+                        </select>
                     </div>
                 </div>
+            </div>
+            {{-- Align dropdown --}}
+            <div class="relative inline-block text-left">
+                <button type="button" @click="alignOpen = !alignOpen"
+class="px-3 py-1.5 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium
+flex items-center gap-1">
+                    <ion-icon name="text-outline" class="text-lg"></ion-icon>
+                    <span>Align</span>
+                    <ion-icon name="chevron-down-outline" class="text-xs"></ion-
+icon>
+                </button>
+                <div x-show="alignOpen" @click.away="alignOpen = false"
+class="absolute z-20 mt-1 w-32 bg-white border border-gray-200 rounded-md
+shadow-lg py-1">
+                    <a href="#" onclick="applyCommand('justifyLeft'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kiri</a>
+                    <a href="#" onclick="applyCommand('justifyCenter'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Tengah</a>
+                    <a href="#" onclick="applyCommand('justifyRight'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Kanan</a>
+                    <a href="#" onclick="applyCommand('justifyFull'); alignOpen=false; return false;" class="block px-3 py-2 text-sm hover:bg-gray-100">Justify</a>
+                </div>
+            </div>
+        </div>
 
                 {{-- KARTU TABEL RINCIAN --}}
                 <div class="bg-white rounded-xl shadow-sm border border-gray-200
@@ -288,11 +240,11 @@ shadow-lg py-1">
                         >
                             <thead class="sticky top-0 z-20 bg-gray-50">
                                 <tr>
-                                    <th class="sticky left-0 z-30 bg-gray-100 
+                                    <th class="sticky left-0 z-30 bg-gray-100
 w-12">#</th>
                                     @foreach($configRincian as $col)
-                                        <th class="px-3 py-2 text-left text-xs 
-font-medium text-gray-500 uppercase whitespace-nowrap">{{ $col['label'] ?? 
+                                        <th class="px-3 py-2 text-left text-xs
+font-medium text-gray-500 uppercase whitespace-nowrap">{{ $col['label'] ??
 $col['name'] }}</th>
                                     @endforeach
                                 </tr>
@@ -311,8 +263,9 @@ $col['name'] }}</th>
                                                 class="w-full h-full outline-none px-2 py-1 text-sm"
                                                 :class="fitTable ? 'min-w-[80px]' : 'min-w-[150px]'"
                                                 {{-- Trigger cell update on blur instead of every keystroke to prevent cursor jump/lag --}}
-                                                wire:blur="updateCell({{ $index }}, '{{ $col['name'] }}', $event.target.innerHTML)"
-                                                wire:key="cell-{{ $index }}-{{ $col['name'] }}"
+                                                wire:ignore
+                                                x-on:blur="$wire.updateCell({{$index }}, '{{ $col['name'] }}', $event.target.innerHTML)"
+                                                wire:key="cell-{{ $index}}-{{ $col['name'] }}"
                                             >{!! $row[$col['name']] ?? '' !!}</div>
                                         </td>
                                     @endforeach
@@ -339,16 +292,16 @@ $col['name'] }}</th>
                 {{-- KARTU DETAIL LAPORAN --}}
                 <div class="bg-white p-4 rounded-xl shadow-sm border border-
 gray-200">
-                    <h2 class="text-lg font-semibold text-gray-800">Detail 
+                    <h2 class="text-lg font-semibold text-gray-800">Detail
 Laporan</h2>
                     {{-- Judul dan tanggal laporan (editable) --}}
                     <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div>
                             <label class="text-sm font-medium text-
 gray-600">Judul Laporan</label>
-                            {{-- Gunakan wire:model.defer agar judul selalu 
+                            {{-- Gunakan wire:model.defer agar judul selalu
 tersinkron sebelum simpan/preview tanpa perlu blur --}}
-                            <input type="text" wire:model.defer="reportTitle" 
+                            <input type="text" wire:model.defer="reportTitle"
 class="input-modern" placeholder="Masukkan judul laporan">
                             @error('reportTitle')
                                 <p class="text-red-500 text-xs mt-1">{{ $message
@@ -358,9 +311,9 @@ class="input-modern" placeholder="Masukkan judul laporan">
                         <div>
                             <label class="text-sm font-medium text-
 gray-600">Tanggal Laporan</label>
-                            {{-- Gunakan wire:model.defer agar tanggal 
+                            {{-- Gunakan wire:model.defer agar tanggal
 tersinkron sebelum simpan/preview tanpa perlu blur --}}
-                            <input type="date" wire:model.defer="rekap.tanggal" 
+                            <input type="date" wire:model.defer="rekap.tanggal"
 class="input-modern">
                             @error('rekap.tanggal')
                                 <p class="text-red-500 text-xs mt-1">{{ $message
@@ -370,38 +323,38 @@ class="input-modern">
                         {{-- Kolom rekap lainnya --}}
                         @foreach($configRekap as $field)
                             <div>
-                                <label class="text-sm font-medium text-gray-600 
+                                <label class="text-sm font-medium text-gray-600
 capitalize">{{ $field['label'] ?? $field['name'] }}</label>
-                                @if(!empty($field['formula']) || 
+                                @if(!empty($field['formula']) ||
 !empty($field['readonly']))
-                                    {{-- Blok ini untuk nilai yang tidak bisa 
+                                    {{-- Blok ini untuk nilai yang tidak bisa
 diedit --}}
                                     <div class="mt-1 block w-full rounded-md bg-
 gray-100 px-3 py-2 text-gray-700 text-sm">
                                         @php
-                                            $value = $rekap[$field['name']] ?? 
+                                            $value = $rekap[$field['name']] ??
 0;
                                             $type = $field['type'] ?? 'text';
                                             $formattedValue = $value;
                                             switch ($type) {
                                                 case 'rupiah':
-                                                    $formattedValue = 'Rp ' . 
+                                                    $formattedValue = 'Rp ' .
 number_format((float)$value, 0, ',', '.');
                                                     break;
                                                 case 'dollar':
-                                                    $formattedValue = '$ ' . 
+                                                    $formattedValue = '$ ' .
 number_format((float)$value, 2, '.', ',');
                                                     break;
                                                 case 'kg':
-                                                    $formattedValue = 
+                                                    $formattedValue =
 number_format((float)$value, 0, ',', '.') . ' Kg';
                                                     break;
                                                 case 'g':
-                                                    $formattedValue = 
+                                                    $formattedValue =
 number_format((float)$value, 0, ',', '.') . ' g';
                                                     break;
                                                 case 'number':
-                                                    $formattedValue = 
+                                                    $formattedValue =
 number_format((float)$value, 0, ',', '.');
                                                     break;
                                             }
@@ -410,7 +363,7 @@ number_format((float)$value, 0, ',', '.');
                                     </div>
                                 @else
                                     {{-- Nilai yang bisa diedit --}}
-                                    <input type="{{ $field['type'] }}" 
+                                    <input type="{{ $field['type'] }}"
 wire:model.blur="rekap.{{ $field['name'] }}" class="input-modern">
                                 @endif
                             </div>
@@ -431,3 +384,50 @@ wire:model.blur="rekap.{{ $field['name'] }}" class="input-modern">
 
         </div>
     </div>
+  @once
+        <script>
+            /**
+             * Kembalikan perilaku pemformatan teks ke penggunaan seleksi
+normal.
+             * Pengguna harus menyeleksi teks yang ingin diformat. Fungsi ini
+             * menjalankan execCommand dan memicu event input agar Livewire
+             * menangkap perubahan konten. Kami menambahkan logika untuk
+             * memilih seluruh isi sel ketika tidak ada teks yang diseleksi,
+             * sehingga perintah seperti align dapat diterapkan ke seluruh
+             * konten tanpa perlu seleksi manual.
+             */
+            window.activeEditableElement = null;
+            document.addEventListener('focusin', function (e) {
+                if (e.target && e.target.isContentEditable) {
+                    window.activeEditableElement = e.target;
+                }
+            });
+            function applyCommand(cmd, value = null) {
+                const el = window.activeEditableElement;
+                if (!el) return;
+                el.focus();
+                // Jika tidak ada teks yang diseleksi, pilih seluruh isi sel
+                const selection = window.getSelection();
+                if (selection && (selection.isCollapsed || selection.type === 'Caret')) {
+                    const range = document.createRange();
+                    range.selectNodeContents(el);
+                    selection.removeAllRanges();
+                    selection.addRange(range);
+                }
+                try {
+                    document.execCommand(cmd, false, value);
+                } catch (e) {
+                    // abaikan jika browser tidak mendukung perintah
+                }
+                // Notifikasi ke Livewire bahwa isi sel berubah
+                try {
+                    const event = new Event('input', { bubbles: true });
+                    el.dispatchEvent(event);
+                } catch (e) {
+                    const evt = document.createEvent('Event');
+                    evt.initEvent('input', true, true);
+                    el.dispatchEvent(evt);
+                }
+            }
+        </script>
+    @endonce

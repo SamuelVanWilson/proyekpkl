@@ -75,6 +75,10 @@
             @endforelse
         </ul>
     </div>
+    {{-- Pagination for aktivitas --}}
+    <div class="mt-4">
+        {{ $recentReports->links('components.pagination-green') }}
+    </div>
 </div>
 
 {{-- Insight Statistik Laporan --}}
@@ -99,6 +103,10 @@
                 <li class="py-4 text-sm text-gray-500 text-center">Tidak ada data.</li>
             @endforelse
         </ul>
+        {{-- Pagination for top clients --}}
+        <div class="mt-4">
+            {{ $reportCounts->links('components.pagination-green') }}
+        </div>
     </div>
 
     {{-- Statistik Jenis Laporan --}}

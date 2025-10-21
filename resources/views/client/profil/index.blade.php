@@ -74,7 +74,6 @@
             <span class="text-sm text-gray-900">{{ $user->nomor_telepon }}</span>
         </div>
         @endif
-        @if($user->subscription_plan)
         <div class="p-4 flex justify-between items-center">
             <span class="text-sm font-medium text-gray-700">Status Langganan</span>
             @if($user->subscription_plan == null)
@@ -83,8 +82,6 @@
                 <span class="text-sm text-blue-800 bg-blue-100 px-2 inline-flex items-center rounded-full">{{ $user->subscription_plan }}</span>
             @endif
         </div>
-        @endif
-
     </div>
 </div>
 

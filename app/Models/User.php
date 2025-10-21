@@ -94,11 +94,22 @@ class User extends Authenticatable implements MustVerifyEmailContract
     public function hasActiveSubscription(): bool
     {
         // Periksa apakah kolom subscription_expires_at masih berlaku
-        if ($this->subscription_expires_at && $this->subscription_expires_at->isFuture()) {
-            return true;
+        // Jika kedaluwarsa, reset subscription_plan ke null agar tidak ada status plan yang menempel
+        if ($this->subscription_expires_at) {
+            if ($this->subscription_expires_at->isPast()) {
+                // Bila masa langganan sudah lewat, kosongkan informasi plan
+                if ($this->subscription_plan !== null) {
+                    $this->subscription_plan = null;
+                    // Jangan ubah subscription_expires_at untuk keperluan histori
+                    $this->save();
+                }
+            } else {
+                // subscription masih aktif
+                return true;
+            }
         }
 
-        // Jika tidak, cek apakah ada langganan berstatus paid yang belum kedaluwarsa
+        // Jika tidak ada subscription aktif di atribut user, cek apakah ada langganan berstatus paid yang belum kedaluwarsa
         return $this->subscriptions()
             ->where('payment_status', 'paid')
             ->where('subscription_expires_at', '>', now())

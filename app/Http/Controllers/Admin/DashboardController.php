@@ -14,14 +14,16 @@ class DashboardController extends Controller
     {
         $totalClients = User::where('role', 'user')->count();
         $totalReports = DailyReport::count();
-        // Ambil laporan terbaru beserta user untuk log aktivitas
-        $recentReports = DailyReport::with('user')->orderByDesc('updated_at')->take(5)->get();
-        // Hitung jumlah laporan per klien (top 5) untuk insight
+        // Ambil laporan terbaru beserta user untuk log aktivitas dengan pagination
+        // Gunakan page name khusus agar dua pagination tidak berbenturan dalam query string
+        $recentReports = DailyReport::with('user')
+            ->orderByDesc('updated_at')
+            ->paginate(5, ['*'], 'recent_page');
+        // Hitung jumlah laporan per klien untuk insight dengan pagination
         $reportCounts = User::where('role', 'user')
             ->withCount('dailyReports')
-            ->orderBy('daily_reports_count', 'desc')
-            ->take(5)
-            ->get();
+            ->orderByDesc('daily_reports_count', 'desc')
+            ->paginate(3, ['*'], 'top_clients_page');
         // Hitung total laporan berdasarkan jenis (Advanced/Biasa/Lama)
         $advancedCount = 0;
         $biasaCount    = 0;

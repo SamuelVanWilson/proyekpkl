@@ -89,7 +89,10 @@ class AuthController extends Controller
         $data = $request->validate([
             'name' => 'required|string|max:255',
             // Disimpan sebagai string; validasi pakai date lalu format string
-            'tanggal_lahir' => 'required|date',
+            // Pastikan tanggal lahir sebelum hari ini (tidak boleh hari ini atau besok)
+            'tanggal_lahir' => 'required|date|before:today',
+        ], [
+            'tanggal_lahir.before' => 'Tanggal lahir harus sebelum hari ini.',
         ]);
 
         $payload = [
@@ -133,9 +136,10 @@ class AuthController extends Controller
             'alamat'        => ['required', 'string', 'max:255', Rule::in($this->provinces())],
             'pekerjaan'     => ['nullable','string','max:255', Rule::in($this->jobs())],
             // Harus +628xxxxxxxxxx (8–11 digit setelah '8', total tetap <15 digit E.164)
-            'nomor_telepon' => ['required','string','regex:/^\+628\d{8,11}$/'],
+            'nomor_telepon' => ['required','string','regex:/^\+628\d{8,11}$/','unique:users,nomor_telepon'],
         ], [
             'nomor_telepon.regex' => 'Nomor telepon harus format Indonesia: +62 8xxxxxxxxxx (boleh ketik 08..., akan diubah otomatis).',
+            'nomor_telepon.unique' => 'Nomor telepon sudah terdaftar.',
         ]);
 
         Session::put('register', array_merge(Session::get('register', []), $data));

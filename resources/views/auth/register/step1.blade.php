@@ -20,7 +20,8 @@
                    class="input-modern">
             @error('tanggal_lahir')<p class="text-sm text-red-600 mt-1">{{ $message }}</p>@enderror
         </div>
-        <div class="flex justify-end">
+        <div class="flex items-center justify-between">
+            <a href="{{ route('login') }}" class="px-4 py-2 rounded-md border">Login</a>
             <button class="px-4 py-2 rounded-md bg-green-600 text-white hover:bg-green-700">Lanjut</button>
         </div>
       </form>
