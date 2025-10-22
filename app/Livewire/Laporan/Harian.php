@@ -345,21 +345,11 @@ class Harian extends Component
             }
         }
 
-        // Sanitasi berdasarkan tipe data
-        if ($colConfig && isset($colConfig['type']) && $colConfig['type'] === 'number') {
-            // Untuk kolom angka, hanya izinkan angka dan pemisah desimal. Hapus tag HTML.
-            $plain = strip_tags($value);
-            // Hapus semua karakter kecuali digit, koma, titik, minus
-            $plain = preg_replace('/[^0-9,\.\-]/', '', (string) $plain);
-            // Ubah koma desimal ke titik
-            $plain = str_replace(',', '.', $plain);
-            // Simpan string numerik apa adanya. Jika tidak ada angka valid, set kosong.
-            $this->rincian[$rowIndex][$column] = $plain;
-        } else {
-            // Untuk tipe lain, gunakan normalisasi HTML untuk menjaga style inline
-            $cleanValue = $this->normalizeHtml($value);
-            $this->rincian[$rowIndex][$column] = $cleanValue;
-        }
+        // Selalu sanitasi HTML untuk menyimpan gaya teks dan alignment.
+        // Bahkan untuk tipe "number", kita simpan nilai dengan HTML agar format teks tetap terjaga.
+        // Nilai numerik untuk perhitungan rumus akan diekstraksi menggunakan parseNumber() saat dihitung.
+        $cleanValue = $this->normalizeHtml($value);
+        $this->rincian[$rowIndex][$column] = $cleanValue;
         // Hitung ulang nilai rekap setelah update
         $this->hitungUlang();
     }
